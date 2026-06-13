@@ -7,6 +7,7 @@ use App\Models\Building;
 use App\Models\Unit;
 use App\Services\ActivityLogger;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Validation\Rule;
 
 class UnitController extends Controller
@@ -15,6 +16,8 @@ class UnitController extends Controller
 
     public function index(Request $request)
     {
+        Gate::authorize('viewAny', Unit::class);
+
         $units = Unit::with('building')
             ->whereHas('building', fn ($q) => $q->where('organization_id', $this->organizationId()))
             ->when($request->building_id, fn ($q, $id) => $q->where('building_id', $id))
@@ -25,10 +28,11 @@ class UnitController extends Controller
         return view('units.index', ['units' => $units, 'buildings' => $this->buildings()]);
     }
 
-    public function create() { return view('units.form', ['unit' => new Unit(), 'buildings' => $this->buildings()]); }
+    public function create() { Gate::authorize('create', Unit::class); return view('units.form', ['unit' => new Unit(), 'buildings' => $this->buildings()]); }
 
     public function store(Request $request, ActivityLogger $logger)
     {
+        Gate::authorize('create', Unit::class);
         $unit = Unit::create($this->validated($request));
         $logger->log('unit.created', $unit);
         return redirect()->route('units.show', $unit);
@@ -42,12 +46,14 @@ class UnitController extends Controller
 
     public function edit(Unit $unit)
     {
+        Gate::authorize('update', $unit);
         $this->authorizeUnit($unit);
         return view('units.form', ['unit' => $unit, 'buildings' => $this->buildings()]);
     }
 
     public function update(Request $request, Unit $unit, ActivityLogger $logger)
     {
+        Gate::authorize('update', $unit);
         $this->authorizeUnit($unit);
         $oldStatus = $unit->status;
         $unit->update($this->validated($request));
@@ -58,6 +64,7 @@ class UnitController extends Controller
     public function destroy(Unit $unit, ActivityLogger $logger)
     {
         abort_unless(auth()->user()->role->value === 'owner', 403);
+        Gate::authorize('delete', $unit);
         $this->authorizeUnit($unit);
         $unit->delete();
         $logger->log('unit.deleted', $unit);
@@ -71,6 +78,7 @@ class UnitController extends Controller
 
     private function authorizeUnit(Unit $unit): void
     {
+        Gate::authorize('view', $unit);
         abort_unless($unit->building()->where('organization_id', $this->organizationId())->exists(), 403);
     }
 
