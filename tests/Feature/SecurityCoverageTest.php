@@ -920,6 +920,34 @@ class SecurityCoverageTest extends TestCase
         ]);
     }
 
+    public function test_owner_can_view_own_organization_activity_logs(): void
+    {
+        [$ownerA] = $this->createTwoOrganizationScenario();
+
+        $this->actingAs($ownerA)->get(route('activity-logs.index'))
+            ->assertOk()
+            ->assertSee('Organization A visible log');
+    }
+
+    public function test_non_owner_roles_cannot_view_activity_logs(): void
+    {
+        [, $managerA, $accountantA, $caretakerA] = $this->createTwoOrganizationScenario();
+
+        foreach ([$managerA, $accountantA, $caretakerA] as $user) {
+            $this->actingAs($user)->get(route('activity-logs.index'))->assertForbidden();
+        }
+    }
+
+    public function test_activity_logs_index_only_shows_current_organization_logs(): void
+    {
+        [$ownerA] = $this->createTwoOrganizationScenario();
+
+        $this->actingAs($ownerA)->get(route('activity-logs.index'))
+            ->assertOk()
+            ->assertSee('Organization A visible log')
+            ->assertDontSee('Organization B private log');
+    }
+
     public function test_owner_cannot_edit_or_update_another_organizations_user(): void
     {
         [$ownerA, , , , $dataB] = $this->createTwoOrganizationScenario();
