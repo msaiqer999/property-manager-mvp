@@ -10,6 +10,7 @@ use App\Services\ActivityLogger;
 use App\Support\PaymentSchedule;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Validation\Rule;
 use Barryvdh\DomPDF\Facade\Pdf;
 
@@ -19,6 +20,8 @@ class ContractController extends Controller
 
     public function index(Request $request)
     {
+        Gate::authorize('viewAny', Contract::class);
+
         $contracts = Contract::with(['tenant', 'unit.building'])
             ->where('organization_id', $this->organizationId())
             ->when($request->status, fn ($q, $status) => $q->where('status', $status))
@@ -30,11 +33,13 @@ class ContractController extends Controller
 
     public function create()
     {
+        Gate::authorize('create', Contract::class);
         return view('contracts.form', $this->formData(new Contract()));
     }
 
     public function store(Request $request, ActivityLogger $logger)
     {
+        Gate::authorize('create', Contract::class);
         $data = $this->validated($request);
         $this->authorizeContractInputs($data);
 
@@ -58,6 +63,7 @@ class ContractController extends Controller
     public function edit(Contract $contract)
     {
         abort_if(auth()->user()->role->value === 'accountant' || auth()->user()->role->value === 'caretaker', 403);
+        Gate::authorize('update', $contract);
         $this->authorizeContract($contract);
         return view('contracts.form', $this->formData($contract));
     }
@@ -65,6 +71,7 @@ class ContractController extends Controller
     public function update(Request $request, Contract $contract, ActivityLogger $logger)
     {
         abort_if(auth()->user()->role->value === 'accountant' || auth()->user()->role->value === 'caretaker', 403);
+        Gate::authorize('update', $contract);
         $this->authorizeContract($contract);
         $data = $this->validated($request);
         $this->authorizeContractInputs($data);
@@ -85,6 +92,7 @@ class ContractController extends Controller
     public function destroy(Contract $contract)
     {
         abort_unless(auth()->user()->role->value === 'owner', 403);
+        Gate::authorize('delete', $contract);
         $this->authorizeContract($contract);
         $contract->delete();
         return redirect()->route('contracts.index');
@@ -92,6 +100,7 @@ class ContractController extends Controller
 
     public function pdf(Contract $contract)
     {
+        Gate::authorize('exportPdf', $contract);
         $this->authorizeContract($contract);
         return Pdf::loadView('pdf.contract', compact('contract'))->download("contract-{$contract->contract_number}.pdf");
     }
@@ -107,6 +116,7 @@ class ContractController extends Controller
 
     private function authorizeContract(Contract $contract): void
     {
+        Gate::authorize('view', $contract);
         abort_unless($contract->organization_id === $this->organizationId(), 403);
     }
 
