@@ -186,6 +186,77 @@ class SecurityCoverageTest extends TestCase
         ])->assertForbidden();
     }
 
+    public function test_caretaker_cannot_access_or_modify_expenses(): void
+    {
+        [, , , $caretakerA, , $dataA] = $this->createTwoOrganizationScenario();
+
+        $this->actingAs($caretakerA)->get(route('expenses.index'))->assertForbidden();
+        $this->actingAs($caretakerA)->get(route('expenses.create'))->assertForbidden();
+        $this->actingAs($caretakerA)->get(route('expenses.show', $dataA['expense']))->assertForbidden();
+        $this->actingAs($caretakerA)->get(route('expenses.edit', $dataA['expense']))->assertForbidden();
+
+        $this->actingAs($caretakerA)->post(route('expenses.store'), $this->expensePayload($dataA))
+            ->assertForbidden();
+
+        $this->actingAs($caretakerA)->put(route('expenses.update', $dataA['expense']), $this->expensePayload($dataA))
+            ->assertForbidden();
+
+        $this->actingAs($caretakerA)->delete(route('expenses.destroy', $dataA['expense']))
+            ->assertForbidden();
+    }
+
+    public function test_only_owner_can_delete_own_organization_expenses(): void
+    {
+        [$ownerA, $managerA, $accountantA, , , $dataA] = $this->createTwoOrganizationScenario();
+
+        $this->actingAs($managerA)->delete(route('expenses.destroy', $dataA['expense']))
+            ->assertForbidden();
+
+        $this->assertDatabaseHas('expenses', ['id' => $dataA['expense']->id]);
+
+        $this->actingAs($accountantA)->delete(route('expenses.destroy', $dataA['expense']))
+            ->assertForbidden();
+
+        $this->assertDatabaseHas('expenses', ['id' => $dataA['expense']->id]);
+
+        $this->actingAs($ownerA)->delete(route('expenses.destroy', $dataA['expense']))
+            ->assertRedirect(route('expenses.index'));
+
+        $this->assertDatabaseMissing('expenses', ['id' => $dataA['expense']->id]);
+    }
+
+    public function test_cross_organization_invoice_upload_update_is_denied(): void
+    {
+        [, $managerA, , , $dataB] = $this->createTwoOrganizationScenario();
+
+        Storage::fake('local');
+
+        $this->actingAs($managerA)->put(route('expenses.update', $dataB['expense']), $this->expensePayload($dataB) + [
+            'invoice_image' => $this->fakePngUpload('cross-org-invoice.png'),
+        ])->assertForbidden();
+
+        $this->assertDatabaseHas('expenses', [
+            'id' => $dataB['expense']->id,
+            'invoice_image' => null,
+        ]);
+    }
+
+    public function test_same_organization_authorized_user_can_upload_expense_invoice(): void
+    {
+        [, $managerA, , , , $dataA] = $this->createTwoOrganizationScenario();
+
+        Storage::fake('local');
+
+        $this->actingAs($managerA)->put(route('expenses.update', $dataA['expense']), $this->expensePayload($dataA) + [
+            'invoice_image' => $this->fakePngUpload('invoice.png'),
+        ])->assertRedirect(route('expenses.show', $dataA['expense']));
+
+        $this->assertDatabaseMissing('expenses', [
+            'id' => $dataA['expense']->id,
+            'invoice_image' => null,
+        ]);
+    }
+
     private function createTwoOrganizationScenario(): array
     {
         $organizationA = Organization::create(['name' => 'Organization A']);
@@ -339,5 +410,13 @@ class SecurityCoverageTest extends TestCase
             'amount' => 100,
             'expense_date' => now()->toDateString(),
         ];
+    }
+
+    private function fakePngUpload(string $name): UploadedFile
+    {
+        return UploadedFile::fake()->createWithContent(
+            $name,
+            base64_decode('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+/p9sAAAAASUVORK5CYII=')
+        );
     }
 }
