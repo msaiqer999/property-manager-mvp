@@ -6,6 +6,7 @@ use App\Http\Controllers\Concerns\ScopesOrganization;
 use App\Models\Expense;
 use App\Models\Payment;
 use App\Models\Unit;
+use App\Support\ReportAuthorization;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Support\Facades\DB;
 
@@ -13,16 +14,23 @@ class ReportController extends Controller
 {
     use ScopesOrganization;
 
-    public function index()
+    public function index(ReportAuthorization $authorization)
     {
         abort_if(auth()->user()->role->value === 'caretaker', 403);
+        abort_unless($authorization->viewReports(auth()->user()), 403);
+        abort_unless($authorization->viewProfitData(auth()->user()), 403);
         return view('reports.index', $this->summaryData());
     }
 
-    public function pdf(string $type)
+    public function pdf(string $type, ReportAuthorization $authorization)
     {
         abort_if(auth()->user()->role->value === 'caretaker', 403);
         abort_unless(in_array($type, ['building-income', 'unit-statement', 'expenses', 'overdue', 'net-profit', 'monthly-summary'], true), 404);
+        abort_unless($authorization->exportPdf(auth()->user(), $type), 403);
+
+        if (in_array($type, ['net-profit', 'monthly-summary'], true)) {
+            abort_unless($authorization->viewProfitData(auth()->user()), 403);
+        }
 
         return Pdf::loadView('pdf.report', $this->reportData($type) + ['type' => $type])->download("{$type}.pdf");
     }
