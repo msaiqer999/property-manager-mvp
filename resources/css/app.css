@@ -1,0 +1,15 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+[dir="rtl"] .rtl-flip {
+    direction: rtl;
+}
+
+.tap-target {
+    min-height: 44px;
+}
+
+.scrollbar-soft {
+    scrollbar-width: thin;
+}

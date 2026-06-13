@@ -1,0 +1,71 @@
+# Runtime Verification
+
+This document explains how to verify the Laravel Property Manager MVP without
+adding new business features.
+
+## Required Tools
+
+- PHP 8.2 or newer
+- Composer
+- Node.js 20 or newer
+- npm
+- PostgreSQL for local app usage, based on `.env.example`
+- SQLite PHP extensions for automated tests
+
+## Local App Setup
+
+From the project root:
+
+```bash
+composer install
+cp .env.example .env
+php artisan key:generate
+```
+
+Create a PostgreSQL database matching the values in `.env`, then run:
+
+```bash
+php artisan migrate:fresh --seed
+php artisan serve
+```
+
+Open:
+
+```text
+http://127.0.0.1:8000
+```
+
+## Run Tests
+
+The existing `phpunit.xml` is configured to use SQLite in memory for tests.
+
+```bash
+php artisan test
+```
+
+## Frontend Build
+
+Install frontend dependencies and build production assets:
+
+```bash
+npm install
+npm run build
+```
+
+For local frontend development:
+
+```bash
+npm run dev
+```
+
+## CI Verification
+
+The GitHub Actions workflow runs:
+
+- `composer install`
+- `php artisan test`
+- `npm install`
+- `npm run build`
+
+Tests use SQLite in CI. Do not treat the application as runtime verified until
+the workflow completes successfully.

@@ -1,0 +1,77 @@
+<?php
+
+namespace App\Http\Controllers;
+
+use App\Http\Controllers\Concerns\ScopesOrganization;
+use App\Models\Tenant;
+use App\Services\ActivityLogger;
+use Illuminate\Http\Request;
+
+class TenantController extends Controller
+{
+    use ScopesOrganization;
+
+    public function index(Request $request)
+    {
+        $tenants = Tenant::where('organization_id', $this->organizationId())
+            ->when($request->search, fn ($q, $s) => $q->where(fn ($sub) => $sub->where('full_name', 'like', "%{$s}%")->orWhere('phone', 'like', "%{$s}%")))
+            ->latest()
+            ->paginate(15);
+
+        return view('tenants.index', compact('tenants'));
+    }
+
+    public function create() { return view('tenants.form', ['tenant' => new Tenant()]); }
+
+    public function store(Request $request, ActivityLogger $logger)
+    {
+        $tenant = Tenant::create($this->validated($request) + ['organization_id' => $this->organizationId()]);
+        $logger->log('tenant.created', $tenant);
+        return redirect()->route('tenants.show', $tenant);
+    }
+
+    public function show(Tenant $tenant)
+    {
+        $this->authorizeTenant($tenant);
+        return view('tenants.show', compact('tenant'));
+    }
+
+    public function edit(Tenant $tenant)
+    {
+        $this->authorizeTenant($tenant);
+        return view('tenants.form', compact('tenant'));
+    }
+
+    public function update(Request $request, Tenant $tenant, ActivityLogger $logger)
+    {
+        $this->authorizeTenant($tenant);
+        $tenant->update($this->validated($request));
+        $logger->log('tenant.updated', $tenant);
+        return redirect()->route('tenants.show', $tenant);
+    }
+
+    public function destroy(Tenant $tenant)
+    {
+        abort_unless(auth()->user()->role->value === 'owner', 403);
+        $this->authorizeTenant($tenant);
+        $tenant->delete();
+        return redirect()->route('tenants.index');
+    }
+
+    private function authorizeTenant(Tenant $tenant): void
+    {
+        abort_unless($tenant->organization_id === $this->organizationId(), 403);
+    }
+
+    private function validated(Request $request): array
+    {
+        return $request->validate([
+            'full_name' => ['required', 'string', 'max:255'],
+            'phone' => ['nullable', 'string', 'max:50'],
+            'email' => ['nullable', 'email', 'max:255'],
+            'id_number' => ['nullable', 'string', 'max:100'],
+            'nationality' => ['nullable', 'string', 'max:100'],
+            'notes' => ['nullable', 'string'],
+        ]);
+    }
+}

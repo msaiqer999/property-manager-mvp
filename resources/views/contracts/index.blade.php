@@ -1,0 +1,7 @@
+@extends('layouts.app')
+@section('content')
+<div class="mb-4 grid gap-3 sm:flex sm:items-center sm:justify-between"><h1 class="text-xl font-semibold">Contracts</h1><a class="tap-target flex items-center justify-center rounded bg-slate-900 px-4 text-sm font-medium text-white" href="{{ route('contracts.create') }}">Add contract</a></div>
+<form class="mb-4 grid gap-3 rounded border bg-white p-3 sm:grid-cols-[1fr_auto]"><select name="status" class="tap-target rounded border p-2"><option value="">All statuses</option>@foreach(['active','expired','terminated'] as $status)<option @selected(request('status') === $status)>{{ $status }}</option>@endforeach</select><button class="tap-target rounded bg-slate-900 px-4 text-white">Filter</button></form>
+<x-table><thead><tr class="text-left"><th class="p-4">Number</th><th class="p-4">Tenant</th><th class="p-4">Unit</th><th class="p-4">Status</th><th></th></tr></thead><tbody>@foreach($contracts as $contract)<tr class="border-t"><td class="p-4 font-medium">{{ $contract->contract_number }}</td><td class="p-4">{{ $contract->tenant->full_name }}</td><td class="p-4">{{ $contract->unit->unit_number }}</td><td class="p-4"><span class="rounded bg-slate-100 px-2 py-1 text-xs">{{ $contract->status }}</span></td><td class="p-4"><a class="tap-target inline-flex items-center rounded border px-3 text-slate-700" href="{{ route('contracts.show', $contract) }}">View</a></td></tr>@endforeach</tbody></x-table>
+{{ $contracts->links() }}
+@endsection

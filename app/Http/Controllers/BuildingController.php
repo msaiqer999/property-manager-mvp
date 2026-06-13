@@ -1,0 +1,66 @@
+<?php
+
+namespace App\Http\Controllers;
+
+use App\Http\Controllers\Concerns\ScopesOrganization;
+use App\Models\Building;
+use App\Services\ActivityLogger;
+use Illuminate\Http\Request;
+
+class BuildingController extends Controller
+{
+    use ScopesOrganization;
+
+    public function index()
+    {
+        $buildings = Building::where('organization_id', $this->organizationId())->latest()->paginate(15);
+        return view('buildings.index', compact('buildings'));
+    }
+
+    public function create() { return view('buildings.form', ['building' => new Building()]); }
+
+    public function store(Request $request, ActivityLogger $logger)
+    {
+        $building = Building::create($this->validated($request) + ['organization_id' => $this->organizationId()]);
+        $logger->log('building.created', $building);
+        return redirect()->route('buildings.show', $building);
+    }
+
+    public function show(Building $building)
+    {
+        abort_unless($building->organization_id === $this->organizationId(), 403);
+        return view('buildings.show', compact('building'));
+    }
+
+    public function edit(Building $building)
+    {
+        abort_unless($building->organization_id === $this->organizationId(), 403);
+        return view('buildings.form', compact('building'));
+    }
+
+    public function update(Request $request, Building $building, ActivityLogger $logger)
+    {
+        abort_unless($building->organization_id === $this->organizationId(), 403);
+        $building->update($this->validated($request));
+        $logger->log('building.updated', $building);
+        return redirect()->route('buildings.show', $building);
+    }
+
+    public function destroy(Building $building, ActivityLogger $logger)
+    {
+        abort_unless(auth()->user()->role->value === 'owner', 403);
+        abort_unless($building->organization_id === $this->organizationId(), 403);
+        $building->delete();
+        $logger->log('building.deleted', $building);
+        return redirect()->route('buildings.index');
+    }
+
+    private function validated(Request $request): array
+    {
+        return $request->validate([
+            'name' => ['required', 'string', 'max:255'],
+            'location' => ['nullable', 'string', 'max:255'],
+            'description' => ['nullable', 'string'],
+        ]);
+    }
+}
