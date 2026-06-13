@@ -360,17 +360,28 @@ class SecurityCoverageTest extends TestCase
         $this->actingAs($managerA)->get(route('units.create'))->assertOk();
         $this->actingAs($managerA)->get(route('units.edit', $dataA['unit']))->assertOk();
 
-        $this->actingAs($managerA)->post(route('units.store'), $this->unitPayload($dataA['building']) + [
-            'unit_number' => 'A-202',
-        ])->assertRedirect();
+        $this->actingAs($managerA)->post(route('units.store'), array_merge(
+            $this->unitPayload($dataA['building']),
+            ['unit_number' => 'A-202'],
+        ))
+            ->assertSessionHasNoErrors()
+            ->assertRedirect();
 
         $created = Unit::where('unit_number', 'A-202')->firstOrFail();
 
         $this->assertSame($dataA['building']->id, $created->building_id);
+        $this->assertDatabaseHas('units', [
+            'id' => $created->id,
+            'unit_number' => 'A-202',
+            'building_id' => $dataA['building']->id,
+        ]);
 
-        $this->actingAs($managerA)->put(route('units.update', $dataA['unit']), $this->unitPayload($dataA['building']) + [
-            'unit_number' => 'A-303',
-        ])->assertRedirect(route('units.show', $dataA['unit']));
+        $this->actingAs($managerA)->put(route('units.update', $dataA['unit']), array_merge(
+            $this->unitPayload($dataA['building']),
+            ['unit_number' => 'A-303'],
+        ))
+            ->assertSessionHasNoErrors()
+            ->assertRedirect(route('units.show', $dataA['unit']));
 
         $this->assertDatabaseHas('units', [
             'id' => $dataA['unit']->id,
