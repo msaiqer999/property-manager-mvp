@@ -351,6 +351,104 @@ class SecurityCoverageTest extends TestCase
         ]);
     }
 
+    public function test_manager_can_view_create_and_update_own_organization_unit(): void
+    {
+        [, $managerA, , , , $dataA] = $this->createTwoOrganizationScenario();
+
+        $this->actingAs($managerA)->get(route('units.index'))->assertOk();
+        $this->actingAs($managerA)->get(route('units.show', $dataA['unit']))->assertOk();
+        $this->actingAs($managerA)->get(route('units.create'))->assertOk();
+        $this->actingAs($managerA)->get(route('units.edit', $dataA['unit']))->assertOk();
+
+        $this->actingAs($managerA)->post(route('units.store'), $this->unitPayload($dataA['building']) + [
+            'unit_number' => 'A-202',
+        ])->assertRedirect();
+
+        $created = Unit::where('unit_number', 'A-202')->firstOrFail();
+
+        $this->assertSame($dataA['building']->id, $created->building_id);
+
+        $this->actingAs($managerA)->put(route('units.update', $dataA['unit']), $this->unitPayload($dataA['building']) + [
+            'unit_number' => 'A-303',
+        ])->assertRedirect(route('units.show', $dataA['unit']));
+
+        $this->assertDatabaseHas('units', [
+            'id' => $dataA['unit']->id,
+            'unit_number' => 'A-303',
+            'building_id' => $dataA['building']->id,
+        ]);
+    }
+
+    public function test_manager_cannot_delete_unit(): void
+    {
+        [, $managerA, , , , $dataA] = $this->createTwoOrganizationScenario();
+
+        $this->actingAs($managerA)->delete(route('units.destroy', $dataA['unit']))
+            ->assertForbidden();
+
+        $this->assertDatabaseHas('units', ['id' => $dataA['unit']->id]);
+    }
+
+    public function test_owner_can_delete_own_organization_unit(): void
+    {
+        [$ownerA, , , , , $dataA] = $this->createTwoOrganizationScenario();
+
+        $this->actingAs($ownerA)->delete(route('units.destroy', $dataA['unit']))
+            ->assertRedirect(route('units.index'));
+
+        $this->assertSoftDeleted('units', ['id' => $dataA['unit']->id]);
+    }
+
+    public function test_accountant_and_caretaker_cannot_access_unit_pages(): void
+    {
+        [, , $accountantA, $caretakerA, , $dataA] = $this->createTwoOrganizationScenario();
+
+        foreach ([$accountantA, $caretakerA] as $user) {
+            $this->actingAs($user)->get(route('units.index'))->assertForbidden();
+            $this->actingAs($user)->get(route('units.create'))->assertForbidden();
+            $this->actingAs($user)->get(route('units.show', $dataA['unit']))->assertForbidden();
+            $this->actingAs($user)->get(route('units.edit', $dataA['unit']))->assertForbidden();
+        }
+    }
+
+    public function test_cross_organization_unit_delete_is_denied(): void
+    {
+        [$ownerA, , , , $dataB] = $this->createTwoOrganizationScenario();
+
+        $this->actingAs($ownerA)->delete(route('units.destroy', $dataB['unit']))
+            ->assertForbidden();
+
+        $this->assertDatabaseHas('units', ['id' => $dataB['unit']->id]);
+    }
+
+    public function test_unit_creation_cannot_use_another_organizations_building(): void
+    {
+        [, $managerA, , , $dataB] = $this->createTwoOrganizationScenario();
+
+        $this->actingAs($managerA)->post(route('units.store'), $this->unitPayload($dataB['building']) + [
+            'unit_number' => 'CROSS-UNIT',
+        ])->assertSessionHasErrors('building_id');
+
+        $this->assertDatabaseMissing('units', [
+            'unit_number' => 'CROSS-UNIT',
+            'building_id' => $dataB['building']->id,
+        ]);
+    }
+
+    public function test_unit_update_cannot_move_unit_to_another_organizations_building(): void
+    {
+        [, $managerA, , , $dataB, $dataA] = $this->createTwoOrganizationScenario();
+
+        $this->actingAs($managerA)->put(route('units.update', $dataA['unit']), $this->unitPayload($dataB['building']) + [
+            'unit_number' => 'MOVED-CROSS-ORG',
+        ])->assertSessionHasErrors('building_id');
+
+        $this->assertDatabaseHas('units', [
+            'id' => $dataA['unit']->id,
+            'building_id' => $dataA['building']->id,
+        ]);
+    }
+
     private function createTwoOrganizationScenario(): array
     {
         $organizationA = Organization::create(['name' => 'Organization A']);
