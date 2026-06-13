@@ -460,6 +460,114 @@ class SecurityCoverageTest extends TestCase
         ]);
     }
 
+    public function test_manager_can_view_create_and_update_own_organization_tenant(): void
+    {
+        [, $managerA, , , , $dataA] = $this->createTwoOrganizationScenario();
+
+        $this->actingAs($managerA)->get(route('tenants.index'))->assertOk();
+        $this->actingAs($managerA)->get(route('tenants.show', $dataA['tenant']))->assertOk();
+        $this->actingAs($managerA)->get(route('tenants.create'))->assertOk();
+        $this->actingAs($managerA)->get(route('tenants.edit', $dataA['tenant']))->assertOk();
+
+        $this->actingAs($managerA)->post(route('tenants.store'), [
+            'full_name' => 'Manager Created Tenant',
+            'phone' => '0501112222',
+            'email' => 'manager-created-tenant@example.com',
+            'id_number' => 'TENANT-001',
+            'nationality' => 'UAE',
+            'notes' => 'Created by manager',
+        ])
+            ->assertSessionHasNoErrors()
+            ->assertRedirect();
+
+        $created = Tenant::where('email', 'manager-created-tenant@example.com')->firstOrFail();
+
+        $this->assertSame($managerA->organization_id, $created->organization_id);
+
+        $this->actingAs($managerA)->put(route('tenants.update', $dataA['tenant']), [
+            'full_name' => 'Manager Updated Tenant',
+            'phone' => '0503334444',
+            'email' => 'manager-updated-tenant@example.com',
+            'id_number' => 'TENANT-002',
+            'nationality' => 'UAE',
+            'notes' => 'Updated by manager',
+        ])
+            ->assertSessionHasNoErrors()
+            ->assertRedirect(route('tenants.show', $dataA['tenant']));
+
+        $this->assertDatabaseHas('tenants', [
+            'id' => $dataA['tenant']->id,
+            'full_name' => 'Manager Updated Tenant',
+            'organization_id' => $managerA->organization_id,
+        ]);
+    }
+
+    public function test_manager_cannot_delete_tenant(): void
+    {
+        [, $managerA, , , , $dataA] = $this->createTwoOrganizationScenario();
+
+        $this->actingAs($managerA)->delete(route('tenants.destroy', $dataA['tenant']))
+            ->assertForbidden();
+
+        $this->assertDatabaseHas('tenants', ['id' => $dataA['tenant']->id]);
+    }
+
+    public function test_owner_can_delete_own_organization_tenant(): void
+    {
+        [$ownerA, , , , , $dataA] = $this->createTwoOrganizationScenario();
+
+        $this->actingAs($ownerA)->delete(route('tenants.destroy', $dataA['tenant']))
+            ->assertRedirect(route('tenants.index'));
+
+        $this->assertDatabaseMissing('tenants', ['id' => $dataA['tenant']->id]);
+    }
+
+    public function test_accountant_and_caretaker_cannot_access_tenant_pages(): void
+    {
+        [, , $accountantA, $caretakerA, , $dataA] = $this->createTwoOrganizationScenario();
+
+        foreach ([$accountantA, $caretakerA] as $user) {
+            $this->actingAs($user)->get(route('tenants.index'))->assertForbidden();
+            $this->actingAs($user)->get(route('tenants.create'))->assertForbidden();
+            $this->actingAs($user)->get(route('tenants.show', $dataA['tenant']))->assertForbidden();
+            $this->actingAs($user)->get(route('tenants.edit', $dataA['tenant']))->assertForbidden();
+        }
+    }
+
+    public function test_cross_organization_tenant_delete_is_denied(): void
+    {
+        [$ownerA, , , , $dataB] = $this->createTwoOrganizationScenario();
+
+        $this->actingAs($ownerA)->delete(route('tenants.destroy', $dataB['tenant']))
+            ->assertForbidden();
+
+        $this->assertDatabaseHas('tenants', ['id' => $dataB['tenant']->id]);
+    }
+
+    public function test_tenant_creation_assigns_current_users_organization(): void
+    {
+        [, $managerA, , , $dataB] = $this->createTwoOrganizationScenario();
+
+        $this->actingAs($managerA)->post(route('tenants.store'), [
+            'organization_id' => $dataB['tenant']->organization_id,
+            'full_name' => 'Organization Assignment Tenant',
+            'phone' => '0505556666',
+            'email' => 'org-assignment-tenant@example.com',
+        ])
+            ->assertSessionHasNoErrors()
+            ->assertRedirect();
+
+        $this->assertDatabaseHas('tenants', [
+            'email' => 'org-assignment-tenant@example.com',
+            'organization_id' => $managerA->organization_id,
+        ]);
+
+        $this->assertDatabaseMissing('tenants', [
+            'email' => 'org-assignment-tenant@example.com',
+            'organization_id' => $dataB['tenant']->organization_id,
+        ]);
+    }
+
     private function createTwoOrganizationScenario(): array
     {
         $organizationA = Organization::create(['name' => 'Organization A']);
