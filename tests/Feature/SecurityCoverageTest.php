@@ -829,6 +829,76 @@ class SecurityCoverageTest extends TestCase
         }
     }
 
+    public function test_all_current_mvp_roles_can_view_dashboard(): void
+    {
+        [$ownerA, $managerA, $accountantA, $caretakerA] = $this->createTwoOrganizationScenario();
+
+        foreach ([$ownerA, $managerA, $accountantA, $caretakerA] as $user) {
+            $this->actingAs($user)->get(route('dashboard'))->assertOk();
+        }
+    }
+
+    public function test_dashboard_financial_totals_are_scoped_to_current_organization(): void
+    {
+        [$ownerA, , , , $dataB, $dataA] = $this->createTwoOrganizationScenario();
+
+        Payment::create([
+            'organization_id' => $ownerA->organization_id,
+            'contract_id' => $dataA['contract']->id,
+            'due_date' => now()->subMonth()->toDateString(),
+            'amount_due' => 111,
+            'amount_paid' => 11,
+            'status' => 'overdue',
+        ]);
+
+        Payment::create([
+            'organization_id' => $dataB['contract']->organization_id,
+            'contract_id' => $dataB['contract']->id,
+            'due_date' => now()->subMonth()->toDateString(),
+            'amount_due' => 222,
+            'amount_paid' => 22,
+            'status' => 'overdue',
+        ]);
+
+        $this->actingAs($ownerA)->get(route('dashboard'))
+            ->assertOk()
+            ->assertSee('Organization A')
+            ->assertSee('1,000.00')
+            ->assertSee('500.00')
+            ->assertSee('100.00')
+            ->assertDontSee('Organization B')
+            ->assertDontSee('90,000.00')
+            ->assertDontSee('10,000.00')
+            ->assertDontSee('80,000.00')
+            ->assertDontSee('200.00');
+    }
+
+    public function test_dashboard_lists_are_scoped_to_current_organization(): void
+    {
+        [$ownerA, , , , $dataB, $dataA] = $this->createTwoOrganizationScenario();
+
+        $dataA['contract']->update([
+            'contract_number' => 'A-DASH-END',
+            'end_date' => now()->addDays(10)->toDateString(),
+        ]);
+
+        $dataB['contract']->update([
+            'contract_number' => 'B-DASH-END',
+            'end_date' => now()->addDays(10)->toDateString(),
+        ]);
+
+        $this->actingAs($ownerA)->get(route('dashboard'))
+            ->assertOk()
+            ->assertSee('A-DASH-END')
+            ->assertSee('maintenance')
+            ->assertDontSee('B-DASH-END')
+            ->assertDontSee($dataB['building']->name)
+            ->assertDontSee($dataB['unit']->unit_number)
+            ->assertDontSee($dataB['tenant']->full_name)
+            ->assertDontSee('security')
+            ->assertDontSee('90,000.00');
+    }
+
     public function test_owner_can_view_create_and_update_own_organization_users(): void
     {
         [$ownerA, $managerA] = $this->createTwoOrganizationScenario();
