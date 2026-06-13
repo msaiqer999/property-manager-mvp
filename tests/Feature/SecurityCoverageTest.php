@@ -568,6 +568,156 @@ class SecurityCoverageTest extends TestCase
         ]);
     }
 
+    public function test_manager_can_view_create_update_and_export_own_organization_contract(): void
+    {
+        [, $managerA, , , , $dataA] = $this->createTwoOrganizationScenario();
+
+        $paymentCount = Payment::count();
+
+        $this->actingAs($managerA)->get(route('contracts.index'))->assertOk();
+        $this->actingAs($managerA)->get(route('contracts.show', $dataA['contract']))->assertOk();
+        $this->actingAs($managerA)->get(route('contracts.create'))->assertOk();
+        $this->actingAs($managerA)->get(route('contracts.edit', $dataA['contract']))->assertOk();
+
+        $this->actingAs($managerA)->post(route('contracts.store'), array_merge(
+            $this->contractPayload($dataA),
+            [
+                'contract_number' => 'MANAGER-CONTRACT-001',
+                'rent_amount' => 1200,
+            ],
+        ))
+            ->assertSessionHasNoErrors()
+            ->assertRedirect();
+
+        $created = Contract::where('contract_number', 'MANAGER-CONTRACT-001')->firstOrFail();
+
+        $this->assertSame($managerA->organization_id, $created->organization_id);
+        $this->assertGreaterThan($paymentCount, Payment::count());
+
+        $this->actingAs($managerA)->put(route('contracts.update', $dataA['contract']), array_merge(
+            $this->contractPayload($dataA),
+            [
+                'contract_number' => 'MANAGER-CONTRACT-UPDATED',
+                'rent_amount' => 1300,
+            ],
+        ))
+            ->assertSessionHasNoErrors()
+            ->assertRedirect(route('contracts.show', $dataA['contract']));
+
+        $this->assertDatabaseHas('contracts', [
+            'id' => $dataA['contract']->id,
+            'contract_number' => 'MANAGER-CONTRACT-UPDATED',
+            'organization_id' => $managerA->organization_id,
+        ]);
+
+        $this->actingAs($managerA)->get(route('contracts.pdf', $dataA['contract']))->assertOk();
+    }
+
+    public function test_manager_cannot_delete_contract(): void
+    {
+        [, $managerA, , , , $dataA] = $this->createTwoOrganizationScenario();
+
+        $this->actingAs($managerA)->delete(route('contracts.destroy', $dataA['contract']))
+            ->assertForbidden();
+
+        $this->assertDatabaseHas('contracts', ['id' => $dataA['contract']->id]);
+    }
+
+    public function test_owner_can_delete_own_organization_contract(): void
+    {
+        [$ownerA, , , , , $dataA] = $this->createTwoOrganizationScenario();
+
+        $this->actingAs($ownerA)->delete(route('contracts.destroy', $dataA['contract']))
+            ->assertRedirect(route('contracts.index'));
+
+        $this->assertDatabaseMissing('contracts', ['id' => $dataA['contract']->id]);
+    }
+
+    public function test_accountant_and_caretaker_cannot_access_contract_pages(): void
+    {
+        [, , $accountantA, $caretakerA, , $dataA] = $this->createTwoOrganizationScenario();
+
+        foreach ([$accountantA, $caretakerA] as $user) {
+            $this->actingAs($user)->get(route('contracts.index'))->assertForbidden();
+            $this->actingAs($user)->get(route('contracts.create'))->assertForbidden();
+            $this->actingAs($user)->get(route('contracts.show', $dataA['contract']))->assertForbidden();
+            $this->actingAs($user)->get(route('contracts.edit', $dataA['contract']))->assertForbidden();
+        }
+    }
+
+    public function test_cross_organization_contract_delete_and_pdf_are_denied(): void
+    {
+        [$ownerA, , , , $dataB] = $this->createTwoOrganizationScenario();
+
+        $this->actingAs($ownerA)->delete(route('contracts.destroy', $dataB['contract']))
+            ->assertForbidden();
+
+        $this->assertDatabaseHas('contracts', ['id' => $dataB['contract']->id]);
+
+        $this->actingAs($ownerA)->get(route('contracts.pdf', $dataB['contract']))
+            ->assertForbidden();
+    }
+
+    public function test_contract_creation_cannot_use_another_organizations_tenant_or_unit(): void
+    {
+        [, $managerA, , , $dataB, $dataA] = $this->createTwoOrganizationScenario();
+
+        $paymentCount = Payment::count();
+
+        $this->actingAs($managerA)->post(route('contracts.store'), array_merge(
+            $this->contractPayload($dataA),
+            [
+                'tenant_id' => $dataB['tenant']->id,
+                'contract_number' => 'CROSS-TENANT-CONTRACT',
+            ],
+        ))->assertForbidden();
+
+        $this->assertSame($paymentCount, Payment::count());
+        $this->assertDatabaseMissing('contracts', ['contract_number' => 'CROSS-TENANT-CONTRACT']);
+
+        $this->actingAs($managerA)->post(route('contracts.store'), array_merge(
+            $this->contractPayload($dataA),
+            [
+                'unit_id' => $dataB['unit']->id,
+                'contract_number' => 'CROSS-UNIT-CONTRACT',
+            ],
+        ))->assertForbidden();
+
+        $this->assertSame($paymentCount, Payment::count());
+        $this->assertDatabaseMissing('contracts', ['contract_number' => 'CROSS-UNIT-CONTRACT']);
+    }
+
+    public function test_contract_update_cannot_move_to_another_organizations_tenant_or_unit(): void
+    {
+        [, $managerA, , , $dataB, $dataA] = $this->createTwoOrganizationScenario();
+
+        $paymentCount = Payment::count();
+
+        $this->actingAs($managerA)->put(route('contracts.update', $dataA['contract']), array_merge(
+            $this->contractPayload($dataA),
+            ['tenant_id' => $dataB['tenant']->id],
+        ))->assertForbidden();
+
+        $this->assertSame($paymentCount, Payment::count());
+        $this->assertDatabaseHas('contracts', [
+            'id' => $dataA['contract']->id,
+            'tenant_id' => $dataA['tenant']->id,
+            'unit_id' => $dataA['unit']->id,
+        ]);
+
+        $this->actingAs($managerA)->put(route('contracts.update', $dataA['contract']), array_merge(
+            $this->contractPayload($dataA),
+            ['unit_id' => $dataB['unit']->id],
+        ))->assertForbidden();
+
+        $this->assertSame($paymentCount, Payment::count());
+        $this->assertDatabaseHas('contracts', [
+            'id' => $dataA['contract']->id,
+            'tenant_id' => $dataA['tenant']->id,
+            'unit_id' => $dataA['unit']->id,
+        ]);
+    }
+
     private function createTwoOrganizationScenario(): array
     {
         $organizationA = Organization::create(['name' => 'Organization A']);
