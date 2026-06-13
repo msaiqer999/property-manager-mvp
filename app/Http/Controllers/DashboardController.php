@@ -7,14 +7,17 @@ use App\Models\Contract;
 use App\Models\Expense;
 use App\Models\Payment;
 use App\Models\Unit;
+use App\Support\DashboardAuthorization;
 use Illuminate\Support\Facades\DB;
 
 class DashboardController extends Controller
 {
     use ScopesOrganization;
 
-    public function __invoke()
+    public function __invoke(DashboardAuthorization $authorization)
     {
+        abort_unless($authorization->viewDashboard(auth()->user()), 403);
+
         $orgId = $this->organizationId();
         $start = now()->startOfMonth();
         $end = now()->endOfMonth();
