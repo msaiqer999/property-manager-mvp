@@ -718,6 +718,143 @@ class SecurityCoverageTest extends TestCase
         ]);
     }
 
+    public function test_owner_can_view_create_and_update_own_organization_users(): void
+    {
+        [$ownerA, $managerA] = $this->createTwoOrganizationScenario();
+
+        $this->actingAs($ownerA)->get(route('users.index'))->assertOk();
+
+        $this->actingAs($ownerA)->post(route('users.store'), [
+            'name' => 'Owner Created User',
+            'email' => 'owner-created-user@example.com',
+            'role' => 'accountant',
+            'password' => 'password',
+            'password_confirmation' => 'password',
+        ])
+            ->assertSessionHasNoErrors()
+            ->assertRedirect(route('users.index'));
+
+        $created = User::where('email', 'owner-created-user@example.com')->firstOrFail();
+
+        $this->assertSame($ownerA->organization_id, $created->organization_id);
+
+        $this->actingAs($ownerA)->put(route('users.update', $managerA), [
+            'name' => 'Owner Updated Manager',
+            'email' => 'owner-updated-manager@example.com',
+            'role' => 'manager',
+            'password' => '',
+            'password_confirmation' => '',
+        ])
+            ->assertSessionHasNoErrors()
+            ->assertRedirect(route('users.index'));
+
+        $this->assertDatabaseHas('users', [
+            'id' => $managerA->id,
+            'name' => 'Owner Updated Manager',
+            'email' => 'owner-updated-manager@example.com',
+            'organization_id' => $ownerA->organization_id,
+        ]);
+    }
+
+    public function test_user_creation_forces_current_users_organization(): void
+    {
+        [$ownerA, , , , $dataB] = $this->createTwoOrganizationScenario();
+
+        $this->actingAs($ownerA)->post(route('users.store'), [
+            'organization_id' => $dataB['owner']->organization_id,
+            'name' => 'Forced Organization User',
+            'email' => 'forced-organization-user@example.com',
+            'role' => 'caretaker',
+            'password' => 'password',
+            'password_confirmation' => 'password',
+        ])
+            ->assertSessionHasNoErrors()
+            ->assertRedirect(route('users.index'));
+
+        $this->assertDatabaseHas('users', [
+            'email' => 'forced-organization-user@example.com',
+            'organization_id' => $ownerA->organization_id,
+        ]);
+
+        $this->assertDatabaseMissing('users', [
+            'email' => 'forced-organization-user@example.com',
+            'organization_id' => $dataB['owner']->organization_id,
+        ]);
+    }
+
+    public function test_user_update_cannot_change_organization(): void
+    {
+        [$ownerA, $managerA, , , $dataB] = $this->createTwoOrganizationScenario();
+
+        $this->actingAs($ownerA)->put(route('users.update', $managerA), [
+            'organization_id' => $dataB['owner']->organization_id,
+            'name' => 'Organization Change Attempt',
+            'email' => 'organization-change-attempt@example.com',
+            'role' => 'manager',
+            'password' => '',
+            'password_confirmation' => '',
+        ])
+            ->assertSessionHasNoErrors()
+            ->assertRedirect(route('users.index'));
+
+        $this->assertDatabaseHas('users', [
+            'id' => $managerA->id,
+            'email' => 'organization-change-attempt@example.com',
+            'organization_id' => $ownerA->organization_id,
+        ]);
+
+        $this->assertDatabaseMissing('users', [
+            'id' => $managerA->id,
+            'organization_id' => $dataB['owner']->organization_id,
+        ]);
+    }
+
+    public function test_owner_cannot_edit_or_update_another_organizations_user(): void
+    {
+        [$ownerA, , , , $dataB] = $this->createTwoOrganizationScenario();
+
+        $this->actingAs($ownerA)->get(route('users.edit', $dataB['owner']))
+            ->assertForbidden();
+
+        $this->actingAs($ownerA)->put(route('users.update', $dataB['owner']), [
+            'name' => 'Cross Organization User Update',
+            'email' => 'cross-organization-user-update@example.com',
+            'role' => 'manager',
+            'password' => '',
+            'password_confirmation' => '',
+        ])->assertForbidden();
+
+        $this->assertDatabaseMissing('users', [
+            'id' => $dataB['owner']->id,
+            'email' => 'cross-organization-user-update@example.com',
+        ]);
+    }
+
+    public function test_non_owner_roles_cannot_manage_users(): void
+    {
+        [$ownerA, $managerA, $accountantA, $caretakerA] = $this->createTwoOrganizationScenario();
+
+        foreach ([$managerA, $accountantA, $caretakerA] as $user) {
+            $this->actingAs($user)->get(route('users.index'))->assertForbidden();
+            $this->actingAs($user)->get(route('users.create'))->assertForbidden();
+            $this->actingAs($user)->post(route('users.store'), [
+                'name' => 'Blocked Managed User',
+                'email' => "blocked-managed-user-{$user->id}@example.com",
+                'role' => 'caretaker',
+                'password' => 'password',
+                'password_confirmation' => 'password',
+            ])->assertForbidden();
+            $this->actingAs($user)->get(route('users.edit', $ownerA))->assertForbidden();
+            $this->actingAs($user)->put(route('users.update', $ownerA), [
+                'name' => 'Blocked Owner Update',
+                'email' => "blocked-owner-update-{$user->id}@example.com",
+                'role' => 'owner',
+                'password' => '',
+                'password_confirmation' => '',
+            ])->assertForbidden();
+        }
+    }
+
     private function createTwoOrganizationScenario(): array
     {
         $organizationA = Organization::create(['name' => 'Organization A']);
