@@ -8,6 +8,7 @@ use App\Models\Expense;
 use App\Models\Unit;
 use App\Services\ActivityLogger;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Gate;
 
 class ExpenseController extends Controller
 {
@@ -15,6 +16,8 @@ class ExpenseController extends Controller
 
     public function index(Request $request)
     {
+        Gate::authorize('viewAny', Expense::class);
+
         $expenses = Expense::with(['building', 'unit'])
             ->where('organization_id', $this->organizationId())
             ->when($request->building_id, fn ($q, $id) => $q->where('building_id', $id))
@@ -29,12 +32,14 @@ class ExpenseController extends Controller
     public function create()
     {
         abort_unless(auth()->user()->role->can('manage-expenses'), 403);
+        Gate::authorize('create', Expense::class);
         return view('expenses.form', $this->formData(new Expense()));
     }
 
     public function store(Request $request, ActivityLogger $logger)
     {
         abort_unless(auth()->user()->role->can('manage-expenses'), 403);
+        Gate::authorize('create', Expense::class);
         $data = $this->validated($request);
         $this->authorizeExpenseInputs($data);
         $data += ['organization_id' => $this->organizationId(), 'created_by' => auth()->id()];
@@ -58,6 +63,7 @@ class ExpenseController extends Controller
     public function edit(Expense $expense)
     {
         abort_unless(auth()->user()->role->can('manage-expenses'), 403);
+        Gate::authorize('update', $expense);
         $this->authorizeExpense($expense);
         return view('expenses.form', $this->formData($expense));
     }
@@ -65,11 +71,13 @@ class ExpenseController extends Controller
     public function update(Request $request, Expense $expense, ActivityLogger $logger)
     {
         abort_unless(auth()->user()->role->can('manage-expenses'), 403);
+        Gate::authorize('update', $expense);
         $this->authorizeExpense($expense);
         $data = $this->validated($request);
         $this->authorizeExpenseInputs($data);
 
         if ($request->hasFile('invoice_image')) {
+            Gate::authorize('uploadInvoice', $expense);
             $data['invoice_image'] = $request->file('invoice_image')->store('expense-invoices');
         }
 
@@ -81,6 +89,7 @@ class ExpenseController extends Controller
     public function destroy(Expense $expense)
     {
         abort_unless(auth()->user()->role->value === 'owner', 403);
+        Gate::authorize('delete', $expense);
         $this->authorizeExpense($expense);
         $expense->delete();
         return redirect()->route('expenses.index');
@@ -98,6 +107,7 @@ class ExpenseController extends Controller
 
     private function authorizeExpense(Expense $expense): void
     {
+        Gate::authorize('view', $expense);
         abort_unless($expense->organization_id === $this->organizationId(), 403);
     }
 
