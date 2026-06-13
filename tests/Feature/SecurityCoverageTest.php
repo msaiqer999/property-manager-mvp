@@ -11,6 +11,7 @@ use App\Models\Payment;
 use App\Models\Tenant;
 use App\Models\Unit;
 use App\Models\User;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
@@ -718,6 +719,115 @@ class SecurityCoverageTest extends TestCase
         ]);
     }
 
+    public function test_owner_manager_and_accountant_can_view_reports_index(): void
+    {
+        [$ownerA, $managerA, $accountantA] = $this->createTwoOrganizationScenario();
+
+        foreach ([$ownerA, $managerA, $accountantA] as $user) {
+            $this->actingAs($user)->get(route('reports.index'))->assertOk();
+        }
+    }
+
+    public function test_caretaker_cannot_view_reports_index(): void
+    {
+        [, , , $caretakerA] = $this->createTwoOrganizationScenario();
+
+        $this->actingAs($caretakerA)->get(route('reports.index'))->assertForbidden();
+    }
+
+    public function test_owner_manager_and_accountant_can_export_all_report_pdf_types(): void
+    {
+        [$ownerA, $managerA, $accountantA] = $this->createTwoOrganizationScenario();
+        $types = $this->reportTypes();
+        $this->fakeReportPdf(count($types) * 3);
+
+        foreach ([$ownerA, $managerA, $accountantA] as $user) {
+            foreach ($types as $type) {
+                $this->actingAs($user)->get(route('reports.pdf', $type))->assertOk();
+            }
+        }
+    }
+
+    public function test_caretaker_cannot_export_any_report_pdf_type(): void
+    {
+        [, , , $caretakerA] = $this->createTwoOrganizationScenario();
+
+        foreach ($this->reportTypes() as $type) {
+            $this->actingAs($caretakerA)->get(route('reports.pdf', $type))->assertForbidden();
+        }
+    }
+
+    public function test_invalid_report_type_returns_not_found(): void
+    {
+        [$ownerA] = $this->createTwoOrganizationScenario();
+
+        $this->actingAs($ownerA)->get(route('reports.pdf', 'invalid-report'))->assertNotFound();
+    }
+
+    public function test_reports_index_does_not_expose_another_organizations_financial_totals(): void
+    {
+        [$ownerA] = $this->createTwoOrganizationScenario();
+
+        $this->actingAs($ownerA)->get(route('reports.index'))
+            ->assertOk()
+            ->assertSee('500.00')
+            ->assertDontSee('90,000.00')
+            ->assertDontSee('10,000.00')
+            ->assertDontSee('80,000.00');
+    }
+
+    public function test_report_pdfs_remain_scoped_to_current_organization(): void
+    {
+        [$ownerA, , , , $dataB, $dataA] = $this->createTwoOrganizationScenario();
+
+        Payment::create([
+            'organization_id' => $ownerA->organization_id,
+            'contract_id' => $dataA['contract']->id,
+            'due_date' => now()->subMonth()->toDateString(),
+            'amount_due' => 111,
+            'amount_paid' => 0,
+            'status' => 'overdue',
+        ]);
+
+        Payment::create([
+            'organization_id' => $dataB['contract']->organization_id,
+            'contract_id' => $dataB['contract']->id,
+            'due_date' => now()->subMonth()->toDateString(),
+            'amount_due' => 222,
+            'amount_paid' => 0,
+            'status' => 'overdue',
+        ]);
+
+        $capturedReports = [];
+        $this->fakeReportPdf(count($this->reportTypes()), $capturedReports);
+
+        foreach ($this->reportTypes() as $type) {
+            $this->actingAs($ownerA)->get(route('reports.pdf', $type))->assertOk();
+        }
+
+        $buildingRows = $capturedReports['building-income']['rows'];
+        $this->assertTrue($buildingRows->contains(fn ($row) => $row->name === $dataA['building']->name));
+        $this->assertFalse($buildingRows->contains(fn ($row) => $row->name === $dataB['building']->name));
+
+        $unitRows = $capturedReports['unit-statement']['rows'];
+        $this->assertTrue($unitRows->contains(fn (Unit $unit) => $unit->unit_number === $dataA['unit']->unit_number));
+        $this->assertFalse($unitRows->contains(fn (Unit $unit) => $unit->unit_number === $dataB['unit']->unit_number));
+
+        $expenseRows = $capturedReports['expenses']['rows'];
+        $this->assertTrue($expenseRows->contains(fn (Expense $expense) => (int) $expense->amount === 500));
+        $this->assertFalse($expenseRows->contains(fn (Expense $expense) => (int) $expense->amount === 10000));
+
+        $overdueRows = $capturedReports['overdue']['rows'];
+        $this->assertTrue($overdueRows->contains(fn (Payment $payment) => (int) $payment->amount_due === 111));
+        $this->assertFalse($overdueRows->contains(fn (Payment $payment) => (int) $payment->amount_due === 222));
+
+        foreach (['net-profit', 'monthly-summary'] as $type) {
+            $this->assertSame(1000.0, (float) $capturedReports[$type]['income']);
+            $this->assertSame(500.0, (float) $capturedReports[$type]['expensesTotal']);
+            $this->assertSame(500.0, (float) $capturedReports[$type]['netProfit']);
+        }
+    }
+
     public function test_owner_can_view_create_and_update_own_organization_users(): void
     {
         [$ownerA, $managerA] = $this->createTwoOrganizationScenario();
@@ -1016,5 +1126,34 @@ class SecurityCoverageTest extends TestCase
             $name,
             base64_decode('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+/p9sAAAAASUVORK5CYII=')
         );
+    }
+
+    private function reportTypes(): array
+    {
+        return [
+            'building-income',
+            'unit-statement',
+            'expenses',
+            'overdue',
+            'net-profit',
+            'monthly-summary',
+        ];
+    }
+
+    private function fakeReportPdf(int $times, array &$capturedReports = []): void
+    {
+        Pdf::shouldReceive('loadView')
+            ->times($times)
+            ->withArgs(function (string $view, array $data) use (&$capturedReports) {
+                $capturedReports[$data['type']] = $data;
+
+                return $view === 'pdf.report';
+            })
+            ->andReturn(new class {
+                public function download(string $filename)
+                {
+                    return response("fake {$filename}", 200);
+                }
+            });
     }
 }
