@@ -12,6 +12,7 @@ use App\Models\Tenant;
 use App\Models\Unit;
 use App\Models\User;
 use Barryvdh\DomPDF\Facade\Pdf;
+use Barryvdh\DomPDF\PDF as DomPdfDocument;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
@@ -1142,6 +1143,11 @@ class SecurityCoverageTest extends TestCase
 
     private function fakeReportPdf(int $times, array &$capturedReports = []): void
     {
+        $pdf = \Mockery::mock(DomPdfDocument::class);
+        $pdf->shouldReceive('download')
+            ->times($times)
+            ->andReturnUsing(fn (string $filename) => response("fake {$filename}", 200));
+
         Pdf::shouldReceive('loadView')
             ->times($times)
             ->withArgs(function (string $view, array $data) use (&$capturedReports) {
@@ -1149,11 +1155,6 @@ class SecurityCoverageTest extends TestCase
 
                 return $view === 'pdf.report';
             })
-            ->andReturn(new class {
-                public function download(string $filename)
-                {
-                    return response("fake {$filename}", 200);
-                }
-            });
+            ->andReturn($pdf);
     }
 }
