@@ -7,6 +7,7 @@ use App\Http\Controllers\Concerns\ScopesOrganization;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\Rules\Enum;
 
@@ -17,18 +18,21 @@ class UserController extends Controller
     public function index()
     {
         abort_unless(auth()->user()->role->value === 'owner', 403);
+        Gate::authorize('viewAny', User::class);
         return view('users.index', ['users' => User::where('organization_id', $this->organizationId())->orderBy('name')->get()]);
     }
 
     public function create()
     {
         abort_unless(auth()->user()->role->value === 'owner', 403);
+        Gate::authorize('create', User::class);
         return view('users.form', ['user' => new User()]);
     }
 
     public function store(Request $request)
     {
         abort_unless(auth()->user()->role->value === 'owner', 403);
+        Gate::authorize('create', User::class);
         $data = $this->validated($request);
         $data['organization_id'] = $this->organizationId();
         $data['password'] = Hash::make($data['password']);
@@ -39,12 +43,14 @@ class UserController extends Controller
     public function edit(User $user)
     {
         abort_unless(auth()->user()->role->value === 'owner' && $user->organization_id === $this->organizationId(), 403);
+        Gate::authorize('update', $user);
         return view('users.form', compact('user'));
     }
 
     public function update(Request $request, User $user)
     {
         abort_unless(auth()->user()->role->value === 'owner' && $user->organization_id === $this->organizationId(), 403);
+        Gate::authorize('update', $user);
         $data = $this->validated($request, true);
         if (! empty($data['password'])) {
             $data['password'] = Hash::make($data['password']);
