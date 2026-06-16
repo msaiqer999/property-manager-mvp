@@ -58,6 +58,8 @@ Route::middleware('auth')->group(function () {
 
     Route::middleware(EnsureAbility::class.':manage-users')->group(function () {
         Route::resource('users', UserController::class)->only(['index', 'create', 'store', 'edit', 'update']);
+        Route::patch('users/{user}/deactivate', [UserController::class, 'deactivate'])->name('users.deactivate');
+        Route::patch('users/{user}/reactivate', [UserController::class, 'reactivate'])->name('users.reactivate');
         Route::get('activity-logs', ActivityLogController::class)->name('activity-logs.index');
     });
 });

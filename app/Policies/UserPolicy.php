@@ -28,8 +28,18 @@ class UserPolicy
             && $target->organization_id === $user->organization_id;
     }
 
+    public function deactivate(User $user, User $target): bool
+    {
+        return $this->update($user, $target);
+    }
+
+    public function reactivate(User $user, User $target): bool
+    {
+        return $this->update($user, $target);
+    }
+
     public function manageUsers(User $user): bool
     {
-        return $user->role->value === 'owner';
+        return $user->is_active && $user->role->value === 'owner';
     }
 }

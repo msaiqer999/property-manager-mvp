@@ -990,6 +990,182 @@ class SecurityCoverageTest extends TestCase
         ]);
     }
 
+    public function test_owner_can_deactivate_a_non_owner_team_member_in_same_organization(): void
+    {
+        [$ownerA, $managerA] = $this->createTwoOrganizationScenario();
+
+        $this->actingAs($ownerA)
+            ->patch(route('users.deactivate', $managerA))
+            ->assertRedirect(route('users.index'));
+
+        $this->assertDatabaseHas('users', [
+            'id' => $managerA->id,
+            'organization_id' => $ownerA->organization_id,
+            'is_active' => false,
+        ]);
+    }
+
+    public function test_owner_can_reactivate_a_team_member_in_same_organization(): void
+    {
+        [$ownerA, $managerA] = $this->createTwoOrganizationScenario();
+
+        $managerA->update(['is_active' => false]);
+
+        $this->actingAs($ownerA)
+            ->patch(route('users.reactivate', $managerA))
+            ->assertRedirect(route('users.index'));
+
+        $this->assertDatabaseHas('users', [
+            'id' => $managerA->id,
+            'organization_id' => $ownerA->organization_id,
+            'is_active' => true,
+        ]);
+    }
+
+    public function test_deactivated_user_cannot_log_in_or_access_application(): void
+    {
+        [, $managerA] = $this->createTwoOrganizationScenario();
+
+        $managerA->update(['is_active' => false]);
+
+        $this->post(route('login'), [
+            'email' => $managerA->email,
+            'password' => 'password',
+        ])->assertSessionHasErrors('email');
+
+        $this->actingAs($managerA)
+            ->get(route('dashboard'))
+            ->assertRedirect(route('login'));
+    }
+
+    public function test_owner_cannot_deactivate_or_delete_last_owner(): void
+    {
+        [$ownerA] = $this->createTwoOrganizationScenario();
+
+        $this->actingAs($ownerA)
+            ->patch(route('users.deactivate', $ownerA))
+            ->assertStatus(422);
+
+        $this->assertDatabaseHas('users', [
+            'id' => $ownerA->id,
+            'role' => 'owner',
+            'is_active' => true,
+        ]);
+
+        $this->actingAs($ownerA)
+            ->delete('/users/'.$ownerA->id)
+            ->assertMethodNotAllowed();
+    }
+
+    public function test_owner_cannot_demote_last_owner_to_non_owner_role(): void
+    {
+        [$ownerA] = $this->createTwoOrganizationScenario();
+
+        $this->actingAs($ownerA)
+            ->put(route('users.update', $ownerA), [
+                'name' => $ownerA->name,
+                'email' => $ownerA->email,
+                'role' => 'manager',
+                'password' => '',
+                'password_confirmation' => '',
+            ])
+            ->assertStatus(422);
+
+        $this->assertDatabaseHas('users', [
+            'id' => $ownerA->id,
+            'role' => 'owner',
+            'is_active' => true,
+        ]);
+    }
+
+    public function test_non_owner_roles_cannot_manage_user_access_or_change_roles(): void
+    {
+        [$ownerA, $managerA, $accountantA, $caretakerA] = $this->createTwoOrganizationScenario();
+
+        foreach ([$managerA, $accountantA, $caretakerA] as $user) {
+            $this->actingAs($user)->patch(route('users.deactivate', $ownerA))->assertForbidden();
+            $this->actingAs($user)->patch(route('users.reactivate', $ownerA))->assertForbidden();
+
+            $this->actingAs($user)->put(route('users.update', $ownerA), [
+                'name' => 'Blocked Role Change',
+                'email' => "blocked-role-change-{$user->id}@example.com",
+                'role' => 'manager',
+                'password' => '',
+                'password_confirmation' => '',
+            ])->assertForbidden();
+        }
+    }
+
+    public function test_cross_organization_user_access_management_is_forbidden(): void
+    {
+        [$ownerA, , , , $dataB] = $this->createTwoOrganizationScenario();
+
+        $this->actingAs($ownerA)
+            ->patch(route('users.deactivate', $dataB['owner']))
+            ->assertForbidden();
+
+        $this->actingAs($ownerA)
+            ->patch(route('users.reactivate', $dataB['owner']))
+            ->assertForbidden();
+
+        $this->actingAs($ownerA)
+            ->put(route('users.update', $dataB['owner']), [
+                'name' => 'Cross Organization Role Change',
+                'email' => 'cross-org-role-change@example.com',
+                'role' => 'manager',
+                'password' => '',
+                'password_confirmation' => '',
+            ])
+            ->assertForbidden();
+    }
+
+    public function test_user_access_changes_are_recorded_in_activity_logs(): void
+    {
+        [$ownerA, $managerA] = $this->createTwoOrganizationScenario();
+
+        $this->actingAs($ownerA)
+            ->put(route('users.update', $managerA), [
+                'name' => $managerA->name,
+                'email' => $managerA->email,
+                'role' => 'accountant',
+                'password' => '',
+                'password_confirmation' => '',
+            ])
+            ->assertRedirect(route('users.index'));
+
+        $this->actingAs($ownerA)
+            ->patch(route('users.deactivate', $managerA))
+            ->assertRedirect(route('users.index'));
+
+        $this->actingAs($ownerA)
+            ->patch(route('users.reactivate', $managerA))
+            ->assertRedirect(route('users.index'));
+
+        $this->assertDatabaseHas('activity_logs', [
+            'organization_id' => $ownerA->organization_id,
+            'user_id' => $ownerA->id,
+            'action' => 'user.role_changed',
+            'subject_type' => User::class,
+            'subject_id' => $managerA->id,
+        ]);
+
+        $this->assertDatabaseHas('activity_logs', [
+            'organization_id' => $ownerA->organization_id,
+            'user_id' => $ownerA->id,
+            'action' => 'user.deactivated',
+            'subject_type' => User::class,
+            'subject_id' => $managerA->id,
+        ]);
+
+        $this->assertDatabaseHas('activity_logs', [
+            'organization_id' => $ownerA->organization_id,
+            'user_id' => $ownerA->id,
+            'action' => 'user.reactivated',
+            'subject_type' => User::class,
+            'subject_id' => $managerA->id,
+        ]);
+    }
+
     public function test_owner_can_view_own_organization_activity_logs(): void
     {
         [$ownerA] = $this->createTwoOrganizationScenario();
