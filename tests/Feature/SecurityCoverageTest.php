@@ -838,6 +838,23 @@ class SecurityCoverageTest extends TestCase
         }
     }
 
+    public function test_owner_only_navigation_links_are_hidden_from_non_owner_roles(): void
+    {
+        [$ownerA, $managerA, $accountantA, $caretakerA] = $this->createTwoOrganizationScenario();
+
+        $this->actingAs($ownerA)->get(route('dashboard'))
+            ->assertOk()
+            ->assertSee('>Users<', false)
+            ->assertSee('>Activity<', false);
+
+        foreach ([$managerA, $accountantA, $caretakerA] as $user) {
+            $this->actingAs($user)->get(route('dashboard'))
+                ->assertOk()
+                ->assertDontSee('>Users<', false)
+                ->assertDontSee('>Activity<', false);
+        }
+    }
+
     public function test_dashboard_financial_totals_are_scoped_to_current_organization(): void
     {
         [$ownerA, , , , $dataB, $dataA] = $this->createTwoOrganizationScenario();

@@ -18,7 +18,14 @@
                     </form>
                 </div>
                 <nav class="scrollbar-soft mx-auto flex max-w-6xl gap-2 overflow-x-auto px-4 pb-3 text-sm" aria-label="Primary">
-                    @foreach(['dashboard' => '/', 'units' => 'units', 'payments' => 'payments', 'contracts' => 'contracts', 'tenants' => 'tenants', 'expenses' => 'expenses', 'reports' => 'reports', 'buildings' => 'buildings', 'users' => 'users', 'activity' => 'activity-logs'] as $label => $path)
+                    @php
+                        $navigation = ['dashboard' => '/', 'units' => 'units', 'payments' => 'payments', 'contracts' => 'contracts', 'tenants' => 'tenants', 'expenses' => 'expenses', 'reports' => 'reports', 'buildings' => 'buildings', 'users' => 'users', 'activity' => 'activity-logs'];
+
+                        if (auth()->user()->role->value !== 'owner') {
+                            unset($navigation['users'], $navigation['activity']);
+                        }
+                    @endphp
+                    @foreach($navigation as $label => $path)
                         <a class="tap-target flex shrink-0 items-center rounded border bg-white px-4 font-medium text-slate-700" href="{{ url($path) }}">{{ ucfirst($label) }}</a>
                     @endforeach
                 </nav>
