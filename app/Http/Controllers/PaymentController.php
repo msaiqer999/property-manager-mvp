@@ -17,7 +17,7 @@ class PaymentController extends Controller
     {
         Gate::authorize('viewAny', Payment::class);
 
-        $payments = Payment::with('contract.tenant')
+        $payments = Payment::with(['contract.tenant', 'contract.unit'])
             ->where('organization_id', $this->organizationId())
             ->when($request->status, fn ($q, $status) => $q->where('status', $status))
             ->when($request->overdue, fn ($q) => $q->where('due_date', '<', now())->where('status', '!=', 'paid'))

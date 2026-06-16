@@ -24,7 +24,7 @@ class SecurityCoverageTest extends TestCase
 
     public function test_owner_cannot_access_another_organizations_record_pages_or_pdfs(): void
     {
-        [$ownerA, , , , $dataB] = $this->createTwoOrganizationScenario();
+        [$ownerA, , , , $dataB, $dataA] = $this->createTwoOrganizationScenario();
 
         $this->actingAs($ownerA)->get(route('buildings.show', $dataB['building']))->assertForbidden();
         $this->actingAs($ownerA)->get(route('buildings.edit', $dataB['building']))->assertForbidden();
@@ -96,7 +96,7 @@ class SecurityCoverageTest extends TestCase
 
     public function test_index_pages_reports_users_and_activity_logs_do_not_expose_another_organization_data(): void
     {
-        [$ownerA, , , , $dataB] = $this->createTwoOrganizationScenario();
+        [$ownerA, , , , $dataB, $dataA] = $this->createTwoOrganizationScenario();
 
         $this->actingAs($ownerA)->get(route('buildings.index'))
             ->assertOk()
@@ -116,6 +116,19 @@ class SecurityCoverageTest extends TestCase
 
         $this->actingAs($ownerA)->get(route('payments.index'))
             ->assertOk()
+            ->assertSee('Payments are generated from contracts and can be recorded when rent is collected.')
+            ->assertSee('Due date')
+            ->assertSee('Tenant')
+            ->assertSee('Unit')
+            ->assertSee('Contract')
+            ->assertSee('Amount')
+            ->assertSee('Status')
+            ->assertSee('Paid date')
+            ->assertSee('Action')
+            ->assertSee($dataA['tenant']->full_name)
+            ->assertSee($dataA['unit']->unit_number)
+            ->assertSee($dataA['contract']->contract_number)
+            ->assertSee('View receipt')
             ->assertDontSee('90,000.00');
 
         $this->actingAs($ownerA)->get(route('expenses.index'))
