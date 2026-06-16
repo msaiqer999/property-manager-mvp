@@ -112,6 +112,20 @@ class SecurityCoverageTest extends TestCase
 
         $this->actingAs($ownerA)->get(route('contracts.index'))
             ->assertOk()
+            ->assertSee('Contracts connect tenants to units and generate the rent schedule.')
+            ->assertSee('Contract number')
+            ->assertSee('Tenant')
+            ->assertSee('Unit')
+            ->assertSee('Start date')
+            ->assertSee('End date')
+            ->assertSee('Rent')
+            ->assertSee('Frequency')
+            ->assertSee('Status')
+            ->assertSee('Action')
+            ->assertSee('View contract')
+            ->assertSee($dataA['contract']->contract_number)
+            ->assertSee($dataA['tenant']->full_name)
+            ->assertSee($dataA['unit']->unit_number)
             ->assertDontSee($dataB['contract']->contract_number);
 
         $this->actingAs($ownerA)->get(route('payments.index'))
