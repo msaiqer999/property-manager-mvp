@@ -7,8 +7,15 @@
 @endforeach
 </div>
 <div class="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-@foreach(['building-income','unit-statement','expenses','overdue','net-profit','monthly-summary'] as $type)
-<a class="tap-target flex items-center rounded border bg-white p-4 font-medium shadow-sm" href="{{ route('reports.pdf', $type) }}">{{ ucwords(str_replace('-', ' ', $type)) }} PDF</a>
+@foreach([
+    'building-income' => 'Export building income PDF',
+    'unit-statement' => 'Download unit statement PDF',
+    'expenses' => 'Export expenses PDF',
+    'overdue' => 'Export overdue payments PDF',
+    'net-profit' => 'Export net profit PDF',
+    'monthly-summary' => 'Export monthly summary PDF',
+] as $type => $label)
+<a class="tap-target flex items-center rounded border bg-white p-4 font-medium shadow-sm" href="{{ route('reports.pdf', $type) }}">{{ $label }}</a>
 @endforeach
 </div>
 @endsection

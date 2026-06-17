@@ -32,7 +32,7 @@ class ReportController extends Controller
             abort_unless($authorization->viewProfitData(auth()->user()), 403);
         }
 
-        return Pdf::loadView('pdf.report', $this->reportData($type) + ['type' => $type])->download("{$type}.pdf");
+        return Pdf::loadView('pdf.report', $this->reportData($type) + ['type' => $type])->download($this->pdfFilename($type));
     }
 
     private function summaryData(): array
@@ -91,6 +91,21 @@ class ReportController extends Controller
                     ->orderBy('due_date')
                     ->get(),
             ],
+        };
+    }
+
+    private function pdfFilename(string $type): string
+    {
+        $period = now()->format('Y-m');
+
+        return match ($type) {
+            'building-income' => "building-income-{$period}.pdf",
+            'unit-statement' => "unit-statement-{$period}.pdf",
+            'expenses' => "expenses-{$period}.pdf",
+            'overdue' => "overdue-payments-{$period}.pdf",
+            'net-profit' => "net-profit-{$period}.pdf",
+            'monthly-summary' => "monthly-summary-{$period}.pdf",
+            default => "{$type}-{$period}.pdf",
         };
     }
 }

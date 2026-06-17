@@ -6,6 +6,9 @@
     <p>Expenses: {{ number_format($expensesTotal, 2) }}</p>
     <p>Net profit: {{ number_format($netProfit, 2) }}</p>
     <h2>Rows</h2>
+    @if($rows->isEmpty())
+        <p>No data available for this report.</p>
+    @endif
     <table width="100%" border="1" cellspacing="0" cellpadding="4">
         <tr><th>Item</th><th>Details</th><th>Amount</th><th>Status</th></tr>
         @foreach($rows as $row)

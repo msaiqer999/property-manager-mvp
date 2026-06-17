@@ -75,7 +75,7 @@ class PaymentController extends Controller
     {
         Gate::authorize('exportReceiptPdf', $payment);
         $this->authorizePayment($payment);
-        return Pdf::loadView('pdf.receipt', compact('payment'))->download("receipt-{$payment->id}.pdf");
+        return Pdf::loadView('pdf.receipt', compact('payment'))->download("payment-receipt-{$payment->id}.pdf");
     }
 
     private function authorizePayment(Payment $payment): void
