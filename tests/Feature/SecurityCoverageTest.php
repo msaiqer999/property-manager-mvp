@@ -608,10 +608,19 @@ class SecurityCoverageTest extends TestCase
         $this->actingAs($managerA)->get(route('contracts.create'))->assertOk();
         $this->actingAs($managerA)->get(route('contracts.edit', $dataA['contract']))->assertOk();
 
+        $availableUnit = Unit::create([
+            'building_id' => $dataA['building']->id,
+            'unit_number' => 'MANAGER-CONTRACT-UNIT',
+            'type' => 'apartment',
+            'status' => 'vacant',
+            'rent_amount' => 1200,
+        ]);
+
         $this->actingAs($managerA)->post(route('contracts.store'), array_merge(
             $this->contractPayload($dataA),
             [
                 'contract_number' => 'MANAGER-CONTRACT-001',
+                'unit_id' => $availableUnit->id,
                 'rent_amount' => 1200,
             ],
         ))
@@ -629,7 +638,8 @@ class SecurityCoverageTest extends TestCase
             $this->contractPayload($dataA),
             [
                 'contract_number' => 'MANAGER-CONTRACT-UPDATED',
-                'rent_amount' => 1300,
+                'deposit_amount' => 1300,
+                'notes' => 'Manager allowed non-schedule update.',
             ],
         ))
             ->assertSessionHasNoErrors()
@@ -639,6 +649,8 @@ class SecurityCoverageTest extends TestCase
             'id' => $dataA['contract']->id,
             'contract_number' => $dataA['contract']->contract_number,
             'organization_id' => $managerA->organization_id,
+            'deposit_amount' => 1300,
+            'notes' => 'Manager allowed non-schedule update.',
         ]);
 
         $this->actingAs($managerA)->get(route('contracts.pdf', $dataA['contract']))->assertOk();

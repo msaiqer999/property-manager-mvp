@@ -8,6 +8,7 @@ use App\Models\Tenant;
 use App\Models\Unit;
 use App\Services\ActivityLogger;
 use App\Support\PaymentSchedule;
+use App\Support\UnitOccupancy;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Http\Request;
@@ -52,8 +53,12 @@ class ContractController extends Controller
         }
 
         $this->authorizeUnitInput($data['unit_id']);
+        $this->assertNoActiveOverlap($data['unit_id'], $data['start_date'], $data['end_date'], null, $data['status']);
 
         $contract = DB::transaction(function () use ($data, $logger) {
+            $unit = $this->lockOwnedUnit($data['unit_id']);
+            $this->assertNoActiveOverlap($unit->id, $data['start_date'], $data['end_date'], null, $data['status']);
+
             if ($data['tenant_mode'] === 'new') {
                 $tenant = Tenant::create($this->tenantData($data['new_tenant']) + [
                     'organization_id' => $this->organizationId(),
@@ -70,7 +75,7 @@ class ContractController extends Controller
             ]);
             $contract->update(['contract_number' => $this->contractNumber($contract)]);
             PaymentSchedule::createFor($contract);
-            $contract->unit()->update(['status' => 'rented']);
+            UnitOccupancy::sync($unit);
             $logger->log('contract.created', $contract);
 
             return $contract;
@@ -99,16 +104,30 @@ class ContractController extends Controller
         Gate::authorize('update', $contract);
         $this->authorizeContract($contract);
         $data = $this->validated($request);
-        $this->authorizeContractInputs($data);
-        DB::transaction(function () use ($contract, $data) {
-            $scheduleFields = ['start_date', 'end_date', 'rent_amount', 'payment_frequency'];
-            $scheduleChanged = collect($scheduleFields)->contains(fn ($field) => (string) $contract->{$field} !== (string) $data[$field]);
+        $this->assertImmutableContractInputs($request, $contract);
+        $this->assertValidStatusTransition($contract, $data['status']);
+        $scheduleFields = ['start_date', 'end_date', 'rent_amount', 'payment_frequency'];
+        $scheduleChanged = collect($scheduleFields)->contains(fn ($field) => $this->scheduleFieldChanged($contract, $data, $field));
+
+        if ($scheduleChanged && $this->hasRecordedPayments($contract)) {
+            throw ValidationException::withMessages([
+                'start_date' => 'Contract payment terms cannot be changed after a payment has been recorded.',
+            ]);
+        }
+
+        $this->assertNoActiveOverlap($contract->unit_id, $data['start_date'], $data['end_date'], $contract, $data['status']);
+
+        DB::transaction(function () use ($contract, $data, $scheduleChanged) {
+            $unit = $this->lockOwnedUnit($contract->unit_id);
+            $this->assertNoActiveOverlap($unit->id, $data['start_date'], $data['end_date'], $contract, $data['status']);
 
             $contract->update($data);
 
             if ($scheduleChanged) {
                 PaymentSchedule::replaceFor($contract);
             }
+
+            UnitOccupancy::sync($unit);
         });
         $logger->log('contract.updated', $contract);
         return redirect()->route('contracts.show', $contract);
@@ -132,10 +151,17 @@ class ContractController extends Controller
 
     private function formData(Contract $contract): array
     {
+        $units = Unit::with(['building', 'contracts' => fn ($q) => $q->where('status', 'active')->orderBy('start_date')])
+            ->whereHas('building', fn ($q) => $q->where('organization_id', $this->organizationId()))
+            ->orderBy('unit_number')
+            ->get();
+
+        $units->each(fn (Unit $unit) => $unit->availability_label = $this->availabilityLabel($unit));
+
         return [
             'contract' => $contract,
             'tenants' => Tenant::where('organization_id', $this->organizationId())->orderBy('full_name')->get(),
-            'units' => Unit::whereHas('building', fn ($q) => $q->where('organization_id', $this->organizationId()))->orderBy('unit_number')->get(),
+            'units' => $units,
         ];
     }
 
@@ -168,8 +194,6 @@ class ContractController extends Controller
         }
 
         $rules = [
-            'unit_id' => ['required', 'exists:units,id'],
-            'tenant_id' => [$creating ? 'required_if:tenant_mode,existing' : 'required', 'nullable', 'exists:tenants,id'],
             'start_date' => ['required', 'date'],
             'end_date' => ['required', 'date', 'after:start_date'],
             'rent_amount' => ['required', 'numeric', 'min:0'],
@@ -181,6 +205,8 @@ class ContractController extends Controller
 
         if ($creating) {
             $rules += [
+                'unit_id' => ['required', 'exists:units,id'],
+                'tenant_id' => ['required_if:tenant_mode,existing', 'nullable', 'exists:tenants,id'],
                 'tenant_mode' => ['required', 'in:existing,new'],
                 'new_tenant.full_name' => ['required_if:tenant_mode,new', 'nullable', 'string', 'max:255'],
                 'new_tenant.phone' => ['nullable', 'string', 'max:50'],
@@ -195,6 +221,115 @@ class ContractController extends Controller
         $data['deposit_amount'] = $this->moneyOrZero($data['deposit_amount'] ?? null);
 
         return $data;
+    }
+
+    private function assertNoActiveOverlap(int $unitId, string $startDate, string $endDate, ?Contract $except = null, string $status = 'active'): void
+    {
+        if ($status !== 'active') {
+            return;
+        }
+
+        $query = Contract::where('unit_id', $unitId)
+            ->where('status', 'active')
+            ->whereDate('start_date', '<=', $endDate)
+            ->whereDate('end_date', '>=', $startDate);
+
+        if ($except !== null) {
+            $query->whereKeyNot($except->id);
+        }
+
+        if ($query->exists()) {
+            throw ValidationException::withMessages([
+                'unit_id' => 'This unit already has an active contract during the selected dates.',
+            ]);
+        }
+    }
+
+    private function lockOwnedUnit(int $unitId): Unit
+    {
+        $unit = Unit::whereKey($unitId)->lockForUpdate()->firstOrFail();
+        abort_unless($unit->building()->where('organization_id', $this->organizationId())->exists(), 403);
+
+        return $unit;
+    }
+
+    private function assertImmutableContractInputs(Request $request, Contract $contract): void
+    {
+        if ($request->filled('tenant_id')) {
+            abort_unless((int) $request->input('tenant_id') === $contract->tenant_id, 403);
+        }
+
+        if ($request->filled('unit_id')) {
+            abort_unless((int) $request->input('unit_id') === $contract->unit_id, 403);
+        }
+    }
+
+    private function assertValidStatusTransition(Contract $contract, string $requestedStatus): void
+    {
+        if ($contract->status === $requestedStatus) {
+            return;
+        }
+
+        if ($contract->status === 'active' && in_array($requestedStatus, ['expired', 'terminated'], true)) {
+            return;
+        }
+
+        throw ValidationException::withMessages([
+            'status' => 'This contract status transition is not allowed.',
+        ]);
+    }
+
+    private function hasRecordedPayments(Contract $contract): bool
+    {
+        return $contract->payments()
+            ->where(fn ($query) => $query->where('amount_paid', '>', 0)->orWhereNotNull('payment_date'))
+            ->exists();
+    }
+
+    private function availabilityLabel(Unit $unit): string
+    {
+        $today = now()->toDateString();
+        $currentContracts = $unit->contracts
+            ->filter(fn (Contract $contract) => $contract->start_date->toDateString() <= $today && $contract->end_date->toDateString() >= $today);
+        $currentContractIds = $currentContracts->pluck('id')->all();
+        $currentEndDate = $currentContracts->max(fn (Contract $contract) => $contract->end_date->toDateString());
+
+        $futureContracts = $unit->contracts
+            ->reject(fn (Contract $contract) => in_array($contract->id, $currentContractIds, true))
+            ->filter(fn (Contract $contract) => $contract->start_date->toDateString() > $today)
+            ->sortBy(fn (Contract $contract) => $contract->start_date->toDateString())
+            ->values();
+
+        if ($unit->status === 'maintenance') {
+            $label = 'Maintenance';
+        } else {
+            $label = $currentEndDate ? "Occupied until {$currentEndDate}" : 'Available now';
+        }
+
+        if ($futureContracts->isNotEmpty()) {
+            $futureContract = $futureContracts->first();
+            $additionalFutureCount = $futureContracts->count() - 1;
+            $label .= '; future contract '.$futureContract->start_date->toDateString().' to '.$futureContract->end_date->toDateString();
+
+            if ($additionalFutureCount > 0) {
+                $label .= ' +'.$additionalFutureCount.' more';
+            }
+        }
+
+        return $label;
+    }
+
+    private function scheduleFieldChanged(Contract $contract, array $data, string $field): bool
+    {
+        if (in_array($field, ['start_date', 'end_date'], true)) {
+            return Carbon::parse($contract->{$field})->toDateString() !== Carbon::parse($data[$field])->toDateString();
+        }
+
+        if ($field === 'rent_amount') {
+            return number_format((float) $contract->rent_amount, 2, '.', '') !== number_format((float) $data['rent_amount'], 2, '.', '');
+        }
+
+        return (string) $contract->{$field} !== (string) $data[$field];
     }
 
     private function tenantData(array $data): array
