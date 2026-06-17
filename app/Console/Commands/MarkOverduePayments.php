@@ -15,6 +15,8 @@ class MarkOverduePayments extends Command
         $count = Payment::query()
             ->where('due_date', '<', now()->toDateString())
             ->where('status', 'pending')
+            ->where('amount_paid', 0)
+            ->whereNull('payment_date')
             ->update(['status' => 'overdue']);
 
         $this->info("Marked {$count} payments overdue.");
