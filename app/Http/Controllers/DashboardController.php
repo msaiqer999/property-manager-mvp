@@ -21,6 +21,18 @@ class DashboardController extends Controller
         $orgId = $this->organizationId();
         $start = now()->startOfMonth();
         $end = now()->endOfMonth();
+        $expiringSoon = Contract::with(['tenant', 'unit.building'])
+            ->where('organization_id', $orgId)
+            ->where('status', 'active')
+            ->whereDate('end_date', '>=', now()->toDateString())
+            ->whereDate('end_date', '<=', now()->addDays(90)->toDateString())
+            ->orderBy('end_date')
+            ->get();
+        $expiryCounts = [
+            '30' => $expiringSoon->filter(fn (Contract $contract) => $contract->expiryWarningGroup() === '30')->count(),
+            '60' => $expiringSoon->filter(fn (Contract $contract) => $contract->expiryWarningGroup() === '60')->count(),
+            '90' => $expiringSoon->filter(fn (Contract $contract) => $contract->expiryWarningGroup() === '90')->count(),
+        ];
 
         return view('dashboard', [
             'monthlyIncome' => Payment::where('organization_id', $orgId)->where('status', 'paid')->whereBetween('payment_date', [$start, $end])->sum('amount_paid'),
@@ -31,7 +43,8 @@ class DashboardController extends Controller
                 ->sum(DB::raw('amount_due - amount_paid')),
             'vacantUnits' => Unit::whereHas('building', fn ($q) => $q->where('organization_id', $orgId))->where('status', 'vacant')->count(),
             'rentedUnits' => Unit::whereHas('building', fn ($q) => $q->where('organization_id', $orgId))->where('status', 'rented')->count(),
-            'endingSoon' => Contract::where('organization_id', $orgId)->whereBetween('end_date', [now(), now()->addDays(45)])->get(),
+            'expiringSoon' => $expiringSoon->take(5),
+            'expiryCounts' => $expiryCounts,
             'latestPayments' => Payment::where('organization_id', $orgId)->latest()->take(5)->get(),
             'latestExpenses' => Expense::where('organization_id', $orgId)->latest()->take(5)->get(),
         ]);

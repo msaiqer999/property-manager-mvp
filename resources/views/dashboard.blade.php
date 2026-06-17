@@ -33,13 +33,19 @@
 
 <div class="mt-6 grid gap-4 lg:grid-cols-3">
     <section class="rounded border bg-white p-4 shadow-sm">
-        <h2 class="mb-3 font-semibold">Contracts ending soon</h2>
-        @forelse($endingSoon as $contract)
+        <h2 class="mb-3 font-semibold">Contracts expiring soon</h2>
+        <div class="mb-3 grid grid-cols-3 gap-2 text-center text-sm">
+            <div class="rounded bg-slate-50 p-2"><p class="font-semibold">{{ $expiryCounts['30'] }}</p><p class="text-xs text-slate-500">30 days</p></div>
+            <div class="rounded bg-slate-50 p-2"><p class="font-semibold">{{ $expiryCounts['60'] }}</p><p class="text-xs text-slate-500">60 days</p></div>
+            <div class="rounded bg-slate-50 p-2"><p class="font-semibold">{{ $expiryCounts['90'] }}</p><p class="text-xs text-slate-500">90 days</p></div>
+        </div>
+        @forelse($expiringSoon as $contract)
             <div class="border-t py-3 text-sm">
-                <p class="font-medium">{{ $contract->contract_number }}</p>
-                <p class="text-slate-500">Ends {{ $contract->end_date->toDateString() }}</p>
+                <a class="font-medium text-blue-700" href="{{ route('contracts.show', $contract) }}">{{ $contract->contract_number }}</a>
+                <p class="text-slate-600">{{ $contract->tenant->full_name }} · {{ $contract->unit->building->name }} / {{ $contract->unit->unit_number }}</p>
+                <p class="text-slate-500">Ends {{ $contract->end_date->toDateString() }} · {{ $contract->expiryWarningText() }}</p>
             </div>
-        @empty <p class="text-sm text-slate-500">No upcoming endings.</p> @endforelse
+        @empty <p class="text-sm text-slate-500">No active contracts are expiring within 90 days.</p> @endforelse
     </section>
     <section class="rounded border bg-white p-4 shadow-sm">
         <h2 class="mb-3 font-semibold">Latest payments</h2>
