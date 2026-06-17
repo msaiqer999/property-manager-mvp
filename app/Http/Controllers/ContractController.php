@@ -8,9 +8,11 @@ use App\Models\Tenant;
 use App\Models\Unit;
 use App\Services\ActivityLogger;
 use App\Support\PaymentSchedule;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Validation\ValidationException;
 use Illuminate\Validation\Rule;
 use Barryvdh\DomPDF\Facade\Pdf;
 
@@ -40,17 +42,40 @@ class ContractController extends Controller
     public function store(Request $request, ActivityLogger $logger)
     {
         Gate::authorize('create', Contract::class);
-        $data = $this->validated($request);
-        $this->authorizeContractInputs($data);
+        $data = $this->validated($request, true);
 
-        $contract = DB::transaction(function () use ($data) {
-            $contract = Contract::create($data + ['organization_id' => $this->organizationId()]);
+        if ($data['tenant_mode'] === 'new') {
+            Gate::authorize('create', Tenant::class);
+            $this->rejectDuplicateTenant($data['new_tenant']);
+        } else {
+            $this->authorizeTenantInput($data['tenant_id']);
+        }
+
+        $this->authorizeUnitInput($data['unit_id']);
+
+        $contract = DB::transaction(function () use ($data, $logger) {
+            if ($data['tenant_mode'] === 'new') {
+                $tenant = Tenant::create($this->tenantData($data['new_tenant']) + [
+                    'organization_id' => $this->organizationId(),
+                ]);
+                $logger->log('tenant.created', $tenant);
+                $data['tenant_id'] = $tenant->id;
+            }
+
+            unset($data['tenant_mode'], $data['new_tenant']);
+
+            $contract = Contract::create($data + [
+                'organization_id' => $this->organizationId(),
+                'contract_number' => 'PENDING-'.uniqid(),
+            ]);
+            $contract->update(['contract_number' => $this->contractNumber($contract)]);
             PaymentSchedule::createFor($contract);
             $contract->unit()->update(['status' => 'rented']);
+            $logger->log('contract.created', $contract);
 
             return $contract;
         });
-        $logger->log('contract.created', $contract);
+
         return redirect()->route('contracts.show', $contract);
     }
 
@@ -122,23 +147,29 @@ class ContractController extends Controller
 
     private function authorizeContractInputs(array $data): void
     {
-        abort_unless(Tenant::where('organization_id', $this->organizationId())->whereKey($data['tenant_id'])->exists(), 403);
-        abort_unless(Unit::whereKey($data['unit_id'])->whereHas('building', fn ($q) => $q->where('organization_id', $this->organizationId()))->exists(), 403);
+        $this->authorizeTenantInput($data['tenant_id']);
+        $this->authorizeUnitInput($data['unit_id']);
     }
 
-    private function validated(Request $request): array
+    private function authorizeTenantInput(int $tenantId): void
     {
-        return $request->validate([
+        abort_unless(Tenant::where('organization_id', $this->organizationId())->whereKey($tenantId)->exists(), 403);
+    }
+
+    private function authorizeUnitInput(int $unitId): void
+    {
+        abort_unless(Unit::whereKey($unitId)->whereHas('building', fn ($q) => $q->where('organization_id', $this->organizationId()))->exists(), 403);
+    }
+
+    private function validated(Request $request, bool $creating = false): array
+    {
+        if ($creating) {
+            $request->merge(['tenant_mode' => $request->input('tenant_mode', 'existing')]);
+        }
+
+        $rules = [
             'unit_id' => ['required', 'exists:units,id'],
-            'tenant_id' => ['required', 'exists:tenants,id'],
-            'contract_number' => [
-                'required',
-                'string',
-                'max:100',
-                Rule::unique('contracts', 'contract_number')
-                    ->where('organization_id', $this->organizationId())
-                    ->ignore($request->route('contract')),
-            ],
+            'tenant_id' => [$creating ? 'required_if:tenant_mode,existing' : 'required', 'nullable', 'exists:tenants,id'],
             'start_date' => ['required', 'date'],
             'end_date' => ['required', 'date', 'after:start_date'],
             'rent_amount' => ['required', 'numeric', 'min:0'],
@@ -146,6 +177,93 @@ class ContractController extends Controller
             'deposit_amount' => ['nullable', 'numeric', 'min:0'],
             'status' => ['required', 'in:active,expired,terminated'],
             'notes' => ['nullable', 'string'],
-        ]);
+        ];
+
+        if ($creating) {
+            $rules += [
+                'tenant_mode' => ['required', 'in:existing,new'],
+                'new_tenant.full_name' => ['required_if:tenant_mode,new', 'nullable', 'string', 'max:255'],
+                'new_tenant.phone' => ['nullable', 'string', 'max:50'],
+                'new_tenant.email' => ['nullable', 'email', 'max:255'],
+                'new_tenant.id_number' => ['nullable', 'string', 'max:100'],
+                'new_tenant.nationality' => ['nullable', 'string', 'max:100'],
+                'new_tenant.notes' => ['nullable', 'string'],
+            ];
+        }
+
+        $data = $request->validate($rules);
+        $data['deposit_amount'] = $this->moneyOrZero($data['deposit_amount'] ?? null);
+
+        return $data;
+    }
+
+    private function tenantData(array $data): array
+    {
+        return [
+            'full_name' => trim($data['full_name']),
+            'phone' => $this->nullableTrim($data['phone'] ?? null),
+            'email' => $this->nullableLower($data['email'] ?? null),
+            'id_number' => $this->nullableTrim($data['id_number'] ?? null),
+            'nationality' => $this->nullableTrim($data['nationality'] ?? null),
+            'notes' => $this->nullableTrim($data['notes'] ?? null),
+        ];
+    }
+
+    private function rejectDuplicateTenant(array $data): void
+    {
+        $tenant = $this->tenantData($data);
+        $query = Tenant::where('organization_id', $this->organizationId());
+
+        $duplicateExists = false;
+
+        if (! empty($tenant['id_number'])) {
+            $duplicateExists = (clone $query)->where('id_number', $tenant['id_number'])->exists();
+        }
+
+        if (! $duplicateExists && ! empty($tenant['email'])) {
+            $duplicateExists = (clone $query)
+                ->where('full_name', $tenant['full_name'])
+                ->whereRaw('LOWER(email) = ?', [$tenant['email']])
+                ->exists();
+        }
+
+        if (! $duplicateExists && ! empty($tenant['phone'])) {
+            $duplicateExists = (clone $query)
+                ->where('full_name', $tenant['full_name'])
+                ->where('phone', $tenant['phone'])
+                ->exists();
+        }
+
+        if ($duplicateExists) {
+            throw ValidationException::withMessages([
+                'new_tenant.full_name' => 'A tenant with matching details already exists. Select the existing tenant instead.',
+            ]);
+        }
+    }
+
+    private function nullableTrim(?string $value): ?string
+    {
+        $value = trim((string) $value);
+
+        return $value === '' ? null : $value;
+    }
+
+    private function nullableLower(?string $value): ?string
+    {
+        $value = $this->nullableTrim($value);
+
+        return $value === null ? null : strtolower($value);
+    }
+
+    private function moneyOrZero(mixed $value): mixed
+    {
+        return $value === null || $value === '' ? 0 : $value;
+    }
+
+    private function contractNumber(Contract $contract): string
+    {
+        $year = Carbon::parse($contract->start_date)->format('Y');
+
+        return 'CN-'.$year.'-'.str_pad((string) $contract->id, 6, '0', STR_PAD_LEFT);
     }
 }

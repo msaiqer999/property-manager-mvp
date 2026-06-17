@@ -40,16 +40,32 @@ class PaymentSchedule
             default => 1,
         };
 
-        $period = CarbonPeriod::create($contract->start_date, "{$months} months", $contract->end_date);
+        $periodStart = $contract->start_date->copy();
+        $contractEnd = $contract->end_date->copy()->addDay();
 
-        foreach ($period as $dueDate) {
+        while ($periodStart->lt($contractEnd)) {
+            $periodEnd = $periodStart->copy()->addMonthsNoOverflow($months);
+            $actualEnd = $periodEnd->lt($contractEnd) ? $periodEnd : $contractEnd;
+            $actualDays = $periodStart->diffInDays($actualEnd);
+            $periodDays = $periodStart->diffInDays($periodEnd);
+
+            if ($actualDays <= 0 || $periodDays <= 0) {
+                break;
+            }
+
+            $amountDue = $actualDays === $periodDays
+                ? $contract->rent_amount
+                : round($contract->rent_amount * ($actualDays / $periodDays), 2);
+
             $contract->payments()->create([
                 'organization_id' => $contract->organization_id,
-                'due_date' => $dueDate,
-                'amount_due' => $contract->rent_amount * $months,
+                'due_date' => $periodStart,
+                'amount_due' => $amountDue,
                 'amount_paid' => 0,
                 'status' => 'pending',
             ]);
+
+            $periodStart = $periodEnd;
         }
     }
 }

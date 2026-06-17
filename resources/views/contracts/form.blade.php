@@ -2,20 +2,69 @@
 @section('content')
 <div class="mb-4">
     <h1 class="text-xl font-semibold">{{ $contract->exists ? 'Edit contract' : 'Add contract' }}</h1>
-    <p class="mt-1 text-sm text-slate-600">Choose an existing tenant and unit, then enter the rental terms used to generate payment schedules.</p>
+    <p class="mt-1 text-sm text-slate-600">Choose an existing tenant and unit, then enter the rental terms used to generate payment schedules. {{ $contract->exists ? 'The contract number is read-only.' : 'The contract number will be generated automatically.' }}</p>
 </div>
+@php($tenantMode = old('tenant_mode', 'existing'))
 <form method="post" action="{{ $contract->exists ? route('contracts.update', $contract) : route('contracts.store') }}" class="grid max-w-3xl gap-4 rounded border bg-white p-4 shadow-sm md:grid-cols-2">
 @csrf @if($contract->exists) @method('put') @endif
-<label class="block text-sm font-medium">Tenant <select name="tenant_id" class="tap-target mt-1 w-full rounded border p-2">@foreach($tenants as $tenant)<option value="{{ $tenant->id }}" @selected(old('tenant_id', $contract->tenant_id)==$tenant->id)>{{ $tenant->full_name }}</option>@endforeach</select><span class="mt-1 block text-xs text-slate-500">Select an existing tenant record.</span></label>
+@if(! $contract->exists)
+<fieldset class="rounded border p-3 md:col-span-2">
+    <legend class="px-1 text-sm font-medium">Tenant</legend>
+    <div class="mt-2 grid gap-2 sm:grid-cols-2">
+        <label class="flex items-center gap-2 text-sm"><input type="radio" name="tenant_mode" value="existing" @checked($tenantMode !== 'new')> Select existing tenant</label>
+        <label class="flex items-center gap-2 text-sm"><input type="radio" name="tenant_mode" value="new" @checked($tenantMode === 'new')> Add new tenant</label>
+    </div>
+</fieldset>
+@endif
+<label id="existing-tenant-fields" class="block text-sm font-medium {{ ! $contract->exists && $tenantMode === 'new' ? 'hidden' : '' }}">Tenant <select name="tenant_id" class="tap-target mt-1 w-full rounded border p-2" @disabled(! $contract->exists && $tenantMode === 'new')>@foreach($tenants as $tenant)<option value="{{ $tenant->id }}" @selected(old('tenant_id', $contract->tenant_id)==$tenant->id)>{{ $tenant->full_name }}</option>@endforeach</select><span class="mt-1 block text-xs text-slate-500">Select an existing tenant record.</span></label>
+@if(! $contract->exists)
+<div id="new-tenant-fields" class="grid gap-4 rounded border border-dashed p-3 md:col-span-2 md:grid-cols-2 {{ $tenantMode === 'new' ? '' : 'hidden' }}">
+    <p class="text-sm text-slate-600 md:col-span-2">Add tenant details here without leaving the contract workflow. The tenant will be saved as a separate record.</p>
+    <label class="block text-sm font-medium">Full name <input name="new_tenant[full_name]" value="{{ old('new_tenant.full_name') }}" class="tap-target mt-1 w-full rounded border p-2" @disabled($tenantMode !== 'new')></label>
+    <label class="block text-sm font-medium">Phone <input name="new_tenant[phone]" value="{{ old('new_tenant.phone') }}" class="tap-target mt-1 w-full rounded border p-2" @disabled($tenantMode !== 'new')></label>
+    <label class="block text-sm font-medium">Email <input name="new_tenant[email]" type="email" value="{{ old('new_tenant.email') }}" class="tap-target mt-1 w-full rounded border p-2" @disabled($tenantMode !== 'new')></label>
+    <label class="block text-sm font-medium">ID number <input name="new_tenant[id_number]" value="{{ old('new_tenant.id_number') }}" class="tap-target mt-1 w-full rounded border p-2" @disabled($tenantMode !== 'new')></label>
+    <label class="block text-sm font-medium">Nationality <input name="new_tenant[nationality]" value="{{ old('new_tenant.nationality') }}" class="tap-target mt-1 w-full rounded border p-2" @disabled($tenantMode !== 'new')></label>
+    <label class="block text-sm font-medium md:col-span-2">Tenant notes <textarea name="new_tenant[notes]" rows="3" class="mt-1 w-full rounded border p-2" @disabled($tenantMode !== 'new')>{{ old('new_tenant.notes') }}</textarea></label>
+</div>
+@endif
 <label class="block text-sm font-medium">Unit <select name="unit_id" class="tap-target mt-1 w-full rounded border p-2">@foreach($units as $unit)<option value="{{ $unit->id }}" @selected(old('unit_id', $contract->unit_id)==$unit->id)>{{ $unit->building->name }} / {{ $unit->unit_number }}</option>@endforeach</select><span class="mt-1 block text-xs text-slate-500">Select the unit covered by this contract.</span></label>
-<label class="block text-sm font-medium">Contract number <input name="contract_number" value="{{ old('contract_number', $contract->contract_number) }}" class="tap-target mt-1 w-full rounded border p-2" required></label>
+@if($contract->exists)<label class="block text-sm font-medium">Contract number <input value="{{ $contract->contract_number }}" class="tap-target mt-1 w-full rounded border bg-slate-50 p-2" readonly><span class="mt-1 block text-xs text-slate-500">Generated by the system and cannot be changed here.</span></label>@endif
 <label class="block text-sm font-medium">Status <select name="status" class="tap-target mt-1 w-full rounded border p-2">@foreach(['active','expired','terminated'] as $status)<option @selected(old('status', $contract->status)==$status)>{{ $status }}</option>@endforeach</select></label>
 <label class="block text-sm font-medium">Start date <input name="start_date" type="date" value="{{ old('start_date', optional($contract->start_date)->toDateString()) }}" class="tap-target mt-1 w-full rounded border p-2" required></label>
 <label class="block text-sm font-medium">End date <input name="end_date" type="date" value="{{ old('end_date', optional($contract->end_date)->toDateString()) }}" class="tap-target mt-1 w-full rounded border p-2" required></label>
-<label class="block text-sm font-medium">Rent amount <input name="rent_amount" type="number" step="0.01" value="{{ old('rent_amount', $contract->rent_amount) }}" class="tap-target mt-1 w-full rounded border p-2"><span class="mt-1 block text-xs text-slate-500">Used to calculate scheduled rent payments.</span></label>
-<label class="block text-sm font-medium">Payment frequency <select name="payment_frequency" class="tap-target mt-1 w-full rounded border p-2">@foreach(['monthly','quarterly','semi_annual','annual'] as $frequency)<option @selected(old('payment_frequency', $contract->payment_frequency)==$frequency)>{{ $frequency }}</option>@endforeach</select><span class="mt-1 block text-xs text-slate-500">Controls how often rent payments are generated.</span></label>
+<label class="block text-sm font-medium">Rent amount per payment period <input name="rent_amount" type="number" step="0.01" value="{{ old('rent_amount', $contract->rent_amount) }}" class="tap-target mt-1 w-full rounded border p-2"><span class="mt-1 block text-xs text-slate-500">This same amount repeats according to the selected payment frequency.</span></label>
+<label class="block text-sm font-medium">Payment frequency <select name="payment_frequency" class="tap-target mt-1 w-full rounded border p-2">@foreach(['monthly','quarterly','semi_annual','annual'] as $frequency)<option @selected(old('payment_frequency', $contract->payment_frequency)==$frequency)>{{ $frequency }}</option>@endforeach</select><span class="mt-1 block text-xs text-slate-500">Controls how often the rent amount per payment period becomes due.</span></label>
 <label class="block text-sm font-medium">Deposit amount <input name="deposit_amount" type="number" step="0.01" value="{{ old('deposit_amount', $contract->deposit_amount) }}" class="tap-target mt-1 w-full rounded border p-2"></label>
 <label class="block text-sm font-medium md:col-span-2">Notes <textarea name="notes" rows="4" class="mt-1 w-full rounded border p-2">{{ old('notes', $contract->notes) }}</textarea></label>
 <button class="tap-target w-full rounded bg-slate-900 px-4 text-white md:col-span-2">Save</button>
 </form>
+@if(! $contract->exists)
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    const radios = document.querySelectorAll('input[name="tenant_mode"]');
+    const existing = document.getElementById('existing-tenant-fields');
+    const newFields = document.getElementById('new-tenant-fields');
+
+    const setDisabled = (container, disabled) => {
+        container.querySelectorAll('input, select, textarea').forEach((field) => {
+            field.disabled = disabled;
+        });
+    };
+
+    const syncTenantMode = () => {
+        const mode = document.querySelector('input[name="tenant_mode"]:checked')?.value || 'existing';
+        const addingNew = mode === 'new';
+
+        existing.classList.toggle('hidden', addingNew);
+        newFields.classList.toggle('hidden', ! addingNew);
+        setDisabled(existing, addingNew);
+        setDisabled(newFields, ! addingNew);
+    };
+
+    radios.forEach((radio) => radio.addEventListener('change', syncTenantMode));
+    syncTenantMode();
+});
+</script>
+@endif
 @endsection

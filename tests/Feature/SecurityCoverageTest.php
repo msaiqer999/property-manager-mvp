@@ -618,9 +618,11 @@ class SecurityCoverageTest extends TestCase
             ->assertSessionHasNoErrors()
             ->assertRedirect();
 
-        $created = Contract::where('contract_number', 'MANAGER-CONTRACT-001')->firstOrFail();
+        $created = Contract::latest('id')->firstOrFail();
 
         $this->assertSame($managerA->organization_id, $created->organization_id);
+        $this->assertMatchesRegularExpression('/^CN-\d{4}-\d{6}$/', $created->contract_number);
+        $this->assertNotSame('MANAGER-CONTRACT-001', $created->contract_number);
         $this->assertGreaterThan($paymentCount, Payment::count());
 
         $this->actingAs($managerA)->put(route('contracts.update', $dataA['contract']), array_merge(
@@ -635,7 +637,7 @@ class SecurityCoverageTest extends TestCase
 
         $this->assertDatabaseHas('contracts', [
             'id' => $dataA['contract']->id,
-            'contract_number' => 'MANAGER-CONTRACT-UPDATED',
+            'contract_number' => $dataA['contract']->contract_number,
             'organization_id' => $managerA->organization_id,
         ]);
 
