@@ -40,8 +40,9 @@
 
 ## Phase 5: PWA And Field Usage
 
-- Add PWA manifest.
-- Add service worker for basic offline shell.
+- Basic installability foundation is present through a manifest, app icons, and a network-only service worker.
+- Offline application functionality is intentionally not included.
+- Production installation still requires proper HTTPS deployment and browser verification.
 - Optimize caretaker payment recording flow.
 - Add camera-first proof upload.
 - Add push notifications for overdue payments and contracts ending soon.
