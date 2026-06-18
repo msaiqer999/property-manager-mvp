@@ -8,8 +8,23 @@
 
 .tap-target {
     min-height: 44px;
+    min-width: 44px;
 }
 
 .scrollbar-soft {
     scrollbar-width: thin;
+}
+
+.mobile-table {
+    overscroll-behavior-inline: contain;
+}
+
+.mobile-table th,
+.mobile-table td {
+    vertical-align: top;
+}
+
+nav[role="navigation"] a {
+    min-height: 44px;
+    min-width: 44px;
 }

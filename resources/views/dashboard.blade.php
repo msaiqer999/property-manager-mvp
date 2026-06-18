@@ -41,7 +41,7 @@
         </div>
         @forelse($expiringSoon as $contract)
             <div class="border-t py-3 text-sm">
-                <a class="font-medium text-blue-700" href="{{ route('contracts.show', $contract) }}">{{ $contract->contract_number }}</a>
+                <a class="tap-target inline-flex items-center font-medium text-blue-700" href="{{ route('contracts.show', $contract) }}">{{ $contract->contract_number }}</a>
                 <p class="text-slate-600">{{ $contract->tenant->full_name }} · {{ $contract->unit->building->name }} / {{ $contract->unit->unit_number }}</p>
                 <p class="text-slate-500">Ends {{ $contract->end_date->toDateString() }} · {{ $contract->expiryWarningText() }}</p>
             </div>
