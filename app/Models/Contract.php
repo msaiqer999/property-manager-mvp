@@ -71,4 +71,9 @@ class Contract extends Model
             default => "Expires in {$days} days",
         };
     }
+
+    public function isRenewalEligible(): bool
+    {
+        return $this->expiryWarningGroup() !== null;
+    }
 }

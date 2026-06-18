@@ -34,16 +34,43 @@ class ContractController extends Controller
         return view('contracts.index', compact('contracts'));
     }
 
-    public function create()
+    public function create(Request $request)
     {
         Gate::authorize('create', Contract::class);
-        return view('contracts.form', $this->formData(new Contract()));
+        $renewalSource = $this->renewalSource($request->query('renew_from'));
+
+        if ($renewalSource === null) {
+            return view('contracts.form', $this->formData(new Contract()));
+        }
+
+        $durationDays = $renewalSource->start_date->diffInDays($renewalSource->end_date);
+        $startDate = $renewalSource->end_date->copy()->addDay();
+        $contract = new Contract([
+            'tenant_id' => $renewalSource->tenant_id,
+            'unit_id' => $renewalSource->unit_id,
+            'start_date' => $startDate,
+            'end_date' => $startDate->copy()->addDays($durationDays),
+            'rent_amount' => $renewalSource->rent_amount,
+            'payment_frequency' => $renewalSource->payment_frequency,
+            'deposit_amount' => 0,
+            'status' => 'active',
+        ]);
+
+        return view('contracts.form', $this->formData($contract) + compact('renewalSource'));
     }
 
     public function store(Request $request, ActivityLogger $logger)
     {
         Gate::authorize('create', Contract::class);
-        $data = $this->validated($request, true);
+        $renewalSource = $this->renewalSource($request->input('renew_from'));
+        $data = $this->validated($request, true, $renewalSource !== null);
+
+        if ($renewalSource !== null) {
+            $data['tenant_mode'] = 'existing';
+            $data['tenant_id'] = $renewalSource->tenant_id;
+            $data['unit_id'] = $renewalSource->unit_id;
+            $data['status'] = 'active';
+        }
 
         if ($data['tenant_mode'] === 'new') {
             Gate::authorize('create', Tenant::class);
@@ -187,9 +214,9 @@ class ContractController extends Controller
         abort_unless(Unit::whereKey($unitId)->whereHas('building', fn ($q) => $q->where('organization_id', $this->organizationId()))->exists(), 403);
     }
 
-    private function validated(Request $request, bool $creating = false): array
+    private function validated(Request $request, bool $creating = false, bool $renewal = false): array
     {
-        if ($creating) {
+        if ($creating && ! $renewal) {
             $request->merge(['tenant_mode' => $request->input('tenant_mode', 'existing')]);
         }
 
@@ -203,7 +230,7 @@ class ContractController extends Controller
             'notes' => ['nullable', 'string'],
         ];
 
-        if ($creating) {
+        if ($creating && ! $renewal) {
             $rules += [
                 'unit_id' => ['required', 'exists:units,id'],
                 'tenant_id' => ['required_if:tenant_mode,existing', 'nullable', 'exists:tenants,id'],
@@ -221,6 +248,20 @@ class ContractController extends Controller
         $data['deposit_amount'] = $this->moneyOrZero($data['deposit_amount'] ?? null);
 
         return $data;
+    }
+
+    private function renewalSource(mixed $contractId): ?Contract
+    {
+        if ($contractId === null || $contractId === '') {
+            return null;
+        }
+
+        $contract = Contract::with(['tenant', 'unit.building'])->findOrFail((int) $contractId);
+        Gate::authorize('view', $contract);
+        abort_unless($contract->organization_id === $this->organizationId(), 403);
+        abort_unless($contract->isRenewalEligible(), 404);
+
+        return $contract;
     }
 
     private function assertNoActiveOverlap(int $unitId, string $startDate, string $endDate, ?Contract $except = null, string $status = 'active'): void
