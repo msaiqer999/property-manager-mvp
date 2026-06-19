@@ -6,6 +6,16 @@
     direction: rtl;
 }
 
+.bidi-isolate {
+    unicode-bidi: isolate;
+}
+
+[dir="rtl"] input[type="email"],
+[dir="rtl"] input[type="number"],
+[dir="rtl"] input[type="date"] {
+    direction: ltr;
+}
+
 .tap-target {
     min-height: 44px;
     min-width: 44px;

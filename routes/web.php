@@ -9,6 +9,7 @@ use App\Http\Controllers\BuildingController;
 use App\Http\Controllers\ContractController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\ExpenseController;
+use App\Http\Controllers\LocaleController;
 use App\Http\Controllers\PaymentController;
 use App\Http\Controllers\ReportController;
 use App\Http\Controllers\TenantController;
@@ -16,6 +17,10 @@ use App\Http\Controllers\UnitController;
 use App\Http\Controllers\UserController;
 use App\Http\Middleware\EnsureAbility;
 use Illuminate\Support\Facades\Route;
+
+Route::post('/locale/{locale}', LocaleController::class)
+    ->whereIn('locale', ['en', 'ar'])
+    ->name('locale.switch');
 
 Route::middleware('guest')->group(function () {
     Route::get('/register', [RegisteredUserController::class, 'create'])->name('register');
