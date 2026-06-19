@@ -3,8 +3,8 @@
 @php($isRenewal = isset($renewalSource) && $renewalSource)
 @php($displayContract = $isRenewal ? $renewalSource : $contract)
 <div class="mb-4">
-    <h1 class="text-xl font-semibold">{{ $isRenewal ? 'Prepare renewal' : ($contract->exists ? 'Edit contract' : 'Add contract') }}</h1>
-    <p class="mt-1 text-sm text-slate-600">{{ $isRenewal ? 'This creates a new contract. The existing contract will not be changed. Existing deposit is not copied automatically.' : 'Choose an existing tenant and unit, then enter the rental terms used to generate payment schedules. '.($contract->exists ? 'The contract number is read-only.' : 'The contract number will be generated automatically.') }}</p>
+    <h1 class="text-xl font-semibold">{{ $isRenewal ? __('contracts.form.prepare_renewal_title') : ($contract->exists ? __('contracts.form.edit_title') : __('contracts.form.add_title')) }}</h1>
+    <p class="mt-1 text-sm text-slate-600">{{ $isRenewal ? __('contracts.form.renewal_description') : __('contracts.form.description').' '.($contract->exists ? __('contracts.form.number_read_only') : __('contracts.form.number_generated')) }}</p>
 </div>
 @php($tenantMode = old('tenant_mode', 'existing'))
 <form method="post" action="{{ $contract->exists ? route('contracts.update', $contract) : route('contracts.store') }}" class="grid max-w-3xl gap-4 rounded border bg-white p-4 shadow-sm md:grid-cols-2">
@@ -12,43 +12,43 @@
 @if($isRenewal)<input type="hidden" name="renew_from" value="{{ $renewalSource->id }}">@endif
 @if(! $contract->exists && ! $isRenewal)
 <fieldset class="rounded border p-3 md:col-span-2">
-    <legend class="px-1 text-sm font-medium">Tenant</legend>
+    <legend class="px-1 text-sm font-medium">{{ __('contracts.form.tenant') }}</legend>
     <div class="mt-2 grid gap-2 sm:grid-cols-2">
-        <label class="flex items-center gap-2 text-sm"><input type="radio" name="tenant_mode" value="existing" @checked($tenantMode !== 'new')> Select existing tenant</label>
-        <label class="flex items-center gap-2 text-sm"><input type="radio" name="tenant_mode" value="new" @checked($tenantMode === 'new')> Add new tenant</label>
+        <label class="flex items-center gap-2 text-sm"><input type="radio" name="tenant_mode" value="existing" @checked($tenantMode !== 'new')> {{ __('contracts.form.select_existing_tenant') }}</label>
+        <label class="flex items-center gap-2 text-sm"><input type="radio" name="tenant_mode" value="new" @checked($tenantMode === 'new')> {{ __('contracts.form.add_new_tenant') }}</label>
     </div>
 </fieldset>
 @endif
 @if($contract->exists || $isRenewal)
-<div class="block text-sm font-medium">Tenant <div class="tap-target mt-1 w-full rounded border bg-slate-50 p-2">{{ $displayContract->tenant?->full_name }}</div><span class="mt-1 block text-xs text-slate-500">{{ $isRenewal ? 'Tenant is fixed for this renewal preparation.' : 'Tenant is locked after contract creation.' }}</span></div>
+<div class="block text-sm font-medium">{{ __('contracts.form.tenant') }} <div class="tap-target mt-1 w-full rounded border bg-slate-50 p-2">{{ $displayContract->tenant?->full_name }}</div><span class="mt-1 block text-xs text-slate-500">{{ $isRenewal ? __('contracts.form.tenant_fixed_renewal') : __('contracts.form.tenant_locked') }}</span></div>
 @else
-<label id="existing-tenant-fields" class="block text-sm font-medium {{ $tenantMode === 'new' ? 'hidden' : '' }}">Tenant <select name="tenant_id" class="tap-target mt-1 w-full rounded border p-2" @disabled($tenantMode === 'new')>@foreach($tenants as $tenant)<option value="{{ $tenant->id }}" @selected(old('tenant_id', $contract->tenant_id)==$tenant->id)>{{ $tenant->full_name }}</option>@endforeach</select><span class="mt-1 block text-xs text-slate-500">Select an existing tenant record.</span></label>
+<label id="existing-tenant-fields" class="block text-sm font-medium {{ $tenantMode === 'new' ? 'hidden' : '' }}">{{ __('contracts.form.tenant') }} <select name="tenant_id" class="tap-target mt-1 w-full rounded border p-2" @disabled($tenantMode === 'new')>@foreach($tenants as $tenant)<option value="{{ $tenant->id }}" @selected(old('tenant_id', $contract->tenant_id)==$tenant->id)>{{ $tenant->full_name }}</option>@endforeach</select><span class="mt-1 block text-xs text-slate-500">{{ __('contracts.form.select_existing_tenant_hint') }}</span></label>
 @endif
 @if(! $contract->exists && ! $isRenewal)
 <div id="new-tenant-fields" class="grid gap-4 rounded border border-dashed p-3 md:col-span-2 md:grid-cols-2 {{ $tenantMode === 'new' ? '' : 'hidden' }}">
-    <p class="text-sm text-slate-600 md:col-span-2">Add tenant details here without leaving the contract workflow. The tenant will be saved as a separate record.</p>
-    <label class="block text-sm font-medium">Full name <input name="new_tenant[full_name]" value="{{ old('new_tenant.full_name') }}" class="tap-target mt-1 w-full rounded border p-2" @disabled($tenantMode !== 'new')></label>
-    <label class="block text-sm font-medium">Phone <input name="new_tenant[phone]" value="{{ old('new_tenant.phone') }}" class="tap-target mt-1 w-full rounded border p-2" @disabled($tenantMode !== 'new')></label>
-    <label class="block text-sm font-medium">Email <input name="new_tenant[email]" type="email" value="{{ old('new_tenant.email') }}" class="tap-target mt-1 w-full rounded border p-2" @disabled($tenantMode !== 'new')></label>
-    <label class="block text-sm font-medium">ID number <input name="new_tenant[id_number]" value="{{ old('new_tenant.id_number') }}" class="tap-target mt-1 w-full rounded border p-2" @disabled($tenantMode !== 'new')></label>
-    <label class="block text-sm font-medium">Nationality <input name="new_tenant[nationality]" value="{{ old('new_tenant.nationality') }}" class="tap-target mt-1 w-full rounded border p-2" @disabled($tenantMode !== 'new')></label>
-    <label class="block text-sm font-medium md:col-span-2">Tenant notes <textarea name="new_tenant[notes]" rows="3" class="mt-1 w-full rounded border p-2" @disabled($tenantMode !== 'new')>{{ old('new_tenant.notes') }}</textarea></label>
+    <p class="text-sm text-slate-600 md:col-span-2">{{ __('contracts.form.new_tenant_hint') }}</p>
+    <label class="block text-sm font-medium">{{ __('contracts.form.full_name') }} <input name="new_tenant[full_name]" value="{{ old('new_tenant.full_name') }}" class="tap-target mt-1 w-full rounded border p-2" @disabled($tenantMode !== 'new')></label>
+    <label class="block text-sm font-medium">{{ __('contracts.form.phone') }} <input name="new_tenant[phone]" value="{{ old('new_tenant.phone') }}" class="tap-target mt-1 w-full rounded border p-2" @disabled($tenantMode !== 'new')></label>
+    <label class="block text-sm font-medium">{{ __('contracts.form.email') }} <input name="new_tenant[email]" type="email" value="{{ old('new_tenant.email') }}" class="tap-target mt-1 w-full rounded border p-2" @disabled($tenantMode !== 'new')></label>
+    <label class="block text-sm font-medium">{{ __('contracts.form.id_number') }} <input name="new_tenant[id_number]" value="{{ old('new_tenant.id_number') }}" class="tap-target mt-1 w-full rounded border p-2" @disabled($tenantMode !== 'new')></label>
+    <label class="block text-sm font-medium">{{ __('contracts.form.nationality') }} <input name="new_tenant[nationality]" value="{{ old('new_tenant.nationality') }}" class="tap-target mt-1 w-full rounded border p-2" @disabled($tenantMode !== 'new')></label>
+    <label class="block text-sm font-medium md:col-span-2">{{ __('contracts.form.tenant_notes') }} <textarea name="new_tenant[notes]" rows="3" class="mt-1 w-full rounded border p-2" @disabled($tenantMode !== 'new')>{{ old('new_tenant.notes') }}</textarea></label>
 </div>
 @endif
 @if($contract->exists || $isRenewal)
-<div class="block text-sm font-medium">Unit <div class="tap-target mt-1 w-full rounded border bg-slate-50 p-2">{{ $displayContract->unit?->building?->name }} / {{ $displayContract->unit?->unit_number }}</div><span class="mt-1 block text-xs text-slate-500">{{ $isRenewal ? 'Unit is fixed for this renewal preparation.' : 'Unit is locked after contract creation.' }}</span></div>
+<div class="block text-sm font-medium">{{ __('contracts.form.unit') }} <div class="tap-target mt-1 w-full rounded border bg-slate-50 p-2">{{ $displayContract->unit?->building?->name }} / {{ $displayContract->unit?->unit_number }}</div><span class="mt-1 block text-xs text-slate-500">{{ $isRenewal ? __('contracts.form.unit_fixed_renewal') : __('contracts.form.unit_locked') }}</span></div>
 @else
-<label class="block text-sm font-medium">Unit <select name="unit_id" class="tap-target mt-1 w-full rounded border p-2">@foreach($units as $unit)<option value="{{ $unit->id }}" @selected(old('unit_id', $contract->unit_id)==$unit->id)>{{ $unit->building->name }} / {{ $unit->unit_number }} - {{ $unit->availability_label }}</option>@endforeach</select><span class="mt-1 block text-xs text-slate-500">Select the unit covered by this contract. Date overlap is checked when saving.</span></label>
+<label class="block text-sm font-medium">{{ __('contracts.form.unit') }} <select name="unit_id" class="tap-target mt-1 w-full rounded border p-2">@foreach($units as $unit)<option value="{{ $unit->id }}" @selected(old('unit_id', $contract->unit_id)==$unit->id)>{{ $unit->building->name }} / {{ $unit->unit_number }} - {{ $unit->availability_label }}</option>@endforeach</select><span class="mt-1 block text-xs text-slate-500">{{ __('contracts.form.unit_hint') }}</span></label>
 @endif
-@if($contract->exists)<label class="block text-sm font-medium">Contract number <input value="{{ $contract->contract_number }}" class="tap-target mt-1 w-full rounded border bg-slate-50 p-2" readonly><span class="mt-1 block text-xs text-slate-500">Generated by the system and cannot be changed here.</span></label>@endif
-@if($isRenewal)<div class="block text-sm font-medium">Status <div class="tap-target mt-1 w-full rounded border bg-slate-50 p-2">active</div><input type="hidden" name="status" value="active"></div>@else<label class="block text-sm font-medium">Status <select name="status" class="tap-target mt-1 w-full rounded border p-2">@foreach(['active','expired','terminated'] as $status)<option @selected(old('status', $contract->status)==$status)>{{ $status }}</option>@endforeach</select></label>@endif
-<label class="block text-sm font-medium">Start date <input name="start_date" type="date" value="{{ old('start_date', optional($contract->start_date)->toDateString()) }}" class="tap-target mt-1 w-full rounded border p-2" required></label>
-<label class="block text-sm font-medium">End date <input name="end_date" type="date" value="{{ old('end_date', optional($contract->end_date)->toDateString()) }}" class="tap-target mt-1 w-full rounded border p-2" required></label>
-<label class="block text-sm font-medium">Rent amount per payment period <input name="rent_amount" type="number" step="0.01" value="{{ old('rent_amount', $contract->rent_amount) }}" class="tap-target mt-1 w-full rounded border p-2"><span class="mt-1 block text-xs text-slate-500">This same amount repeats according to the selected payment frequency.</span></label>
-<label class="block text-sm font-medium">Payment frequency <select name="payment_frequency" class="tap-target mt-1 w-full rounded border p-2">@foreach(['monthly','quarterly','semi_annual','annual'] as $frequency)<option @selected(old('payment_frequency', $contract->payment_frequency)==$frequency)>{{ $frequency }}</option>@endforeach</select><span class="mt-1 block text-xs text-slate-500">Controls how often the rent amount per payment period becomes due.</span></label>
-<label class="block text-sm font-medium">Deposit amount <input name="deposit_amount" type="number" step="0.01" value="{{ old('deposit_amount', $contract->deposit_amount) }}" class="tap-target mt-1 w-full rounded border p-2"></label>
-<label class="block text-sm font-medium md:col-span-2">Notes <textarea name="notes" rows="4" class="mt-1 w-full rounded border p-2">{{ old('notes', $contract->notes) }}</textarea></label>
-<button class="tap-target w-full rounded bg-slate-900 px-4 text-white md:col-span-2">Save</button>
+@if($contract->exists)<label class="block text-sm font-medium">{{ __('contracts.form.contract_number') }} <input value="{{ $contract->contract_number }}" class="tap-target mt-1 w-full rounded border bg-slate-50 p-2" readonly><span class="mt-1 block text-xs text-slate-500">{{ __('contracts.form.contract_number_locked') }}</span></label>@endif
+@if($isRenewal)<div class="block text-sm font-medium">{{ __('contracts.form.status') }} <div class="tap-target mt-1 w-full rounded border bg-slate-50 p-2">{{ __('contracts.statuses.active') }}</div><input type="hidden" name="status" value="active"></div>@else<label class="block text-sm font-medium">{{ __('contracts.form.status') }} <select name="status" class="tap-target mt-1 w-full rounded border p-2">@foreach(['active','expired','terminated'] as $status)<option value="{{ $status }}" @selected(old('status', $contract->status)==$status)>{{ __('contracts.statuses.'.$status) }}</option>@endforeach</select></label>@endif
+<label class="block text-sm font-medium">{{ __('contracts.form.start_date') }} <input name="start_date" type="date" value="{{ old('start_date', optional($contract->start_date)->toDateString()) }}" class="tap-target mt-1 w-full rounded border p-2" required></label>
+<label class="block text-sm font-medium">{{ __('contracts.form.end_date') }} <input name="end_date" type="date" value="{{ old('end_date', optional($contract->end_date)->toDateString()) }}" class="tap-target mt-1 w-full rounded border p-2" required></label>
+<label class="block text-sm font-medium">{{ __('contracts.form.rent_amount') }} <input name="rent_amount" type="number" step="0.01" value="{{ old('rent_amount', $contract->rent_amount) }}" class="tap-target mt-1 w-full rounded border p-2"><span class="mt-1 block text-xs text-slate-500">{{ __('contracts.form.rent_amount_hint') }}</span></label>
+<label class="block text-sm font-medium">{{ __('contracts.form.payment_frequency') }} <select name="payment_frequency" class="tap-target mt-1 w-full rounded border p-2">@foreach(['monthly','quarterly','semi_annual','annual'] as $frequency)<option value="{{ $frequency }}" @selected(old('payment_frequency', $contract->payment_frequency)==$frequency)>{{ __('contracts.frequencies.'.$frequency) }}</option>@endforeach</select><span class="mt-1 block text-xs text-slate-500">{{ __('contracts.form.payment_frequency_hint') }}</span></label>
+<label class="block text-sm font-medium">{{ __('contracts.form.deposit_amount') }} <input name="deposit_amount" type="number" step="0.01" value="{{ old('deposit_amount', $contract->deposit_amount) }}" class="tap-target mt-1 w-full rounded border p-2"></label>
+<label class="block text-sm font-medium md:col-span-2">{{ __('contracts.form.notes') }} <textarea name="notes" rows="4" class="mt-1 w-full rounded border p-2">{{ old('notes', $contract->notes) }}</textarea></label>
+<button class="tap-target w-full rounded bg-slate-900 px-4 text-white md:col-span-2">{{ __('contracts.form.save') }}</button>
 </form>
 @if(! $contract->exists && ! $isRenewal)
 <script>

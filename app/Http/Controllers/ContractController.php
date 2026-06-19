@@ -134,7 +134,7 @@ class ContractController extends Controller
 
         if ($scheduleChanged && $this->hasRecordedPayments($contract)) {
             throw ValidationException::withMessages([
-                'start_date' => 'Contract payment terms cannot be changed after a payment has been recorded.',
+                'start_date' => __('contracts.validation.payment_terms_locked'),
             ]);
         }
 
@@ -225,7 +225,7 @@ class ContractController extends Controller
             ];
         }
 
-        $data = $request->validate($rules);
+        $data = $request->validate($rules, [], __('contracts.attributes'));
         $data['deposit_amount'] = $this->moneyOrZero($data['deposit_amount'] ?? null);
 
         return $data;
@@ -261,7 +261,7 @@ class ContractController extends Controller
 
         if ($query->exists()) {
             throw ValidationException::withMessages([
-                'unit_id' => 'This unit already has an active contract during the selected dates.',
+                'unit_id' => __('contracts.validation.overlap'),
             ]);
         }
     }
@@ -296,7 +296,7 @@ class ContractController extends Controller
         }
 
         throw ValidationException::withMessages([
-            'status' => 'This contract status transition is not allowed.',
+            'status' => __('contracts.validation.invalid_status_transition'),
         ]);
     }
 
@@ -322,18 +322,23 @@ class ContractController extends Controller
             ->values();
 
         if ($unit->status === 'maintenance') {
-            $label = 'Maintenance';
+            $label = __('contracts.availability.maintenance');
         } else {
-            $label = $currentEndDate ? "Occupied until {$currentEndDate}" : 'Available now';
+            $label = $currentEndDate
+                ? __('contracts.availability.occupied_until', ['date' => $currentEndDate])
+                : __('contracts.availability.available_now');
         }
 
         if ($futureContracts->isNotEmpty()) {
             $futureContract = $futureContracts->first();
             $additionalFutureCount = $futureContracts->count() - 1;
-            $label .= '; future contract '.$futureContract->start_date->toDateString().' to '.$futureContract->end_date->toDateString();
+            $label .= '; '.__('contracts.availability.future_contract', [
+                'start' => $futureContract->start_date->toDateString(),
+                'end' => $futureContract->end_date->toDateString(),
+            ]);
 
             if ($additionalFutureCount > 0) {
-                $label .= ' +'.$additionalFutureCount.' more';
+                $label .= ' '.__('contracts.availability.more', ['count' => $additionalFutureCount]);
             }
         }
 
@@ -392,7 +397,7 @@ class ContractController extends Controller
 
         if ($duplicateExists) {
             throw ValidationException::withMessages([
-                'new_tenant.full_name' => 'A tenant with matching details already exists. Select the existing tenant instead.',
+                'new_tenant.full_name' => __('contracts.validation.duplicate_tenant'),
             ]);
         }
     }
