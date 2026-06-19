@@ -18,21 +18,18 @@ class UserController extends Controller
 
     public function index()
     {
-        abort_unless(auth()->user()->role->value === 'owner', 403);
         Gate::authorize('viewAny', User::class);
         return view('users.index', ['users' => User::where('organization_id', $this->organizationId())->orderBy('name')->get()]);
     }
 
     public function create()
     {
-        abort_unless(auth()->user()->role->value === 'owner', 403);
         Gate::authorize('create', User::class);
         return view('users.form', ['user' => new User()]);
     }
 
     public function store(Request $request)
     {
-        abort_unless(auth()->user()->role->value === 'owner', 403);
         Gate::authorize('create', User::class);
         $data = $this->validated($request);
         $data['organization_id'] = $this->organizationId();
@@ -43,14 +40,12 @@ class UserController extends Controller
 
     public function edit(User $user)
     {
-        abort_unless(auth()->user()->role->value === 'owner' && $user->organization_id === $this->organizationId(), 403);
         Gate::authorize('update', $user);
         return view('users.form', compact('user'));
     }
 
     public function update(Request $request, User $user)
     {
-        abort_unless(auth()->user()->role->value === 'owner' && $user->organization_id === $this->organizationId(), 403);
         Gate::authorize('update', $user);
         $data = $this->validated($request, true);
         abort_if($this->wouldDemoteLastOwner($user, $data['role']), 422, 'A workspace must have at least one active owner.');
@@ -73,7 +68,6 @@ class UserController extends Controller
 
     public function deactivate(User $user)
     {
-        abort_unless(auth()->user()->role->value === 'owner' && $user->organization_id === $this->organizationId(), 403);
         Gate::authorize('deactivate', $user);
         abort_if($this->isLastActiveOwner($user), 422, 'A workspace must have at least one active owner.');
 
@@ -87,7 +81,6 @@ class UserController extends Controller
 
     public function reactivate(User $user)
     {
-        abort_unless(auth()->user()->role->value === 'owner' && $user->organization_id === $this->organizationId(), 403);
         Gate::authorize('reactivate', $user);
 
         if (! $user->is_active) {

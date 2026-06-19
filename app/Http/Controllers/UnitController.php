@@ -40,21 +40,19 @@ class UnitController extends Controller
 
     public function show(Unit $unit)
     {
-        $this->authorizeUnit($unit);
+        Gate::authorize('view', $unit);
         return view('units.show', compact('unit'));
     }
 
     public function edit(Unit $unit)
     {
         Gate::authorize('update', $unit);
-        $this->authorizeUnit($unit);
         return view('units.form', ['unit' => $unit, 'buildings' => $this->buildings()]);
     }
 
     public function update(Request $request, Unit $unit, ActivityLogger $logger)
     {
         Gate::authorize('update', $unit);
-        $this->authorizeUnit($unit);
         $oldStatus = $unit->status;
         $unit->update($this->validated($request));
         $logger->log($oldStatus !== $unit->status ? 'unit.status_changed' : 'unit.updated', $unit);
@@ -63,9 +61,7 @@ class UnitController extends Controller
 
     public function destroy(Unit $unit, ActivityLogger $logger)
     {
-        abort_unless(auth()->user()->role->value === 'owner', 403);
         Gate::authorize('delete', $unit);
-        $this->authorizeUnit($unit);
         $unit->delete();
         $logger->log('unit.deleted', $unit);
         return redirect()->route('units.index');
@@ -74,12 +70,6 @@ class UnitController extends Controller
     private function buildings()
     {
         return Building::where('organization_id', $this->organizationId())->orderBy('name')->get();
-    }
-
-    private function authorizeUnit(Unit $unit): void
-    {
-        Gate::authorize('view', $unit);
-        abort_unless($unit->building()->where('organization_id', $this->organizationId())->exists(), 403);
     }
 
     private function validated(Request $request): array

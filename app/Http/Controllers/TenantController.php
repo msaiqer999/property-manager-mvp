@@ -36,21 +36,19 @@ class TenantController extends Controller
 
     public function show(Tenant $tenant)
     {
-        $this->authorizeTenant($tenant);
+        Gate::authorize('view', $tenant);
         return view('tenants.show', compact('tenant'));
     }
 
     public function edit(Tenant $tenant)
     {
         Gate::authorize('update', $tenant);
-        $this->authorizeTenant($tenant);
         return view('tenants.form', compact('tenant'));
     }
 
     public function update(Request $request, Tenant $tenant, ActivityLogger $logger)
     {
         Gate::authorize('update', $tenant);
-        $this->authorizeTenant($tenant);
         $tenant->update($this->validated($request));
         $logger->log('tenant.updated', $tenant);
         return redirect()->route('tenants.show', $tenant);
@@ -58,17 +56,9 @@ class TenantController extends Controller
 
     public function destroy(Tenant $tenant)
     {
-        abort_unless(auth()->user()->role->value === 'owner', 403);
         Gate::authorize('delete', $tenant);
-        $this->authorizeTenant($tenant);
         $tenant->delete();
         return redirect()->route('tenants.index');
-    }
-
-    private function authorizeTenant(Tenant $tenant): void
-    {
-        Gate::authorize('view', $tenant);
-        abort_unless($tenant->organization_id === $this->organizationId(), 403);
     }
 
     private function validated(Request $request): array

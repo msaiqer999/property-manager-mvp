@@ -113,23 +113,19 @@ class ContractController extends Controller
 
     public function show(Contract $contract)
     {
-        $this->authorizeContract($contract);
+        Gate::authorize('view', $contract);
         return view('contracts.show', compact('contract'));
     }
 
     public function edit(Contract $contract)
     {
-        abort_if(auth()->user()->role->value === 'accountant' || auth()->user()->role->value === 'caretaker', 403);
         Gate::authorize('update', $contract);
-        $this->authorizeContract($contract);
         return view('contracts.form', $this->formData($contract));
     }
 
     public function update(Request $request, Contract $contract, ActivityLogger $logger)
     {
-        abort_if(auth()->user()->role->value === 'accountant' || auth()->user()->role->value === 'caretaker', 403);
         Gate::authorize('update', $contract);
-        $this->authorizeContract($contract);
         $data = $this->validated($request);
         $this->assertImmutableContractInputs($request, $contract);
         $this->assertValidStatusTransition($contract, $data['status']);
@@ -162,9 +158,7 @@ class ContractController extends Controller
 
     public function destroy(Contract $contract)
     {
-        abort_unless(auth()->user()->role->value === 'owner', 403);
         Gate::authorize('delete', $contract);
-        $this->authorizeContract($contract);
         $contract->delete();
         return redirect()->route('contracts.index');
     }
@@ -172,7 +166,6 @@ class ContractController extends Controller
     public function pdf(Contract $contract)
     {
         Gate::authorize('exportPdf', $contract);
-        $this->authorizeContract($contract);
         return Pdf::loadView('pdf.contract', compact('contract'))->download("contract-{$contract->contract_number}.pdf");
     }
 
@@ -192,26 +185,14 @@ class ContractController extends Controller
         ];
     }
 
-    private function authorizeContract(Contract $contract): void
-    {
-        Gate::authorize('view', $contract);
-        abort_unless($contract->organization_id === $this->organizationId(), 403);
-    }
-
-    private function authorizeContractInputs(array $data): void
-    {
-        $this->authorizeTenantInput($data['tenant_id']);
-        $this->authorizeUnitInput($data['unit_id']);
-    }
-
     private function authorizeTenantInput(int $tenantId): void
     {
-        abort_unless(Tenant::where('organization_id', $this->organizationId())->whereKey($tenantId)->exists(), 403);
+        Gate::authorize('view', Tenant::findOrFail($tenantId));
     }
 
     private function authorizeUnitInput(int $unitId): void
     {
-        abort_unless(Unit::whereKey($unitId)->whereHas('building', fn ($q) => $q->where('organization_id', $this->organizationId()))->exists(), 403);
+        Gate::authorize('view', Unit::findOrFail($unitId));
     }
 
     private function validated(Request $request, bool $creating = false, bool $renewal = false): array
@@ -258,7 +239,6 @@ class ContractController extends Controller
 
         $contract = Contract::with(['tenant', 'unit.building'])->findOrFail((int) $contractId);
         Gate::authorize('view', $contract);
-        abort_unless($contract->organization_id === $this->organizationId(), 403);
         abort_unless($contract->isRenewalEligible(), 404);
 
         return $contract;
@@ -289,7 +269,7 @@ class ContractController extends Controller
     private function lockOwnedUnit(int $unitId): Unit
     {
         $unit = Unit::whereKey($unitId)->lockForUpdate()->firstOrFail();
-        abort_unless($unit->building()->where('organization_id', $this->organizationId())->exists(), 403);
+        Gate::authorize('view', $unit);
 
         return $unit;
     }

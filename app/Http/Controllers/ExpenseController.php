@@ -31,14 +31,12 @@ class ExpenseController extends Controller
 
     public function create()
     {
-        abort_unless(auth()->user()->role->can('manage-expenses'), 403);
         Gate::authorize('create', Expense::class);
         return view('expenses.form', $this->formData(new Expense()));
     }
 
     public function store(Request $request, ActivityLogger $logger)
     {
-        abort_unless(auth()->user()->role->can('manage-expenses'), 403);
         Gate::authorize('create', Expense::class);
         $data = $this->validated($request);
         $this->authorizeExpenseInputs($data);
@@ -56,23 +54,19 @@ class ExpenseController extends Controller
 
     public function show(Expense $expense)
     {
-        $this->authorizeExpense($expense);
+        Gate::authorize('view', $expense);
         return view('expenses.show', compact('expense'));
     }
 
     public function edit(Expense $expense)
     {
-        abort_unless(auth()->user()->role->can('manage-expenses'), 403);
         Gate::authorize('update', $expense);
-        $this->authorizeExpense($expense);
         return view('expenses.form', $this->formData($expense));
     }
 
     public function update(Request $request, Expense $expense, ActivityLogger $logger)
     {
-        abort_unless(auth()->user()->role->can('manage-expenses'), 403);
         Gate::authorize('update', $expense);
-        $this->authorizeExpense($expense);
         $data = $this->validated($request);
         $this->authorizeExpenseInputs($data);
 
@@ -88,9 +82,7 @@ class ExpenseController extends Controller
 
     public function destroy(Expense $expense)
     {
-        abort_unless(auth()->user()->role->value === 'owner', 403);
         Gate::authorize('delete', $expense);
-        $this->authorizeExpense($expense);
         $expense->delete();
         return redirect()->route('expenses.index');
     }
@@ -105,18 +97,12 @@ class ExpenseController extends Controller
         return Building::where('organization_id', $this->organizationId())->orderBy('name')->get();
     }
 
-    private function authorizeExpense(Expense $expense): void
-    {
-        Gate::authorize('view', $expense);
-        abort_unless($expense->organization_id === $this->organizationId(), 403);
-    }
-
     private function authorizeExpenseInputs(array $data): void
     {
-        abort_unless(Building::where('organization_id', $this->organizationId())->whereKey($data['building_id'])->exists(), 403);
+        Gate::authorize('view', Building::findOrFail($data['building_id']));
 
         if (! empty($data['unit_id'])) {
-            abort_unless(Unit::whereKey($data['unit_id'])->whereHas('building', fn ($q) => $q->where('organization_id', $this->organizationId()))->exists(), 403);
+            Gate::authorize('view', Unit::findOrFail($data['unit_id']));
         }
     }
 

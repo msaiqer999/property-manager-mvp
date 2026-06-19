@@ -33,21 +33,18 @@ class BuildingController extends Controller
     public function show(Building $building)
     {
         Gate::authorize('view', $building);
-        abort_unless($building->organization_id === $this->organizationId(), 403);
         return view('buildings.show', compact('building'));
     }
 
     public function edit(Building $building)
     {
         Gate::authorize('update', $building);
-        abort_unless($building->organization_id === $this->organizationId(), 403);
         return view('buildings.form', compact('building'));
     }
 
     public function update(Request $request, Building $building, ActivityLogger $logger)
     {
         Gate::authorize('update', $building);
-        abort_unless($building->organization_id === $this->organizationId(), 403);
         $building->update($this->validated($request));
         $logger->log('building.updated', $building);
         return redirect()->route('buildings.show', $building);
@@ -55,9 +52,7 @@ class BuildingController extends Controller
 
     public function destroy(Building $building, ActivityLogger $logger)
     {
-        abort_unless(auth()->user()->role->value === 'owner', 403);
         Gate::authorize('delete', $building);
-        abort_unless($building->organization_id === $this->organizationId(), 403);
         $building->delete();
         $logger->log('building.deleted', $building);
         return redirect()->route('buildings.index');
