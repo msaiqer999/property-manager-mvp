@@ -70,7 +70,7 @@
         <h2 class="mb-3 font-semibold">{{ __('app.dashboard.latest_expenses') }}</h2>
         @forelse($latestExpenses as $expense)
             <div class="flex items-center justify-between gap-3 border-t py-3 text-sm">
-                <span class="capitalize">{{ $expense->category }}</span>
+                <span class="capitalize">{{ __('expenses.categories.'.$expense->category) }}</span>
                 <span class="bidi-isolate font-medium" dir="ltr">{{ number_format($expense->amount, 2) }}</span>
             </div>
         @empty <p class="text-sm text-slate-500">{{ __('app.dashboard.no_expenses') }}</p> @endforelse

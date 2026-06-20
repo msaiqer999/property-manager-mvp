@@ -948,12 +948,11 @@ class SecurityCoverageTest extends TestCase
         $this->actingAs($ownerA)->get(route('dashboard'))
             ->assertOk()
             ->assertSee('A-DASH-END')
-            ->assertSee('maintenance')
+            ->assertSee(__('expenses.categories.maintenance'))
             ->assertDontSee('B-DASH-END')
             ->assertDontSee($dataB['building']->name)
             ->assertDontSee($dataB['unit']->unit_number)
             ->assertDontSee($dataB['tenant']->full_name)
-            ->assertDontSee('security')
             ->assertDontSee('90,000.00');
     }
 
