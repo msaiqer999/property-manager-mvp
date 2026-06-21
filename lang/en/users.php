@@ -24,4 +24,8 @@ return [
         'deactivate' => 'Deactivate',
         'reactivate' => 'Reactivate',
     ],
+
+    'validation' => [
+        'last_active_owner_required' => 'A workspace must have at least one active owner.',
+    ],
 ];

@@ -24,4 +24,8 @@ return [
         'deactivate' => 'تعطيل',
         'reactivate' => 'إعادة تفعيل',
     ],
+
+    'validation' => [
+        'last_active_owner_required' => 'يجب أن تضم المنشأة مالكًا نشطًا واحدًا على الأقل.',
+    ],
 ];

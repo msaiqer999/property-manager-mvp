@@ -19,13 +19,15 @@ class UserController extends Controller
     public function index()
     {
         Gate::authorize('viewAny', User::class);
+
         return view('users.index', ['users' => User::where('organization_id', $this->organizationId())->orderBy('name')->get()]);
     }
 
     public function create()
     {
         Gate::authorize('create', User::class);
-        return view('users.form', ['user' => new User()]);
+
+        return view('users.form', ['user' => new User]);
     }
 
     public function store(Request $request)
@@ -35,12 +37,14 @@ class UserController extends Controller
         $data['organization_id'] = $this->organizationId();
         $data['password'] = Hash::make($data['password']);
         User::create($data);
+
         return redirect()->route('users.index');
     }
 
     public function edit(User $user)
     {
         Gate::authorize('update', $user);
+
         return view('users.form', compact('user'));
     }
 
@@ -48,7 +52,7 @@ class UserController extends Controller
     {
         Gate::authorize('update', $user);
         $data = $this->validated($request, true);
-        abort_if($this->wouldDemoteLastOwner($user, $data['role']), 422, 'A workspace must have at least one active owner.');
+        abort_if($this->wouldDemoteLastOwner($user, $data['role']), 422, __('users.validation.last_active_owner_required'));
 
         $oldRole = $user->role->value;
 
@@ -69,7 +73,7 @@ class UserController extends Controller
     public function deactivate(User $user)
     {
         Gate::authorize('deactivate', $user);
-        abort_if($this->isLastActiveOwner($user), 422, 'A workspace must have at least one active owner.');
+        abort_if($this->isLastActiveOwner($user), 422, __('users.validation.last_active_owner_required'));
 
         if ($user->is_active) {
             $user->update(['is_active' => false]);

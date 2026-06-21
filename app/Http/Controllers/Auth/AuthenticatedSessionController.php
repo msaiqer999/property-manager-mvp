@@ -22,7 +22,7 @@ class AuthenticatedSessionController extends Controller
         ]);
 
         if (! Auth::attempt($credentials + ['is_active' => true], $request->boolean('remember'))) {
-            throw ValidationException::withMessages(['email' => 'Invalid login details.']);
+            throw ValidationException::withMessages(['email' => __('auth.failed')]);
         }
 
         $request->session()->regenerate();
