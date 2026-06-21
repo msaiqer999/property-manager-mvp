@@ -32,7 +32,8 @@ class ExpenseController extends Controller
     public function create()
     {
         Gate::authorize('create', Expense::class);
-        return view('expenses.form', $this->formData(new Expense()));
+
+        return view('expenses.form', $this->formData(new Expense));
     }
 
     public function store(Request $request, ActivityLogger $logger)
@@ -55,12 +56,14 @@ class ExpenseController extends Controller
     public function show(Expense $expense)
     {
         Gate::authorize('view', $expense);
+
         return view('expenses.show', compact('expense'));
     }
 
     public function edit(Expense $expense)
     {
         Gate::authorize('update', $expense);
+
         return view('expenses.form', $this->formData($expense));
     }
 
@@ -77,14 +80,15 @@ class ExpenseController extends Controller
 
         $expense->update($data);
         $logger->log('expense.updated', $expense);
+
         return redirect()->route('expenses.show', $expense);
     }
 
     public function destroy(Expense $expense)
     {
         Gate::authorize('delete', $expense);
-        $expense->delete();
-        return redirect()->route('expenses.index');
+
+        abort(422, __('expenses.lifecycle.cannot_delete_financial_record'));
     }
 
     private function formData(Expense $expense): array

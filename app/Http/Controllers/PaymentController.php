@@ -30,12 +30,14 @@ class PaymentController extends Controller
     public function show(Payment $payment)
     {
         Gate::authorize('view', $payment);
+
         return view('payments.show', compact('payment'));
     }
 
     public function edit(Payment $payment)
     {
         Gate::authorize('recordPayment', $payment);
+
         return view('payments.form', compact('payment'));
     }
 
@@ -44,21 +46,29 @@ class PaymentController extends Controller
         Gate::authorize('recordPayment', $payment);
 
         $data = $request->validate([
-            'amount_paid' => ['required', 'numeric', 'min:0', 'max:'.$payment->amount_due],
+            'amount_paid' => ['required', 'numeric', 'min:0', 'max:'.$payment->amount_due, 'regex:/^\d{1,10}(?:\.\d{1,2})?$/'],
             'payment_date' => ['nullable', 'date'],
             'payment_method' => ['nullable', 'in:cash,bank_transfer,cheque,other'],
             'proof_image' => ['nullable', 'image', 'max:4096'],
             'notes' => ['nullable', 'string'],
         ]);
 
+        $currentPaidMinor = $this->decimalToMinorUnits((string) $payment->amount_paid);
+        $incomingPaidMinor = $this->decimalToMinorUnits((string) $data['amount_paid']);
+        $amountDueMinor = $this->decimalToMinorUnits((string) $payment->amount_due);
+
+        if ($currentPaidMinor > 0 && $incomingPaidMinor < $currentPaidMinor) {
+            abort(422, __('payments.validation.paid_amount_cannot_decrease'));
+        }
+
         if ($request->hasFile('proof_image')) {
             Gate::authorize('uploadProof', $payment);
             $data['proof_image'] = $request->file('proof_image')->store('payment-proofs');
         }
 
-        $data['status'] = $data['amount_paid'] >= $payment->amount_due
+        $data['status'] = $incomingPaidMinor >= $amountDueMinor
             ? 'paid'
-            : ($data['amount_paid'] > 0 ? 'partial' : ($payment->due_date->isPast() ? 'overdue' : 'pending'));
+            : ($incomingPaidMinor > 0 ? 'partial' : ($payment->due_date->isPast() ? 'overdue' : 'pending'));
         $data['created_by'] = auth()->id();
         $payment->update($data);
 
@@ -67,9 +77,23 @@ class PaymentController extends Controller
         return redirect()->route('payments.show', $payment);
     }
 
+    private function decimalToMinorUnits(string $value): int
+    {
+        $value = trim($value);
+
+        if (! preg_match('/^\d{1,10}(?:\.\d{1,2})?$/', $value)) {
+            abort(422);
+        }
+
+        [$whole, $fraction] = array_pad(explode('.', $value, 2), 2, '');
+
+        return ((int) $whole * 100) + (int) str_pad($fraction, 2, '0');
+    }
+
     public function receipt(Payment $payment)
     {
         Gate::authorize('exportReceiptPdf', $payment);
+
         return Pdf::loadView('pdf.receipt', compact('payment'))->download("payment-receipt-{$payment->id}.pdf");
     }
 }

@@ -17,28 +17,37 @@ class BuildingController extends Controller
         Gate::authorize('viewAny', Building::class);
 
         $buildings = Building::where('organization_id', $this->organizationId())->latest()->paginate(15);
+
         return view('buildings.index', compact('buildings'));
     }
 
-    public function create() { Gate::authorize('create', Building::class); return view('buildings.form', ['building' => new Building()]); }
+    public function create()
+    {
+        Gate::authorize('create', Building::class);
+
+        return view('buildings.form', ['building' => new Building]);
+    }
 
     public function store(Request $request, ActivityLogger $logger)
     {
         Gate::authorize('create', Building::class);
         $building = Building::create($this->validated($request) + ['organization_id' => $this->organizationId()]);
         $logger->log('building.created', $building);
+
         return redirect()->route('buildings.show', $building);
     }
 
     public function show(Building $building)
     {
         Gate::authorize('view', $building);
+
         return view('buildings.show', compact('building'));
     }
 
     public function edit(Building $building)
     {
         Gate::authorize('update', $building);
+
         return view('buildings.form', compact('building'));
     }
 
@@ -47,14 +56,21 @@ class BuildingController extends Controller
         Gate::authorize('update', $building);
         $building->update($this->validated($request));
         $logger->log('building.updated', $building);
+
         return redirect()->route('buildings.show', $building);
     }
 
     public function destroy(Building $building, ActivityLogger $logger)
     {
         Gate::authorize('delete', $building);
+
+        if ($building->units()->withTrashed()->exists() || $building->expenses()->exists()) {
+            abort(422, __('buildings.lifecycle.cannot_archive_with_history'));
+        }
+
         $building->delete();
         $logger->log('building.deleted', $building);
+
         return redirect()->route('buildings.index');
     }
 

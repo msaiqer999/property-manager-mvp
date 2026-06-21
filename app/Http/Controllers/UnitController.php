@@ -28,25 +28,33 @@ class UnitController extends Controller
         return view('units.index', ['units' => $units, 'buildings' => $this->buildings()]);
     }
 
-    public function create() { Gate::authorize('create', Unit::class); return view('units.form', ['unit' => new Unit(), 'buildings' => $this->buildings()]); }
+    public function create()
+    {
+        Gate::authorize('create', Unit::class);
+
+        return view('units.form', ['unit' => new Unit, 'buildings' => $this->buildings()]);
+    }
 
     public function store(Request $request, ActivityLogger $logger)
     {
         Gate::authorize('create', Unit::class);
         $unit = Unit::create($this->validated($request));
         $logger->log('unit.created', $unit);
+
         return redirect()->route('units.show', $unit);
     }
 
     public function show(Unit $unit)
     {
         Gate::authorize('view', $unit);
+
         return view('units.show', compact('unit'));
     }
 
     public function edit(Unit $unit)
     {
         Gate::authorize('update', $unit);
+
         return view('units.form', ['unit' => $unit, 'buildings' => $this->buildings()]);
     }
 
@@ -56,14 +64,21 @@ class UnitController extends Controller
         $oldStatus = $unit->status;
         $unit->update($this->validated($request));
         $logger->log($oldStatus !== $unit->status ? 'unit.status_changed' : 'unit.updated', $unit);
+
         return redirect()->route('units.show', $unit);
     }
 
     public function destroy(Unit $unit, ActivityLogger $logger)
     {
         Gate::authorize('delete', $unit);
+
+        if ($unit->contracts()->exists() || $unit->expenses()->exists()) {
+            abort(422, __('units.lifecycle.cannot_archive_with_history'));
+        }
+
         $unit->delete();
         $logger->log('unit.deleted', $unit);
+
         return redirect()->route('units.index');
     }
 

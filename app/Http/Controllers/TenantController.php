@@ -24,25 +24,33 @@ class TenantController extends Controller
         return view('tenants.index', compact('tenants'));
     }
 
-    public function create() { Gate::authorize('create', Tenant::class); return view('tenants.form', ['tenant' => new Tenant()]); }
+    public function create()
+    {
+        Gate::authorize('create', Tenant::class);
+
+        return view('tenants.form', ['tenant' => new Tenant]);
+    }
 
     public function store(Request $request, ActivityLogger $logger)
     {
         Gate::authorize('create', Tenant::class);
         $tenant = Tenant::create($this->validated($request) + ['organization_id' => $this->organizationId()]);
         $logger->log('tenant.created', $tenant);
+
         return redirect()->route('tenants.show', $tenant);
     }
 
     public function show(Tenant $tenant)
     {
         Gate::authorize('view', $tenant);
+
         return view('tenants.show', compact('tenant'));
     }
 
     public function edit(Tenant $tenant)
     {
         Gate::authorize('update', $tenant);
+
         return view('tenants.form', compact('tenant'));
     }
 
@@ -51,13 +59,21 @@ class TenantController extends Controller
         Gate::authorize('update', $tenant);
         $tenant->update($this->validated($request));
         $logger->log('tenant.updated', $tenant);
+
         return redirect()->route('tenants.show', $tenant);
     }
 
-    public function destroy(Tenant $tenant)
+    public function destroy(Tenant $tenant, ActivityLogger $logger)
     {
         Gate::authorize('delete', $tenant);
+
+        if ($tenant->contracts()->exists()) {
+            abort(422, __('tenants.lifecycle.cannot_delete_with_contracts'));
+        }
+
         $tenant->delete();
+        $logger->log('tenant.deleted', $tenant);
+
         return redirect()->route('tenants.index');
     }
 

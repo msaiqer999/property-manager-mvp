@@ -44,4 +44,8 @@ return [
         'chalet' => 'شاليه',
         'other' => 'أخرى',
     ],
+
+    'lifecycle' => [
+        'cannot_archive_with_history' => 'لا يمكن أرشفة وحدة مرتبطة بعقود أو مصروفات.',
+    ],
 ];

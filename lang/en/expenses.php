@@ -38,4 +38,8 @@ return [
         'date' => 'Date',
         'notes' => 'Notes',
     ],
+
+    'lifecycle' => [
+        'cannot_delete_financial_record' => 'Financial expense records cannot be deleted.',
+    ],
 ];

@@ -18,4 +18,8 @@ return [
     'sections' => [
         'contracts' => 'العقود',
     ],
+
+    'lifecycle' => [
+        'cannot_delete_with_contracts' => 'لا يمكن حذف مستأجر مرتبط بعقود.',
+    ],
 ];

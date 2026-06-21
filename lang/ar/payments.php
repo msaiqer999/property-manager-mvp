@@ -53,4 +53,8 @@ return [
         'paid' => 'المدفوع',
         'status' => 'الحالة',
     ],
+
+    'validation' => [
+        'paid_amount_cannot_decrease' => 'لا يمكن تخفيض المبلغ المدفوع بعد تسجيله.',
+    ],
 ];

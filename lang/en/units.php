@@ -44,4 +44,8 @@ return [
         'chalet' => 'Chalet',
         'other' => 'Other',
     ],
+
+    'lifecycle' => [
+        'cannot_archive_with_history' => 'A unit linked to contracts or expenses cannot be archived.',
+    ],
 ];

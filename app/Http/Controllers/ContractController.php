@@ -9,13 +9,12 @@ use App\Models\Unit;
 use App\Services\ActivityLogger;
 use App\Support\PaymentSchedule;
 use App\Support\UnitOccupancy;
+use Barryvdh\DomPDF\Facade\Pdf;
+use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Validation\ValidationException;
-use Illuminate\Validation\Rule;
-use Barryvdh\DomPDF\Facade\Pdf;
 
 class ContractController extends Controller
 {
@@ -40,7 +39,7 @@ class ContractController extends Controller
         $renewalSource = $this->renewalSource($request->query('renew_from'));
 
         if ($renewalSource === null) {
-            return view('contracts.form', $this->formData(new Contract()));
+            return view('contracts.form', $this->formData(new Contract));
         }
 
         $durationDays = $renewalSource->start_date->diffInDays($renewalSource->end_date);
@@ -114,12 +113,14 @@ class ContractController extends Controller
     public function show(Contract $contract)
     {
         Gate::authorize('view', $contract);
+
         return view('contracts.show', compact('contract'));
     }
 
     public function edit(Contract $contract)
     {
         Gate::authorize('update', $contract);
+
         return view('contracts.form', $this->formData($contract));
     }
 
@@ -153,19 +154,21 @@ class ContractController extends Controller
             UnitOccupancy::sync($unit);
         });
         $logger->log('contract.updated', $contract);
+
         return redirect()->route('contracts.show', $contract);
     }
 
     public function destroy(Contract $contract)
     {
         Gate::authorize('delete', $contract);
-        $contract->delete();
-        return redirect()->route('contracts.index');
+
+        abort(422, __('contracts.validation.cannot_delete'));
     }
 
     public function pdf(Contract $contract)
     {
         Gate::authorize('exportPdf', $contract);
+
         return Pdf::loadView('pdf.contract', compact('contract'))->download("contract-{$contract->contract_number}.pdf");
     }
 

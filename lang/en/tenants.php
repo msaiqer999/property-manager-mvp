@@ -18,4 +18,8 @@ return [
     'sections' => [
         'contracts' => 'Contracts',
     ],
+
+    'lifecycle' => [
+        'cannot_delete_with_contracts' => 'A tenant linked to contracts cannot be deleted.',
+    ],
 ];

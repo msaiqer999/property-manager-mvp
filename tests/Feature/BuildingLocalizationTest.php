@@ -181,6 +181,8 @@ class BuildingLocalizationTest extends TestCase
             'organization_id' => $owner->organization_id,
             'name' => 'Owner Updated Building Localization Unique',
         ]);
+        $this->assertSame(0, $ownerDisposable->units()->withTrashed()->count());
+        $this->assertSame(0, $ownerDisposable->expenses()->count());
         $this->actingAs($owner)->delete(route('buildings.destroy', $ownerDisposable))
             ->assertRedirect(route('buildings.index'));
         $this->assertSoftDeleted('buildings', [

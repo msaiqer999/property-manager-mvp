@@ -12,6 +12,7 @@ return [
         'tenant' => [
             'created' => 'Tenant created',
             'updated' => 'Tenant updated',
+            'deleted' => 'Tenant deleted',
         ],
         'contract' => [
             'created' => 'Contract created',

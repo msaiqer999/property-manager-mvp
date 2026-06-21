@@ -38,4 +38,8 @@ return [
         'date' => 'التاريخ',
         'notes' => 'ملاحظات',
     ],
+
+    'lifecycle' => [
+        'cannot_delete_financial_record' => 'لا يمكن حذف سجلات المصروفات المالية.',
+    ],
 ];

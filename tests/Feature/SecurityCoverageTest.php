@@ -193,7 +193,7 @@ class SecurityCoverageTest extends TestCase
         Storage::fake('local');
 
         $this->actingAs($caretakerA)->put(route('payments.update', $dataA['payment']), [
-            'amount_paid' => 250,
+            'amount_paid' => $dataA['payment']->amount_due,
             'payment_date' => now()->toDateString(),
             'payment_method' => 'cash',
             'proof_image' => UploadedFile::fake()->createWithContent(
@@ -204,7 +204,7 @@ class SecurityCoverageTest extends TestCase
 
         $this->assertDatabaseHas('payments', [
             'id' => $dataA['payment']->id,
-            'amount_paid' => 250,
+            'amount_paid' => $dataA['payment']->amount_due,
             'created_by' => $caretakerA->id,
         ]);
 
@@ -237,6 +237,11 @@ class SecurityCoverageTest extends TestCase
     public function test_only_owner_can_delete_own_organization_expenses(): void
     {
         [$ownerA, $managerA, $accountantA, , , $dataA] = $this->createTwoOrganizationScenario();
+        $activityCount = ActivityLog::where([
+            'action' => 'expense.deleted',
+            'subject_type' => Expense::class,
+            'subject_id' => $dataA['expense']->id,
+        ])->count();
 
         $this->actingAs($managerA)->delete(route('expenses.destroy', $dataA['expense']))
             ->assertForbidden();
@@ -249,9 +254,14 @@ class SecurityCoverageTest extends TestCase
         $this->assertDatabaseHas('expenses', ['id' => $dataA['expense']->id]);
 
         $this->actingAs($ownerA)->delete(route('expenses.destroy', $dataA['expense']))
-            ->assertRedirect(route('expenses.index'));
+            ->assertStatus(422);
 
-        $this->assertDatabaseMissing('expenses', ['id' => $dataA['expense']->id]);
+        $this->assertDatabaseHas('expenses', ['id' => $dataA['expense']->id]);
+        $this->assertSame($activityCount, ActivityLog::where([
+            'action' => 'expense.deleted',
+            'subject_type' => Expense::class,
+            'subject_id' => $dataA['expense']->id,
+        ])->count());
     }
 
     public function test_cross_organization_invoice_upload_update_is_denied(): void
@@ -330,11 +340,24 @@ class SecurityCoverageTest extends TestCase
     public function test_owner_can_delete_own_organization_building(): void
     {
         [$ownerA, , , , , $dataA] = $this->createTwoOrganizationScenario();
+        $activityCount = ActivityLog::where([
+            'action' => 'building.deleted',
+            'subject_type' => Building::class,
+            'subject_id' => $dataA['building']->id,
+        ])->count();
 
         $this->actingAs($ownerA)->delete(route('buildings.destroy', $dataA['building']))
-            ->assertRedirect(route('buildings.index'));
+            ->assertStatus(422);
 
-        $this->assertSoftDeleted('buildings', ['id' => $dataA['building']->id]);
+        $this->assertDatabaseHas('buildings', [
+            'id' => $dataA['building']->id,
+            'deleted_at' => null,
+        ]);
+        $this->assertSame($activityCount, ActivityLog::where([
+            'action' => 'building.deleted',
+            'subject_type' => Building::class,
+            'subject_id' => $dataA['building']->id,
+        ])->count());
     }
 
     public function test_accountant_and_caretaker_cannot_access_building_pages(): void
@@ -432,11 +455,24 @@ class SecurityCoverageTest extends TestCase
     public function test_owner_can_delete_own_organization_unit(): void
     {
         [$ownerA, , , , , $dataA] = $this->createTwoOrganizationScenario();
+        $activityCount = ActivityLog::where([
+            'action' => 'unit.deleted',
+            'subject_type' => Unit::class,
+            'subject_id' => $dataA['unit']->id,
+        ])->count();
 
         $this->actingAs($ownerA)->delete(route('units.destroy', $dataA['unit']))
-            ->assertRedirect(route('units.index'));
+            ->assertStatus(422);
 
-        $this->assertSoftDeleted('units', ['id' => $dataA['unit']->id]);
+        $this->assertDatabaseHas('units', [
+            'id' => $dataA['unit']->id,
+            'deleted_at' => null,
+        ]);
+        $this->assertSame($activityCount, ActivityLog::where([
+            'action' => 'unit.deleted',
+            'subject_type' => Unit::class,
+            'subject_id' => $dataA['unit']->id,
+        ])->count());
     }
 
     public function test_accountant_and_caretaker_cannot_access_unit_pages(): void
@@ -544,11 +580,21 @@ class SecurityCoverageTest extends TestCase
     public function test_owner_can_delete_own_organization_tenant(): void
     {
         [$ownerA, , , , , $dataA] = $this->createTwoOrganizationScenario();
+        $activityCount = ActivityLog::where([
+            'action' => 'tenant.deleted',
+            'subject_type' => Tenant::class,
+            'subject_id' => $dataA['tenant']->id,
+        ])->count();
 
         $this->actingAs($ownerA)->delete(route('tenants.destroy', $dataA['tenant']))
-            ->assertRedirect(route('tenants.index'));
+            ->assertStatus(422);
 
-        $this->assertDatabaseMissing('tenants', ['id' => $dataA['tenant']->id]);
+        $this->assertDatabaseHas('tenants', ['id' => $dataA['tenant']->id]);
+        $this->assertSame($activityCount, ActivityLog::where([
+            'action' => 'tenant.deleted',
+            'subject_type' => Tenant::class,
+            'subject_id' => $dataA['tenant']->id,
+        ])->count());
     }
 
     public function test_accountant_and_caretaker_cannot_access_tenant_pages(): void
@@ -669,11 +715,25 @@ class SecurityCoverageTest extends TestCase
     public function test_owner_can_delete_own_organization_contract(): void
     {
         [$ownerA, , , , , $dataA] = $this->createTwoOrganizationScenario();
+        $paymentIds = $dataA['contract']->payments()->pluck('id')->all();
+        $activityCount = ActivityLog::where([
+            'action' => 'contract.deleted',
+            'subject_type' => Contract::class,
+            'subject_id' => $dataA['contract']->id,
+        ])->count();
 
         $this->actingAs($ownerA)->delete(route('contracts.destroy', $dataA['contract']))
-            ->assertRedirect(route('contracts.index'));
+            ->assertStatus(422);
 
-        $this->assertDatabaseMissing('contracts', ['id' => $dataA['contract']->id]);
+        $this->assertDatabaseHas('contracts', ['id' => $dataA['contract']->id]);
+        foreach ($paymentIds as $paymentId) {
+            $this->assertDatabaseHas('payments', ['id' => $paymentId]);
+        }
+        $this->assertSame($activityCount, ActivityLog::where([
+            'action' => 'contract.deleted',
+            'subject_type' => Contract::class,
+            'subject_id' => $dataA['contract']->id,
+        ])->count());
     }
 
     public function test_accountant_and_caretaker_cannot_access_contract_pages(): void

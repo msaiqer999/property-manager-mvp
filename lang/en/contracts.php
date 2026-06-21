@@ -114,6 +114,7 @@ return [
         'overlap' => 'This unit already has an active contract during the selected dates.',
         'invalid_status_transition' => 'This contract status transition is not allowed.',
         'duplicate_tenant' => 'A tenant with matching details already exists. Select the existing tenant instead.',
+        'cannot_delete' => 'Contract records cannot be deleted.',
     ],
 
     'attributes' => [

@@ -228,9 +228,17 @@ class TenantLocalizationTest extends TestCase
             'full_name' => 'Owner Updated Tenant Localization Unique',
             'email' => 'owner-updated-tenant-localization@example.com',
         ]);
+        $this->assertSame(0, $ownerDisposable->contracts()->count());
         $this->actingAs($owner)->delete(route('tenants.destroy', $ownerDisposable))
             ->assertRedirect(route('tenants.index'));
         $this->assertDatabaseMissing('tenants', ['id' => $ownerDisposable->id]);
+        $this->assertDatabaseHas('activity_logs', [
+            'organization_id' => $owner->organization_id,
+            'user_id' => $owner->id,
+            'action' => 'tenant.deleted',
+            'subject_type' => Tenant::class,
+            'subject_id' => $ownerDisposable->id,
+        ]);
 
         $this->actingAs($manager)->get(route('tenants.index'))->assertOk();
         $this->actingAs($manager)->get(route('tenants.show', $tenant))->assertOk();

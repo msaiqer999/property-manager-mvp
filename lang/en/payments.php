@@ -53,4 +53,8 @@ return [
         'paid' => 'Paid',
         'status' => 'Status',
     ],
+
+    'validation' => [
+        'paid_amount_cannot_decrease' => 'The recorded paid amount cannot be reduced.',
+    ],
 ];

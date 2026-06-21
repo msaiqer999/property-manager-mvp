@@ -12,6 +12,7 @@ return [
         'tenant' => [
             'created' => 'تم إنشاء مستأجر',
             'updated' => 'تم تحديث مستأجر',
+            'deleted' => 'تم حذف مستأجر',
         ],
         'contract' => [
             'created' => 'تم إنشاء عقد',

@@ -106,6 +106,7 @@ class ActivityLogLocalizationTest extends TestCase
             'building.deleted' => 'تم حذف مبنى',
             'tenant.created' => 'تم إنشاء مستأجر',
             'tenant.updated' => 'تم تحديث مستأجر',
+            'tenant.deleted' => 'تم حذف مستأجر',
             'contract.created' => 'تم إنشاء عقد',
             'contract.updated' => 'تم تحديث عقد',
             'expense.created' => 'تم إنشاء مصروف',
