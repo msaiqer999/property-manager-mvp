@@ -111,6 +111,7 @@ class ActivityLogLocalizationTest extends TestCase
             'contract.updated' => 'تم تحديث عقد',
             'expense.created' => 'تم إنشاء مصروف',
             'expense.updated' => 'تم تحديث مصروف',
+            'expense.voided' => 'تم إبطال سجل مالي',
             'payment.recorded' => 'تم تسجيل دفعة',
             'unit.created' => 'تم إنشاء وحدة',
             'unit.updated' => 'تم تحديث وحدة',

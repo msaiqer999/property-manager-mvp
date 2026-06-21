@@ -97,6 +97,117 @@ class HistoricalDeletionSafetyTest extends TestCase
         $this->assertSame($activityCount, $this->activityCount('expense.deleted', Expense::class, $expense->id));
     }
 
+    public function test_expense_can_be_voided_without_mutating_financial_fields_and_logs_reason(): void
+    {
+        [$owner, $data] = $this->scenario();
+        $expense = $data['expense'];
+        $activityCount = $this->activityCount('expense.voided', Expense::class, $expense->id);
+
+        $this->actingAs($owner)
+            ->patch(route('expenses.void', $expense), [
+                'void_reason' => 'Duplicate invoice entered by mistake.',
+            ])
+            ->assertRedirect(route('expenses.show', $expense));
+
+        $expense->refresh();
+
+        $this->assertNotNull($expense->voided_at);
+        $this->assertSame($owner->id, $expense->voided_by);
+        $this->assertSame('Duplicate invoice entered by mistake.', $expense->void_reason);
+        $this->assertSame('250.00', number_format((float) $expense->amount, 2, '.', ''));
+        $this->assertSame('2026-06-10', $expense->expense_date->toDateString());
+        $this->assertSame('expense-invoices/original.png', $expense->invoice_image);
+        $this->assertSame('Historical safety expense.', $expense->notes);
+        $this->assertSame($activityCount + 1, $this->activityCount('expense.voided', Expense::class, $expense->id));
+        $this->assertDatabaseHas('activity_logs', [
+            'organization_id' => $owner->organization_id,
+            'user_id' => $owner->id,
+            'action' => 'expense.voided',
+            'subject_type' => Expense::class,
+            'subject_id' => $expense->id,
+            'description' => 'Duplicate invoice entered by mistake.',
+        ]);
+    }
+
+    public function test_voided_expense_cannot_be_edited_or_voided_again(): void
+    {
+        [$owner, $data] = $this->scenario();
+        $expense = $data['expense'];
+
+        $this->actingAs($owner)
+            ->patch(route('expenses.void', $expense), [
+                'void_reason' => 'Original void reason.',
+            ])
+            ->assertRedirect(route('expenses.show', $expense));
+
+        $this->actingAs($owner)
+            ->get(route('expenses.edit', $expense))
+            ->assertStatus(422);
+
+        $this->actingAs($owner)
+            ->put(route('expenses.update', $expense), $this->expensePayload($expense, [
+                'amount' => '999.99',
+                'notes' => 'Attempted voided edit.',
+            ]))
+            ->assertStatus(422);
+
+        $this->actingAs($owner)
+            ->patch(route('expenses.void', $expense), [
+                'void_reason' => 'Second void reason.',
+            ])
+            ->assertStatus(422);
+
+        $expense->refresh();
+
+        $this->assertSame('250.00', number_format((float) $expense->amount, 2, '.', ''));
+        $this->assertSame('Historical safety expense.', $expense->notes);
+        $this->assertSame('Original void reason.', $expense->void_reason);
+        $this->assertSame(1, $this->activityCount('expense.voided', Expense::class, $expense->id));
+    }
+
+    public function test_expense_lifecycle_filter_defaults_to_active_records(): void
+    {
+        [$owner, $data] = $this->scenario();
+        $voidedExpense = $data['expense'];
+        $activeExpense = Expense::create([
+            'organization_id' => $owner->organization_id,
+            'building_id' => $data['building']->id,
+            'unit_id' => $data['unit']->id,
+            'category' => 'cleaning',
+            'amount' => '125.00',
+            'expense_date' => '2026-06-11',
+            'invoice_image' => 'expense-invoices/active.png',
+            'notes' => 'Active expense remains visible.',
+            'created_by' => $owner->id,
+        ]);
+
+        $this->actingAs($owner)
+            ->patch(route('expenses.void', $voidedExpense), [
+                'void_reason' => 'Filter test void.',
+            ])
+            ->assertRedirect(route('expenses.show', $voidedExpense));
+
+        $this->actingAs($owner)
+            ->get(route('expenses.index'))
+            ->assertOk()
+            ->assertSee('125.00')
+            ->assertDontSee('250.00');
+
+        $this->actingAs($owner)
+            ->get(route('expenses.index', ['lifecycle' => 'voided']))
+            ->assertOk()
+            ->assertSee('250.00')
+            ->assertDontSee('125.00');
+
+        $this->actingAs($owner)
+            ->get(route('expenses.index', ['lifecycle' => 'all']))
+            ->assertOk()
+            ->assertSee('250.00')
+            ->assertSee('125.00');
+
+        $this->assertDatabaseHas('expenses', ['id' => $activeExpense->id, 'voided_at' => null]);
+    }
+
     public function test_building_with_active_unit_cannot_be_archived(): void
     {
         [$owner] = $this->scenario();
@@ -623,6 +734,18 @@ class HistoricalDeletionSafetyTest extends TestCase
             'payment_date' => optional($payment->payment_date)->toDateString(),
             'payment_method' => $payment->payment_method,
             'notes' => $payment->notes,
+        ];
+    }
+
+    private function expensePayload(Expense $expense, array $overrides = []): array
+    {
+        return $overrides + [
+            'building_id' => $expense->building_id,
+            'unit_id' => $expense->unit_id,
+            'category' => $expense->category,
+            'amount' => $expense->amount,
+            'expense_date' => $expense->expense_date->toDateString(),
+            'notes' => $expense->notes,
         ];
     }
 

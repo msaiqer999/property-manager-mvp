@@ -21,6 +21,7 @@ return [
         'expense' => [
             'created' => 'تم إنشاء مصروف',
             'updated' => 'تم تحديث مصروف',
+            'voided' => 'تم إبطال سجل مالي',
         ],
         'payment' => [
             'recorded' => 'تم تسجيل دفعة',

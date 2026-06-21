@@ -21,6 +21,7 @@ return [
         'expense' => [
             'created' => 'Expense created',
             'updated' => 'Expense updated',
+            'voided' => 'Expense voided',
         ],
         'payment' => [
             'recorded' => 'Payment recorded',

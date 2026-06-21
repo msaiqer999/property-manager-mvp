@@ -2,6 +2,7 @@
 
 namespace App\Policies;
 
+use App\Enums\Role;
 use App\Models\Expense;
 use App\Models\User;
 
@@ -31,12 +32,18 @@ class ExpensePolicy
 
     public function delete(User $user, Expense $expense): bool
     {
-        return $user->role->value === 'owner'
+        return $user->role === Role::Owner
             && $expense->organization_id === $user->organization_id;
     }
 
     public function uploadInvoice(User $user, Expense $expense): bool
     {
         return $this->update($user, $expense);
+    }
+
+    public function voidExpense(User $user, Expense $expense): bool
+    {
+        return $user->role === Role::Owner
+            && $expense->organization_id === $user->organization_id;
     }
 }

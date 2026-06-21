@@ -36,7 +36,7 @@ class DashboardController extends Controller
 
         return view('dashboard', [
             'monthlyIncome' => Payment::where('organization_id', $orgId)->where('status', 'paid')->whereBetween('payment_date', [$start, $end])->sum('amount_paid'),
-            'monthlyExpenses' => Expense::where('organization_id', $orgId)->whereBetween('expense_date', [$start, $end])->sum('amount'),
+            'monthlyExpenses' => Expense::where('organization_id', $orgId)->notVoided()->whereBetween('expense_date', [$start, $end])->sum('amount'),
             'overdueAmount' => Payment::where('organization_id', $orgId)
                 ->where('due_date', '<', now()->toDateString())
                 ->where('status', '!=', 'paid')
@@ -46,7 +46,7 @@ class DashboardController extends Controller
             'expiringSoon' => $expiringSoon->take(5),
             'expiryCounts' => $expiryCounts,
             'latestPayments' => Payment::where('organization_id', $orgId)->latest()->take(5)->get(),
-            'latestExpenses' => Expense::where('organization_id', $orgId)->latest()->take(5)->get(),
+            'latestExpenses' => Expense::where('organization_id', $orgId)->notVoided()->latest()->take(5)->get(),
         ]);
     }
 }

@@ -100,6 +100,44 @@ class DashboardLocalizationTest extends TestCase
             ->assertDontSee('Other organization dashboard expense.');
     }
 
+    public function test_dashboard_excludes_voided_expenses_from_totals_and_latest_expenses(): void
+    {
+        $this->seed(DatabaseSeeder::class);
+
+        $owner = User::where('email', 'owner@example.com')->firstOrFail();
+        $activeExpense = $this->dashboardExpense($owner, [
+            'building' => 'Active Dashboard Expense Building',
+            'unit' => 'ACTIVE-DASH-101',
+            'category' => 'cleaning',
+            'amount' => 111.11,
+            'date' => now()->startOfMonth()->toDateString(),
+            'notes' => 'Active dashboard expense.',
+            'created_at' => now()->addDay(),
+        ]);
+        $voidedExpense = $this->dashboardExpense($owner, [
+            'building' => 'Voided Dashboard Expense Building',
+            'unit' => 'VOID-DASH-101',
+            'category' => 'maintenance',
+            'amount' => 999999,
+            'date' => now()->startOfMonth()->toDateString(),
+            'notes' => 'Voided dashboard expense.',
+            'created_at' => now()->addDays(2),
+        ]);
+        $voidedExpense->forceFill([
+            'voided_at' => now(),
+            'voided_by' => $owner->id,
+            'void_reason' => 'Excluded from dashboard.',
+        ])->saveQuietly();
+
+        $this->actingAs($owner)
+            ->withSession(['locale' => 'en'])
+            ->get(route('dashboard'))
+            ->assertOk()
+            ->assertSee(number_format((float) $activeExpense->amount, 2))
+            ->assertDontSee('999,999.00')
+            ->assertDontSee('Voided dashboard expense.');
+    }
+
     public function test_dashboard_route_and_authorization_behavior_remain_unchanged(): void
     {
         $this->seed(DatabaseSeeder::class);

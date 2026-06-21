@@ -2,8 +2,8 @@
 
 namespace Tests\Feature;
 
-use App\Models\Contract;
 use App\Models\Building;
+use App\Models\Contract;
 use App\Models\Expense;
 use App\Models\Organization;
 use App\Models\Payment;
@@ -118,6 +118,25 @@ class ReportLocalizationTest extends TestCase
             ->assertDontSee('999,999.00');
     }
 
+    public function test_report_totals_exclude_voided_expenses(): void
+    {
+        $this->seed(DatabaseSeeder::class);
+
+        $owner = User::where('email', 'owner@example.com')->firstOrFail();
+        [$income, $expenses, $netProfit] = $this->currentMonthTotals($owner);
+
+        $this->createVoidedCurrentMonthExpense($owner, 999999);
+
+        $this->actingAs($owner)
+            ->withSession(['locale' => 'en'])
+            ->get(route('reports.index'))
+            ->assertOk()
+            ->assertSee('dir="ltr">'.number_format($income, 2).'</p>', false)
+            ->assertSee('dir="ltr">'.number_format($expenses, 2).'</p>', false)
+            ->assertSee('dir="ltr">'.number_format($netProfit, 2).'</p>', false)
+            ->assertDontSee('999,999.00');
+    }
+
     private function currentMonthTotals(User $user): array
     {
         $start = now()->startOfMonth();
@@ -128,6 +147,7 @@ class ReportLocalizationTest extends TestCase
             ->whereBetween('payment_date', [$start, $end])
             ->sum('amount_paid');
         $expenses = Expense::where('organization_id', $user->organization_id)
+            ->notVoided()
             ->whereBetween('expense_date', [$start, $end])
             ->sum('amount');
 
@@ -182,6 +202,30 @@ class ReportLocalizationTest extends TestCase
             'payment_date' => now()->startOfMonth()->toDateString(),
             'status' => 'paid',
         ]);
+    }
+
+    private function createVoidedCurrentMonthExpense(User $owner, int $amount): void
+    {
+        $building = Building::create([
+            'organization_id' => $owner->organization_id,
+            'name' => 'Voided Report Expense Building',
+            'location' => 'Abu Dhabi',
+        ]);
+
+        $expense = Expense::create([
+            'organization_id' => $owner->organization_id,
+            'building_id' => $building->id,
+            'category' => 'maintenance',
+            'amount' => $amount,
+            'expense_date' => now()->startOfMonth()->toDateString(),
+            'created_by' => $owner->id,
+        ]);
+
+        $expense->forceFill([
+            'voided_at' => now(),
+            'voided_by' => $owner->id,
+            'void_reason' => 'Excluded from report totals.',
+        ])->saveQuietly();
     }
 
     private function reportTypes(): array

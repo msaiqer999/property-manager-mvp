@@ -58,7 +58,10 @@ Route::middleware('auth')->group(function () {
         Route::get('payments/{payment}/receipt', [PaymentController::class, 'receipt'])->name('payments.receipt');
     });
 
-    Route::middleware(EnsureAbility::class.':view-expenses')->resource('expenses', ExpenseController::class);
+    Route::middleware(EnsureAbility::class.':view-expenses')->group(function () {
+        Route::patch('expenses/{expense}/void', [ExpenseController::class, 'voidExpense'])->name('expenses.void');
+        Route::resource('expenses', ExpenseController::class);
+    });
 
     Route::middleware(EnsureAbility::class.':view-reports')->group(function () {
         Route::get('reports', [ReportController::class, 'index'])->name('reports.index');

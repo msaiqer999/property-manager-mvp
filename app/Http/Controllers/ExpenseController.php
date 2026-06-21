@@ -8,7 +8,9 @@ use App\Models\Expense;
 use App\Models\Unit;
 use App\Services\ActivityLogger;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Validation\ValidationException;
 
 class ExpenseController extends Controller
 {
@@ -18,15 +20,25 @@ class ExpenseController extends Controller
     {
         Gate::authorize('viewAny', Expense::class);
 
+        $lifecycle = $this->lifecycleFilter($request);
+
         $expenses = Expense::with(['building', 'unit'])
             ->where('organization_id', $this->organizationId())
+            ->when($lifecycle === 'active', fn ($q) => $q->notVoided())
+            ->when($lifecycle === 'voided', fn ($q) => $q->onlyVoided())
             ->when($request->building_id, fn ($q, $id) => $q->where('building_id', $id))
             ->when($request->unit_id, fn ($q, $id) => $q->where('unit_id', $id))
             ->when($request->category, fn ($q, $category) => $q->where('category', $category))
             ->latest('expense_date')
-            ->paginate(20);
+            ->paginate(20)
+            ->withQueryString();
 
-        return view('expenses.index', ['expenses' => $expenses, 'buildings' => $this->buildings()]);
+        return view('expenses.index', [
+            'expenses' => $expenses,
+            'buildings' => $this->buildings(),
+            'units' => Unit::whereHas('building', fn ($q) => $q->where('organization_id', $this->organizationId()))->orderBy('unit_number')->get(),
+            'lifecycle' => $lifecycle,
+        ]);
     }
 
     public function create()
@@ -57,12 +69,15 @@ class ExpenseController extends Controller
     {
         Gate::authorize('view', $expense);
 
+        $expense->load('voidedBy');
+
         return view('expenses.show', compact('expense'));
     }
 
     public function edit(Expense $expense)
     {
         Gate::authorize('update', $expense);
+        $this->ensureExpenseNotVoided($expense);
 
         return view('expenses.form', $this->formData($expense));
     }
@@ -70,6 +85,8 @@ class ExpenseController extends Controller
     public function update(Request $request, Expense $expense, ActivityLogger $logger)
     {
         Gate::authorize('update', $expense);
+        $this->ensureExpenseNotVoided($expense);
+
         $data = $this->validated($request);
         $this->authorizeExpenseInputs($data);
 
@@ -80,6 +97,37 @@ class ExpenseController extends Controller
 
         $expense->update($data);
         $logger->log('expense.updated', $expense);
+
+        return redirect()->route('expenses.show', $expense);
+    }
+
+    public function voidExpense(Request $request, Expense $expense, ActivityLogger $logger)
+    {
+        Gate::authorize('voidExpense', $expense);
+
+        if ($expense->voided_at !== null) {
+            abort(422, __('expenses.lifecycle.already_voided'));
+        }
+
+        $reason = $this->voidReason($request);
+
+        DB::transaction(function () use ($expense, $logger, $reason) {
+            $updated = Expense::whereKey($expense->id)
+                ->where('organization_id', $this->organizationId())
+                ->whereNull('voided_at')
+                ->update([
+                    'voided_at' => now(),
+                    'voided_by' => auth()->id(),
+                    'void_reason' => $reason,
+                ]);
+
+            if ($updated !== 1) {
+                abort(422, __('expenses.lifecycle.already_voided'));
+            }
+
+            $expense->refresh();
+            $logger->log('expense.voided', $expense, $reason);
+        });
 
         return redirect()->route('expenses.show', $expense);
     }
@@ -108,6 +156,37 @@ class ExpenseController extends Controller
         if (! empty($data['unit_id'])) {
             Gate::authorize('view', Unit::findOrFail($data['unit_id']));
         }
+    }
+
+    private function lifecycleFilter(Request $request): string
+    {
+        $lifecycle = $request->query('lifecycle', 'active');
+
+        return in_array($lifecycle, ['active', 'voided', 'all'], true) ? $lifecycle : 'active';
+    }
+
+    private function ensureExpenseNotVoided(Expense $expense): void
+    {
+        if ($expense->voided_at !== null) {
+            abort(422, __('expenses.lifecycle.cannot_edit_voided'));
+        }
+    }
+
+    private function voidReason(Request $request): string
+    {
+        $data = $request->validate([
+            'void_reason' => ['required', 'string', 'max:1000'],
+        ]);
+
+        $reason = trim(preg_replace('/\s+/u', ' ', $data['void_reason']));
+
+        if ($reason === '') {
+            throw ValidationException::withMessages([
+                'void_reason' => __('validation.required', ['attribute' => __('expenses.attributes.void_reason')]),
+            ]);
+        }
+
+        return $reason;
     }
 
     private function validated(Request $request): array

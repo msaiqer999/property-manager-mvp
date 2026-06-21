@@ -19,6 +19,7 @@ class ReportController extends Controller
         abort_if(auth()->user()->role->value === 'caretaker', 403);
         abort_unless($authorization->viewReports(auth()->user()), 403);
         abort_unless($authorization->viewProfitData(auth()->user()), 403);
+
         return view('reports.index', $this->summaryData());
     }
 
@@ -41,7 +42,7 @@ class ReportController extends Controller
         $start = now()->startOfMonth();
         $end = now()->endOfMonth();
         $income = Payment::where('organization_id', $orgId)->where('status', 'paid')->whereBetween('payment_date', [$start, $end])->sum('amount_paid');
-        $expenses = Expense::where('organization_id', $orgId)->whereBetween('expense_date', [$start, $end])->sum('amount');
+        $expenses = Expense::where('organization_id', $orgId)->notVoided()->whereBetween('expense_date', [$start, $end])->sum('amount');
 
         return [
             'income' => $income,
@@ -75,7 +76,7 @@ class ReportController extends Controller
                     ->get(),
             ],
             'expenses' => [
-                'rows' => Expense::with('building', 'unit')->where('organization_id', $orgId)->latest('expense_date')->get(),
+                'rows' => Expense::with('building', 'unit')->where('organization_id', $orgId)->notVoided()->latest('expense_date')->get(),
             ],
             'overdue' => [
                 'rows' => Payment::with('contract.tenant', 'contract.unit.building')

@@ -62,6 +62,9 @@ class SecurityCoverageTest extends TestCase
         $this->actingAs($ownerA)->get(route('expenses.edit', $dataB['expense']))->assertForbidden();
         $this->actingAs($ownerA)->put(route('expenses.update', $dataB['expense']), $this->expensePayload($dataB))
             ->assertForbidden();
+        $this->actingAs($ownerA)->patch(route('expenses.void', $dataB['expense']), [
+            'void_reason' => 'Cross organization void attempt.',
+        ])->assertForbidden();
 
         $this->actingAs($ownerA)->get(route('users.edit', $dataB['owner']))->assertForbidden();
         $this->actingAs($ownerA)->put(route('users.update', $dataB['owner']), [
@@ -147,7 +150,7 @@ class SecurityCoverageTest extends TestCase
 
         $this->actingAs($ownerA)->get(route('expenses.index'))
             ->assertOk()
-            ->assertDontSee('Security');
+            ->assertDontSee($dataB['building']->name);
 
         $this->actingAs($ownerA)->get(route('users.index'))
             ->assertOk()
@@ -232,6 +235,10 @@ class SecurityCoverageTest extends TestCase
 
         $this->actingAs($caretakerA)->delete(route('expenses.destroy', $dataA['expense']))
             ->assertForbidden();
+
+        $this->actingAs($caretakerA)->patch(route('expenses.void', $dataA['expense']), [
+            'void_reason' => 'Caretaker void attempt.',
+        ])->assertForbidden();
     }
 
     public function test_only_owner_can_delete_own_organization_expenses(): void
@@ -245,11 +252,17 @@ class SecurityCoverageTest extends TestCase
 
         $this->actingAs($managerA)->delete(route('expenses.destroy', $dataA['expense']))
             ->assertForbidden();
+        $this->actingAs($managerA)->patch(route('expenses.void', $dataA['expense']), [
+            'void_reason' => 'Manager void attempt.',
+        ])->assertForbidden();
 
         $this->assertDatabaseHas('expenses', ['id' => $dataA['expense']->id]);
 
         $this->actingAs($accountantA)->delete(route('expenses.destroy', $dataA['expense']))
             ->assertForbidden();
+        $this->actingAs($accountantA)->patch(route('expenses.void', $dataA['expense']), [
+            'void_reason' => 'Accountant void attempt.',
+        ])->assertForbidden();
 
         $this->assertDatabaseHas('expenses', ['id' => $dataA['expense']->id]);
 

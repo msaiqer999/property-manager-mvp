@@ -184,6 +184,7 @@ class ExpenseLocalizationTest extends TestCase
         $this->actingAs($manager)->delete(route('expenses.destroy', $expense))->assertForbidden();
 
         $this->actingAs($accountant)->get(route('expenses.index'))->assertOk();
+        $this->actingAs($accountant)->get(route('expenses.index'))->assertDontSee('Add expense');
         $this->actingAs($accountant)->get(route('expenses.create'))->assertForbidden();
         $this->actingAs($accountant)->get(route('expenses.edit', $expense))->assertForbidden();
 

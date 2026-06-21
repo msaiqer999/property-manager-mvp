@@ -8,6 +8,7 @@ return [
     'view' => 'View',
     'edit_action' => 'Edit',
     'not_available' => 'N/A',
+    'empty' => 'No expenses found.',
 
     'categories' => [
         'maintenance' => 'Maintenance',
@@ -37,9 +38,33 @@ return [
         'amount' => 'Amount',
         'date' => 'Date',
         'notes' => 'Notes',
+        'invoice' => 'Invoice',
+        'status' => 'Status',
+        'action' => 'Action',
     ],
 
     'lifecycle' => [
+        'active' => 'Active',
+        'all' => 'All',
+        'already_voided' => 'This financial expense record has already been voided.',
         'cannot_delete_financial_record' => 'Financial expense records cannot be deleted.',
+        'cannot_edit_voided' => 'Voided financial expense records cannot be edited.',
+        'confirm_void' => 'Void this financial expense record? The amount, date, invoice, and notes will remain unchanged.',
+        'void' => 'Void financial record',
+        'void_reason' => 'Void reason',
+        'voided' => 'Voided',
+        'voided_at' => 'Voided at',
+        'voided_by' => 'Voided by',
+        'voided_filter' => 'Voided',
+    ],
+
+    'filters' => [
+        'all_buildings' => 'All buildings',
+        'all_units' => 'All units',
+        'all_categories' => 'All categories',
+    ],
+
+    'attributes' => [
+        'void_reason' => 'void reason',
     ],
 ];
