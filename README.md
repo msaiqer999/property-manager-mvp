@@ -25,6 +25,10 @@ reports, and activity logs.
 
 ## Setup
 
+This setup path is for local development and demo use. Real pilot deployment
+must use the pilot-safe onboarding sequence in
+[Deployment Notes](docs/deployment-notes.md).
+
 From the project root:
 
 ```bash
@@ -46,6 +50,7 @@ Update `.env` if needed:
 APP_NAME="Property Manager"
 APP_URL=http://127.0.0.1:8000
 APP_LOCALE=en
+REGISTRATION_ENABLED=true
 
 DB_CONNECTION=pgsql
 DB_HOST=127.0.0.1
@@ -61,6 +66,8 @@ Run migrations and seed demo data:
 php artisan migrate:fresh --seed
 php artisan storage:link
 ```
+
+Never run php artisan migrate:fresh, php artisan db:wipe, or demo seeders against the real pilot database.
 
 Run the frontend and backend:
 
@@ -126,10 +133,30 @@ soon, latest payments, and latest expenses.
 ## Useful Commands
 
 ```bash
+php artisan pilot:create-owner
 php artisan payments:mark-overdue
 php artisan test
 php artisan route:list
 ```
+
+## Pilot Onboarding
+
+For a real pilot, public self-registration should remain disabled. Create the
+first owner from a trusted server console instead:
+
+1. Keep the application unavailable publicly or behind restricted access.
+2. Set all production environment values, including `REGISTRATION_ENABLED=false`.
+3. Run `php artisan config:clear`.
+4. Run `php artisan config:cache`.
+5. Run migrations only: `php artisan migrate --force`.
+6. Run `php artisan pilot:create-owner` from the trusted server console.
+7. Verify owner login through restricted access.
+8. Verify as a guest that GET and POST `/register` return 404.
+9. Only then expose the application to intended pilot users.
+10. Keep `REGISTRATION_ENABLED=false`.
+
+Automated tests should explicitly configure registration state and use an
+isolated test database.
 
 ## Documentation
 

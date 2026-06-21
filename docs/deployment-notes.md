@@ -54,6 +54,29 @@ npm ci
 npm run build
 ```
 
+## Real Pilot Onboarding
+
+Use this sequence for the Abu Dhabi pilot or any real pilot database:
+
+1. Keep the application unavailable publicly or behind restricted access.
+2. Set all production environment values, including `REGISTRATION_ENABLED=false`.
+3. Run `php artisan config:clear`.
+4. Run `php artisan config:cache`.
+5. Run migrations only: `php artisan migrate --force`.
+6. Run `php artisan pilot:create-owner` from the trusted server console.
+7. Verify owner login through restricted access.
+8. Verify as a guest that GET and POST `/register` return 404.
+9. Only then expose the application to intended pilot users.
+10. Keep `REGISTRATION_ENABLED=false`.
+
+Never run php artisan migrate:fresh, php artisan db:wipe, or demo seeders against the real pilot database.
+
+Local demo environments may use `REGISTRATION_ENABLED=true` and
+`php artisan migrate:fresh --seed`.
+
+Automated tests should explicitly configure registration state and use an
+isolated test database.
+
 ## File Storage
 
 Current application stores uploaded proofs and invoices on the local private disk.

@@ -10,7 +10,9 @@
         <label class="flex items-center gap-2 text-sm"><input name="remember" type="checkbox"> {{ __('app.auth.remember_me') }}</label>
         <button class="tap-target w-full rounded bg-slate-900 px-4 text-white">{{ __('app.auth.login') }}</button>
         <a href="{{ route('password.request') }}" class="block text-center text-sm text-slate-600">{{ __('app.auth.forgot_password') }}</a>
+        @if(config('app.registration_enabled', true))
         <a href="{{ route('register') }}" class="block text-center text-sm text-slate-600">{{ __('app.auth.create_account') }}</a>
+        @endif
     </form>
 </div>
 @endsection
