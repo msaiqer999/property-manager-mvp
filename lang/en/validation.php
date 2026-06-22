@@ -160,6 +160,7 @@ return [
     'attributes' => [
         'amount' => 'amount',
         'amount_paid' => 'amount paid',
+        'archive_reason' => 'archive reason',
         'building_id' => 'building',
         'category' => 'category',
         'deposit_amount' => 'deposit amount',

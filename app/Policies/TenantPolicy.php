@@ -2,6 +2,7 @@
 
 namespace App\Policies;
 
+use App\Enums\Role;
 use App\Models\Tenant;
 use App\Models\User;
 
@@ -31,7 +32,13 @@ class TenantPolicy
 
     public function delete(User $user, Tenant $tenant): bool
     {
-        return $user->role->value === 'owner'
+        return $user->role === Role::Owner
+            && $tenant->organization_id === $user->organization_id;
+    }
+
+    public function archiveTenant(User $user, Tenant $tenant): bool
+    {
+        return $user->role === Role::Owner
             && $tenant->organization_id === $user->organization_id;
     }
 }

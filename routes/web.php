@@ -49,7 +49,10 @@ Route::middleware('auth')->group(function () {
         Route::resource('units', UnitController::class);
     });
 
-    Route::middleware(EnsureAbility::class.':manage-tenants')->resource('tenants', TenantController::class);
+    Route::middleware(EnsureAbility::class.':manage-tenants')->group(function () {
+        Route::patch('tenants/{tenant}/archive', [TenantController::class, 'archiveTenant'])->name('tenants.archive');
+        Route::resource('tenants', TenantController::class);
+    });
     Route::middleware(EnsureAbility::class.':manage-contracts')->resource('contracts', ContractController::class);
     Route::middleware(EnsureAbility::class.':manage-contracts')->get('contracts/{contract}/pdf', [ContractController::class, 'pdf'])->name('contracts.pdf');
 

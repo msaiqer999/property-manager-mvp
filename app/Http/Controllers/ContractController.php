@@ -183,14 +183,21 @@ class ContractController extends Controller
 
         return [
             'contract' => $contract,
-            'tenants' => Tenant::where('organization_id', $this->organizationId())->orderBy('full_name')->get(),
+            'tenants' => Tenant::where('organization_id', $this->organizationId())->notArchived()->orderBy('full_name')->get(),
             'units' => $units,
         ];
     }
 
     private function authorizeTenantInput(int $tenantId): void
     {
-        Gate::authorize('view', Tenant::findOrFail($tenantId));
+        $tenant = Tenant::findOrFail($tenantId);
+        Gate::authorize('view', $tenant);
+
+        if ($tenant->archived_at !== null) {
+            throw ValidationException::withMessages([
+                'tenant_id' => __('tenants.lifecycle.cannot_select_archived'),
+            ]);
+        }
     }
 
     private function authorizeUnitInput(int $unitId): void
@@ -242,6 +249,11 @@ class ContractController extends Controller
 
         $contract = Contract::with(['tenant', 'unit.building'])->findOrFail((int) $contractId);
         Gate::authorize('view', $contract);
+
+        if ($contract->tenant?->archived_at !== null) {
+            abort(422, __('tenants.lifecycle.cannot_renew_archived'));
+        }
+
         abort_unless($contract->isRenewalEligible(), 404);
 
         return $contract;

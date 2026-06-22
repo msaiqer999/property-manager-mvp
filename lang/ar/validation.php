@@ -160,6 +160,7 @@ return [
     'attributes' => [
         'amount' => 'المبلغ',
         'amount_paid' => 'المبلغ المدفوع',
+        'archive_reason' => 'سبب الأرشفة',
         'building_id' => 'المبنى',
         'category' => 'الفئة',
         'deposit_amount' => 'مبلغ التأمين',
