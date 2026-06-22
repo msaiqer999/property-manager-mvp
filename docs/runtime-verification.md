@@ -52,7 +52,7 @@ php artisan test
 Install frontend dependencies and build production assets:
 
 ```bash
-npm install
+npm ci
 npm run build
 ```
 
@@ -69,7 +69,7 @@ The GitHub Actions workflow runs:
 - `composer install`
 - `composer check-platform-reqs`
 - `php artisan test`
-- `npm install`
+- `npm ci`
 - `npm run build`
 
 Tests use SQLite in CI. Do not treat the application as runtime verified until

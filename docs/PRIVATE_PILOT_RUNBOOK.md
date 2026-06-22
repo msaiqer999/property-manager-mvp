@@ -50,7 +50,7 @@ From the release directory:
 
 ```bash
 composer install --no-dev --optimize-autoloader
-npm install
+npm ci
 npm run build
 ```
 

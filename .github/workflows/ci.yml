@@ -39,7 +39,7 @@ jobs:
           php artisan key:generate --ansi
 
       - name: Install frontend dependencies
-        run: npm install
+        run: npm ci
 
       - name: Build frontend assets
         run: npm run build

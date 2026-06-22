@@ -42,7 +42,7 @@ From the project root:
 composer install
 cp .env.example .env
 php artisan key:generate
-npm install
+npm ci
 ```
 
 Create a PostgreSQL database:
