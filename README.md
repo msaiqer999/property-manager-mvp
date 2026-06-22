@@ -6,7 +6,7 @@ reports, and activity logs.
 
 ## Stack
 
-- Laravel 11
+- Laravel 12
 - PHP 8.2+
 - PostgreSQL
 - Blade
@@ -20,14 +20,17 @@ reports, and activity logs.
 - PHP 8.2 or newer
 - Composer
 - PostgreSQL 14 or newer
-- Node.js 18 or newer
+- Node.js 20 recommended for the production build used by CI
 - npm
 
 ## Setup
 
-This setup path is for local development and demo use. Real pilot deployment
-must use the pilot-safe onboarding sequence in
-[Deployment Notes](docs/deployment-notes.md).
+This setup path is for local development and demo use. Production/private-pilot
+deployment must use the dedicated production template and runbook:
+
+- [Production environment template](.env.production.example)
+- [Private Pilot Runbook](docs/PRIVATE_PILOT_RUNBOOK.md)
+- [Deployment Notes](docs/deployment-notes.md)
 
 From the project root:
 
@@ -68,6 +71,10 @@ php artisan storage:link
 ```
 
 Never run php artisan migrate:fresh, php artisan db:wipe, or demo seeders against the real pilot database.
+
+The public storage link is only for local/demo public files. Payment proofs and
+expense invoices are stored on the private local disk; do not expose private
+uploads through a public storage link in production.
 
 Run the frontend and backend:
 
@@ -145,15 +152,18 @@ For a real pilot, public self-registration should remain disabled. Create the
 first owner from a trusted server console instead:
 
 1. Keep the application unavailable publicly or behind restricted access.
-2. Set all production environment values, including `REGISTRATION_ENABLED=false`.
-3. Run `php artisan config:clear`.
-4. Run `php artisan config:cache`.
-5. Run migrations only: `php artisan migrate --force`.
-6. Run `php artisan pilot:create-owner` from the trusted server console.
-7. Verify owner login through restricted access.
-8. Verify as a guest that GET and POST `/register` return 404.
-9. Only then expose the application to intended pilot users.
-10. Keep `REGISTRATION_ENABLED=false`.
+2. Copy `.env.production.example` to `.env` and replace every placeholder.
+3. Use PostgreSQL and HTTPS for the pilot.
+4. Set all production environment values, including `REGISTRATION_ENABLED=false`,
+   `APP_DEBUG=false`, `APP_URL=https://...`, and `APP_TIMEZONE=Asia/Dubai`.
+5. Run `php artisan config:clear`.
+6. Run `php artisan config:cache`.
+7. Run migrations only: `php artisan migrate --force`.
+8. Run `php artisan pilot:create-owner` from the trusted server console.
+9. Verify owner login through restricted access.
+10. Verify as a guest that GET and POST `/register` return 404.
+11. Only then expose the application to intended pilot users.
+12. Keep `REGISTRATION_ENABLED=false`.
 
 Automated tests should explicitly configure registration state and use an
 isolated test database.
@@ -166,6 +176,7 @@ isolated test database.
 - [Known Limitations](docs/known-limitations.md)
 - [Future Roadmap](docs/future-roadmap.md)
 - [Deployment Notes](docs/deployment-notes.md)
+- [Private Pilot Runbook](docs/PRIVATE_PILOT_RUNBOOK.md)
 
 ## Known Limitations
 
