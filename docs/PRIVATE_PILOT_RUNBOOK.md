@@ -6,11 +6,15 @@ This runbook is for a controlled private pilot of Property Manager with known us
 
 - Ubuntu 22.04 or 24.04 LTS
 - Nginx
-- PHP-FPM 8.2 or newer
+- PHP-FPM 8.3
 - PostgreSQL 14 or newer
 - Node 20 for frontend builds
 - Composer
 - npm
+
+PHP 8.3 is the supported private-pilot baseline. Local PHP 8.4 may run the
+project, but Composer dependency resolution is constrained to PHP 8.3
+compatibility. Production and CI must satisfy `composer check-platform-reqs`.
 
 Required PHP extensions:
 

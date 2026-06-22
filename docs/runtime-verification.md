@@ -5,12 +5,16 @@ adding new business features.
 
 ## Required Tools
 
-- PHP 8.2 or newer
+- PHP 8.3
 - Composer
 - Node.js 20 or newer
 - npm
 - PostgreSQL for local app usage, based on `.env.example`
 - SQLite PHP extensions for automated tests
+
+PHP 8.3 is the supported verification baseline. Local PHP 8.4 may run the
+project, but Composer dependency resolution is constrained to PHP 8.3
+compatibility. CI and production must satisfy `composer check-platform-reqs`.
 
 ## Local App Setup
 
@@ -63,6 +67,7 @@ npm run dev
 The GitHub Actions workflow runs:
 
 - `composer install`
+- `composer check-platform-reqs`
 - `php artisan test`
 - `npm install`
 - `npm run build`

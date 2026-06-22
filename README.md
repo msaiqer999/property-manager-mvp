@@ -7,7 +7,7 @@ reports, and activity logs.
 ## Stack
 
 - Laravel 12
-- PHP 8.2+
+- PHP 8.3
 - PostgreSQL
 - Blade
 - Tailwind CSS via Vite
@@ -17,11 +17,15 @@ reports, and activity logs.
 
 ## Requirements
 
-- PHP 8.2 or newer
+- PHP 8.3 as the supported baseline
 - Composer
 - PostgreSQL 14 or newer
 - Node.js 20 recommended for the production build used by CI
 - npm
+
+Composer is configured to resolve dependencies against PHP 8.3 compatibility.
+Local PHP 8.4 may run the project, but PHP 8.4 is not required. Production and
+CI environments must satisfy `composer check-platform-reqs`.
 
 ## Setup
 

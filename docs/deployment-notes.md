@@ -4,11 +4,15 @@
 
 - Ubuntu 22.04 or 24.04 LTS
 - Nginx
-- PHP 8.2 or newer
+- PHP 8.3
 - PHP-FPM
 - PostgreSQL 14 or newer
 - Redis for cache/queues, optional but recommended
 - Supervisor for queue workers, if queues are added
+
+PHP 8.3 is the supported deployment baseline. Local PHP 8.4 may run the project,
+but Composer dependency resolution is constrained to PHP 8.3 compatibility.
+Production and CI must satisfy `composer check-platform-reqs`.
 
 ## Server Setup Checklist
 
