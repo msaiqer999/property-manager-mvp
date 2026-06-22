@@ -28,6 +28,7 @@ return [
         'paid' => 'مدفوع',
         'partial' => 'مدفوع جزئياً',
         'overdue' => 'متأخر',
+        'cancelled' => 'ملغاة',
     ],
 
     'methods' => [
@@ -54,7 +55,13 @@ return [
         'status' => 'الحالة',
     ],
 
+    'lifecycle' => [
+        'cancelled_due_to_contract_termination' => 'ملغاة بسبب إنهاء العقد',
+    ],
+
     'validation' => [
         'paid_amount_cannot_decrease' => 'لا يمكن تخفيض المبلغ المدفوع بعد تسجيله.',
+        'cannot_record_cancelled' => 'لا يمكن تسجيل أو تغيير دفعة ملغاة.',
+        'receipt_unavailable_without_recorded_money' => 'لا يتوفر إيصال لأنه لم يتم تسجيل أي مبلغ لهذه الدفعة.',
     ],
 ];

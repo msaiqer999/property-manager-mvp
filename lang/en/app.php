@@ -83,6 +83,7 @@ return [
         'partial' => 'Partial',
         'paid' => 'Paid',
         'overdue' => 'Overdue',
+        'cancelled' => 'Cancelled',
         'vacant' => 'Vacant',
         'rented' => 'Rented',
         'maintenance' => 'Maintenance',

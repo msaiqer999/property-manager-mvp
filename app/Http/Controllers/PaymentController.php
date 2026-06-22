@@ -20,7 +20,7 @@ class PaymentController extends Controller
         $payments = Payment::with(['contract.tenant', 'contract.unit'])
             ->where('organization_id', $this->organizationId())
             ->when($request->status, fn ($q, $status) => $q->where('status', $status))
-            ->when($request->overdue, fn ($q) => $q->where('due_date', '<', now())->where('status', '!=', 'paid'))
+            ->when($request->overdue, fn ($q) => $q->where('status', 'overdue'))
             ->orderBy('due_date')
             ->paginate(20);
 
@@ -37,6 +37,7 @@ class PaymentController extends Controller
     public function edit(Payment $payment)
     {
         Gate::authorize('recordPayment', $payment);
+        $this->abortIfCancelled($payment);
 
         return view('payments.form', compact('payment'));
     }
@@ -44,6 +45,7 @@ class PaymentController extends Controller
     public function update(Request $request, Payment $payment, ActivityLogger $logger)
     {
         Gate::authorize('recordPayment', $payment);
+        $this->abortIfCancelled($payment);
 
         $data = $request->validate([
             'amount_paid' => ['required', 'numeric', 'min:0', 'max:'.$payment->amount_due, 'regex:/^\d{1,10}(?:\.\d{1,2})?$/'],
@@ -94,6 +96,17 @@ class PaymentController extends Controller
     {
         Gate::authorize('exportReceiptPdf', $payment);
 
+        if ($this->decimalToMinorUnits((string) $payment->amount_paid) <= 0) {
+            abort(422, __('payments.validation.receipt_unavailable_without_recorded_money'));
+        }
+
         return Pdf::loadView('pdf.receipt', compact('payment'))->download("payment-receipt-{$payment->id}.pdf");
+    }
+
+    private function abortIfCancelled(Payment $payment): void
+    {
+        if ($payment->status === 'cancelled') {
+            abort(422, __('payments.validation.cannot_record_cancelled'));
+        }
     }
 }

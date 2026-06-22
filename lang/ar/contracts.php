@@ -84,6 +84,21 @@ return [
         'record_payment' => 'تسجيل',
     ],
 
+    'lifecycle' => [
+        'terminate' => 'إنهاء العقد',
+        'termination_reason' => 'سبب الإنهاء',
+        'termination_effective_date' => 'تاريخ سريان الإنهاء',
+        'terminated_at' => 'تم الإنهاء في',
+        'terminated_by' => 'تم الإنهاء بواسطة',
+        'already_terminated' => 'تم إنهاء هذا العقد مسبقاً.',
+        'cannot_terminate_expired' => 'لا يمكن إنهاء عقد منتهٍ أو قديم.',
+        'invalid_termination_state' => 'لا يمكن إنهاء هذا العقد في حالته الحالية.',
+        'cannot_edit_terminated' => 'لا يمكن تعديل عقد تم إنهاؤه.',
+        'cannot_renew_terminated' => 'لا يمكن تجديد عقد تم إنهاؤه.',
+        'confirm_terminate' => 'إنهاء هذا العقد الآن؟ ستلغى الدفعات المستقبلية غير المدفوعة، وستبقى المبالغ المستلمة مسجلة.',
+        'terminated_success' => 'تم إنهاء العقد.',
+    ],
+
     'statuses' => [
         'active' => 'نشط',
         'expired' => 'منتهي',
@@ -134,5 +149,6 @@ return [
         'new_tenant.id_number' => 'رقم هوية المستأجر',
         'new_tenant.nationality' => 'جنسية المستأجر',
         'new_tenant.notes' => 'ملاحظات المستأجر',
+        'termination_reason' => 'سبب الإنهاء',
     ],
 ];

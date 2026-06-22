@@ -143,7 +143,7 @@ class ReportLocalizationTest extends TestCase
         $end = now()->endOfMonth();
 
         $income = Payment::where('organization_id', $user->organization_id)
-            ->where('status', 'paid')
+            ->where('amount_paid', '>', 0)
             ->whereBetween('payment_date', [$start, $end])
             ->sum('amount_paid');
         $expenses = Expense::where('organization_id', $user->organization_id)

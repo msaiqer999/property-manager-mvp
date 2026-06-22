@@ -28,6 +28,7 @@ return [
         'paid' => 'Paid',
         'partial' => 'Partial',
         'overdue' => 'Overdue',
+        'cancelled' => 'Cancelled',
     ],
 
     'methods' => [
@@ -54,7 +55,13 @@ return [
         'status' => 'Status',
     ],
 
+    'lifecycle' => [
+        'cancelled_due_to_contract_termination' => 'Cancelled due to contract termination',
+    ],
+
     'validation' => [
         'paid_amount_cannot_decrease' => 'The recorded paid amount cannot be reduced.',
+        'cannot_record_cancelled' => 'Cancelled payments cannot be recorded or changed.',
+        'receipt_unavailable_without_recorded_money' => 'A receipt is unavailable because no money has been recorded for this payment.',
     ],
 ];

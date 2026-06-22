@@ -10,8 +10,8 @@ use App\Models\Tenant;
 use App\Models\Unit;
 use App\Models\User;
 use App\Support\PaymentSchedule;
-use Illuminate\Support\Carbon;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Carbon;
 use Tests\TestCase;
 
 class ContractOccupancyProtectionTest extends TestCase
@@ -241,7 +241,7 @@ class ContractOccupancyProtectionTest extends TestCase
         ]);
     }
 
-    public function test_notes_deposit_and_valid_status_remain_editable_after_payment_is_recorded(): void
+    public function test_notes_deposit_and_expired_status_remain_editable_after_payment_is_recorded(): void
     {
         [$owner, $data] = $this->scenario();
 
@@ -259,7 +259,7 @@ class ContractOccupancyProtectionTest extends TestCase
             ->put(route('contracts.update', $contract), $this->updatePayload($contract, [
                 'deposit_amount' => 900,
                 'notes' => 'Updated without schedule rewrite',
-                'status' => 'terminated',
+                'status' => 'expired',
             ]))
             ->assertRedirect(route('contracts.show', $contract));
 
@@ -267,11 +267,11 @@ class ContractOccupancyProtectionTest extends TestCase
             'id' => $contract->id,
             'deposit_amount' => 900,
             'notes' => 'Updated without schedule rewrite',
-            'status' => 'terminated',
+            'status' => 'expired',
         ]);
     }
 
-    public function test_active_contract_can_transition_to_expired_or_terminated(): void
+    public function test_active_contract_can_transition_to_expired_but_not_terminated_through_generic_update(): void
     {
         [$owner, $data] = $this->scenario();
         $expired = $this->contract($data);
@@ -283,10 +283,10 @@ class ContractOccupancyProtectionTest extends TestCase
 
         $this->actingAs($owner)
             ->put(route('contracts.update', $terminated), $this->updatePayload($terminated, ['status' => 'terminated']))
-            ->assertRedirect(route('contracts.show', $terminated));
+            ->assertSessionHasErrors('status');
 
         $this->assertSame('expired', $expired->fresh()->status);
-        $this->assertSame('terminated', $terminated->fresh()->status);
+        $this->assertSame('active', $terminated->fresh()->status);
     }
 
     public function test_terminal_contracts_cannot_be_reactivated_or_switched(): void
@@ -301,7 +301,7 @@ class ContractOccupancyProtectionTest extends TestCase
 
         $this->actingAs($owner)
             ->put(route('contracts.update', $terminated), $this->updatePayload($terminated, ['status' => 'expired']))
-            ->assertSessionHasErrors('status');
+            ->assertStatus(422);
     }
 
     public function test_current_active_contract_marks_unit_rented_and_future_contract_does_not(): void
@@ -339,7 +339,7 @@ class ContractOccupancyProtectionTest extends TestCase
         $data['unit']->update(['status' => 'rented']);
 
         $this->actingAs($owner)
-            ->put(route('contracts.update', $contract), $this->updatePayload($contract, ['status' => 'terminated']))
+            ->patch(route('contracts.terminate', $contract), ['termination_reason' => 'Ending current occupancy'])
             ->assertRedirect(route('contracts.show', $contract));
 
         $this->assertSame('vacant', $data['unit']->fresh()->status);
@@ -371,7 +371,7 @@ class ContractOccupancyProtectionTest extends TestCase
         $data['unit']->update(['status' => 'rented']);
 
         $this->actingAs($owner)
-            ->put(route('contracts.update', $first), $this->updatePayload($first, ['status' => 'terminated']))
+            ->patch(route('contracts.terminate', $first), ['termination_reason' => 'Another active contract remains'])
             ->assertRedirect(route('contracts.show', $first));
 
         $this->assertSame('rented', $data['unit']->fresh()->status);

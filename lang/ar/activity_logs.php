@@ -18,6 +18,7 @@ return [
         'contract' => [
             'created' => 'تم إنشاء عقد',
             'updated' => 'تم تحديث عقد',
+            'terminated' => 'تم إنهاء عقد',
         ],
         'expense' => [
             'created' => 'تم إنشاء مصروف',

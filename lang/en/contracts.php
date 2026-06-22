@@ -84,6 +84,21 @@ return [
         'record_payment' => 'Record',
     ],
 
+    'lifecycle' => [
+        'terminate' => 'Terminate contract',
+        'termination_reason' => 'Termination reason',
+        'termination_effective_date' => 'Termination effective date',
+        'terminated_at' => 'Terminated at',
+        'terminated_by' => 'Terminated by',
+        'already_terminated' => 'This contract has already been terminated.',
+        'cannot_terminate_expired' => 'An expired or stale contract cannot be terminated.',
+        'invalid_termination_state' => 'This contract cannot be terminated in its current state.',
+        'cannot_edit_terminated' => 'A terminated contract cannot be edited.',
+        'cannot_renew_terminated' => 'A terminated contract cannot be renewed.',
+        'confirm_terminate' => 'Terminate this contract now? Future unpaid scheduled payments will be cancelled, and already received money will remain recorded.',
+        'terminated_success' => 'Contract terminated.',
+    ],
+
     'statuses' => [
         'active' => 'Active',
         'expired' => 'Expired',
@@ -134,5 +149,6 @@ return [
         'new_tenant.id_number' => 'tenant ID number',
         'new_tenant.nationality' => 'tenant nationality',
         'new_tenant.notes' => 'tenant notes',
+        'termination_reason' => 'termination reason',
     ],
 ];

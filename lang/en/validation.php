@@ -187,6 +187,7 @@ return [
         'payment_date' => 'payment date',
         'payment_frequency' => 'payment frequency',
         'payment_method' => 'payment method',
+        'termination_reason' => 'termination reason',
         'phone' => 'phone number',
         'proof_image' => 'proof image',
         'rent_amount' => 'rent amount',

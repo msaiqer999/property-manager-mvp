@@ -35,11 +35,13 @@ class DashboardController extends Controller
         ];
 
         return view('dashboard', [
-            'monthlyIncome' => Payment::where('organization_id', $orgId)->where('status', 'paid')->whereBetween('payment_date', [$start, $end])->sum('amount_paid'),
+            'monthlyIncome' => Payment::where('organization_id', $orgId)
+                ->where('amount_paid', '>', 0)
+                ->whereBetween('payment_date', [$start, $end])
+                ->sum('amount_paid'),
             'monthlyExpenses' => Expense::where('organization_id', $orgId)->notVoided()->whereBetween('expense_date', [$start, $end])->sum('amount'),
             'overdueAmount' => Payment::where('organization_id', $orgId)
-                ->where('due_date', '<', now()->toDateString())
-                ->where('status', '!=', 'paid')
+                ->where('status', 'overdue')
                 ->sum(DB::raw('amount_due - amount_paid')),
             'vacantUnits' => Unit::whereHas('building', fn ($q) => $q->where('organization_id', $orgId))->where('status', 'vacant')->count(),
             'rentedUnits' => Unit::whereHas('building', fn ($q) => $q->where('organization_id', $orgId))->where('status', 'rented')->count(),

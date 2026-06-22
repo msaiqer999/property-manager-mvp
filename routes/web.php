@@ -53,8 +53,11 @@ Route::middleware('auth')->group(function () {
         Route::patch('tenants/{tenant}/archive', [TenantController::class, 'archiveTenant'])->name('tenants.archive');
         Route::resource('tenants', TenantController::class);
     });
-    Route::middleware(EnsureAbility::class.':manage-contracts')->resource('contracts', ContractController::class);
-    Route::middleware(EnsureAbility::class.':manage-contracts')->get('contracts/{contract}/pdf', [ContractController::class, 'pdf'])->name('contracts.pdf');
+    Route::middleware(EnsureAbility::class.':manage-contracts')->group(function () {
+        Route::patch('contracts/{contract}/terminate', [ContractController::class, 'terminate'])->name('contracts.terminate');
+        Route::resource('contracts', ContractController::class);
+        Route::get('contracts/{contract}/pdf', [ContractController::class, 'pdf'])->name('contracts.pdf');
+    });
 
     Route::middleware(EnsureAbility::class.':view-payments')->group(function () {
         Route::resource('payments', PaymentController::class)->only(['index', 'show', 'edit', 'update']);

@@ -83,6 +83,7 @@ return [
         'partial' => 'مدفوع جزئياً',
         'paid' => 'مدفوع',
         'overdue' => 'متأخر',
+        'cancelled' => 'ملغاة',
         'vacant' => 'شاغر',
         'rented' => 'مؤجر',
         'maintenance' => 'صيانة',

@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Http\Controllers\Concerns\ScopesOrganization;
 use App\Models\Contract;
+use App\Models\Payment;
 use App\Models\Tenant;
 use App\Models\Unit;
 use App\Services\ActivityLogger;
@@ -120,6 +121,7 @@ class ContractController extends Controller
     public function edit(Contract $contract)
     {
         Gate::authorize('update', $contract);
+        $this->abortIfTerminated($contract);
 
         return view('contracts.form', $this->formData($contract));
     }
@@ -127,6 +129,7 @@ class ContractController extends Controller
     public function update(Request $request, Contract $contract, ActivityLogger $logger)
     {
         Gate::authorize('update', $contract);
+        $this->abortIfTerminated($contract);
         $data = $this->validated($request);
         $this->assertImmutableContractInputs($request, $contract);
         $this->assertValidStatusTransition($contract, $data['status']);
@@ -156,6 +159,82 @@ class ContractController extends Controller
         $logger->log('contract.updated', $contract);
 
         return redirect()->route('contracts.show', $contract);
+    }
+
+    public function terminate(Request $request, Contract $contract, ActivityLogger $logger)
+    {
+        Gate::authorize('terminate', $contract);
+
+        $today = now()->toDateString();
+
+        if ($contract->status === 'terminated' || $contract->terminated_at !== null) {
+            abort(422, __('contracts.lifecycle.already_terminated'));
+        }
+
+        if ($contract->status === 'expired' || $contract->end_date->toDateString() < $today) {
+            abort(422, __('contracts.lifecycle.cannot_terminate_expired'));
+        }
+
+        if ($contract->status !== 'active') {
+            abort(422, __('contracts.lifecycle.invalid_termination_state'));
+        }
+
+        $data = $request->validate([
+            'termination_reason' => ['required', 'string', 'max:1000'],
+        ], [], __('contracts.attributes'));
+        $reason = $this->normalizeWhitespace($data['termination_reason']);
+
+        if ($reason === '') {
+            throw ValidationException::withMessages([
+                'termination_reason' => __('validation.required', ['attribute' => __('contracts.attributes.termination_reason')]),
+            ]);
+        }
+
+        $now = now();
+        $effectiveDate = $now->toDateString();
+
+        DB::transaction(function () use ($contract, $effectiveDate, $logger, $now, $reason) {
+            $updated = Contract::query()
+                ->whereKey($contract->id)
+                ->where('organization_id', $this->organizationId())
+                ->where('status', 'active')
+                ->whereNull('terminated_at')
+                ->update([
+                    'status' => 'terminated',
+                    'terminated_at' => $now,
+                    'terminated_by' => auth()->id(),
+                    'termination_reason' => $reason,
+                    'termination_effective_date' => $effectiveDate,
+                    'updated_at' => $now,
+                ]);
+
+            if ($updated !== 1) {
+                abort(422, __('contracts.lifecycle.invalid_termination_state'));
+            }
+
+            $eligiblePayments = $this->cancellableFuturePayments($contract, $effectiveDate);
+            $affectedCount = (clone $eligiblePayments)->count();
+            $affectedRemaining = (clone $eligiblePayments)->sum(DB::raw('amount_due - amount_paid'));
+
+            $eligiblePayments->update([
+                'status' => 'cancelled',
+                'updated_at' => $now,
+            ]);
+
+            $contract->refresh();
+            $unit = Unit::whereKey($contract->unit_id)->lockForUpdate()->firstOrFail();
+            UnitOccupancy::sync($unit);
+
+            $logger->log('contract.terminated', $contract, implode(' | ', [
+                'contract_number='.$contract->contract_number,
+                'reason='.$reason,
+                'effective_date='.$effectiveDate,
+                'affected_payment_count='.$affectedCount,
+                'affected_remaining_scheduled_amount='.number_format((float) $affectedRemaining, 2, '.', ''),
+            ]));
+        });
+
+        return redirect()->route('contracts.show', $contract)->with('status', __('contracts.lifecycle.terminated_success'));
     }
 
     public function destroy(Contract $contract)
@@ -211,13 +290,17 @@ class ContractController extends Controller
             $request->merge(['tenant_mode' => $request->input('tenant_mode', 'existing')]);
         }
 
+        if ($creating && $renewal) {
+            $request->merge(['status' => 'active']);
+        }
+
         $rules = [
             'start_date' => ['required', 'date'],
             'end_date' => ['required', 'date', 'after:start_date'],
             'rent_amount' => ['required', 'numeric', 'min:0'],
             'payment_frequency' => ['required', 'in:monthly,quarterly,semi_annual,annual'],
             'deposit_amount' => ['nullable', 'numeric', 'min:0'],
-            'status' => ['required', 'in:active,expired,terminated'],
+            'status' => ['required', 'in:active,expired'],
             'notes' => ['nullable', 'string'],
         ];
 
@@ -249,6 +332,10 @@ class ContractController extends Controller
 
         $contract = Contract::with(['tenant', 'unit.building'])->findOrFail((int) $contractId);
         Gate::authorize('view', $contract);
+
+        if ($contract->status === 'terminated') {
+            abort(422, __('contracts.lifecycle.cannot_renew_terminated'));
+        }
 
         if ($contract->tenant?->archived_at !== null) {
             abort(422, __('tenants.lifecycle.cannot_renew_archived'));
@@ -306,7 +393,7 @@ class ContractController extends Controller
             return;
         }
 
-        if ($contract->status === 'active' && in_array($requestedStatus, ['expired', 'terminated'], true)) {
+        if ($contract->status === 'active' && $requestedStatus === 'expired') {
             return;
         }
 
@@ -320,6 +407,28 @@ class ContractController extends Controller
         return $contract->payments()
             ->where(fn ($query) => $query->where('amount_paid', '>', 0)->orWhereNotNull('payment_date'))
             ->exists();
+    }
+
+    private function cancellableFuturePayments(Contract $contract, string $effectiveDate)
+    {
+        return Payment::query()
+            ->where('organization_id', $this->organizationId())
+            ->where('contract_id', $contract->id)
+            ->whereDate('due_date', '>', $effectiveDate)
+            ->whereColumn('amount_paid', '<', 'amount_due')
+            ->whereIn('status', ['pending', 'overdue', 'partial']);
+    }
+
+    private function abortIfTerminated(Contract $contract): void
+    {
+        if ($contract->status === 'terminated') {
+            abort(422, __('contracts.lifecycle.cannot_edit_terminated'));
+        }
+    }
+
+    private function normalizeWhitespace(string $value): string
+    {
+        return trim((string) preg_replace('/[\p{Z}\s]+/u', ' ', $value));
     }
 
     private function availabilityLabel(Unit $unit): string

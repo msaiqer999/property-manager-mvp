@@ -15,7 +15,7 @@
             <tr>
                 <td>{{ $row->name ?? $row->unit_number ?? $row->category ?? ($row->due_date instanceof \Carbon\CarbonInterface ? $row->due_date->toDateString() : ($row->due_date ?? '')) }}</td>
                 <td>{{ data_get($row, 'building.name') ?? data_get($row, 'contract.tenant.full_name') ?? '' }}</td>
-                <td>{{ number_format($row->income ?? $row->amount ?? $row->amount_due ?? 0, 2) }}</td>
+                <td>{{ number_format($row->income ?? $row->amount ?? $row->remaining_amount ?? $row->amount_due ?? 0, 2) }}</td>
                 <td>{{ $row->status ?? '' }}</td>
             </tr>
         @endforeach

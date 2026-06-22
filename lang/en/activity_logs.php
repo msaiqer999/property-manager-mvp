@@ -18,6 +18,7 @@ return [
         'contract' => [
             'created' => 'Contract created',
             'updated' => 'Contract updated',
+            'terminated' => 'Contract terminated',
         ],
         'expense' => [
             'created' => 'Expense created',

@@ -41,7 +41,10 @@ class ReportController extends Controller
         $orgId = $this->organizationId();
         $start = now()->startOfMonth();
         $end = now()->endOfMonth();
-        $income = Payment::where('organization_id', $orgId)->where('status', 'paid')->whereBetween('payment_date', [$start, $end])->sum('amount_paid');
+        $income = Payment::where('organization_id', $orgId)
+            ->where('amount_paid', '>', 0)
+            ->whereBetween('payment_date', [$start, $end])
+            ->sum('amount_paid');
         $expenses = Expense::where('organization_id', $orgId)->notVoided()->whereBetween('expense_date', [$start, $end])->sum('amount');
 
         return [
@@ -63,7 +66,7 @@ class ReportController extends Controller
                     ->leftJoin('contracts', 'contracts.unit_id', '=', 'units.id')
                     ->leftJoin('payments', function ($join) {
                         $join->on('payments.contract_id', '=', 'contracts.id')
-                            ->where('payments.status', '=', 'paid');
+                            ->where('payments.amount_paid', '>', 0);
                     })
                     ->where('buildings.organization_id', $orgId)
                     ->select('buildings.name', DB::raw('COALESCE(SUM(payments.amount_paid), 0) as income'))
@@ -81,8 +84,9 @@ class ReportController extends Controller
             'overdue' => [
                 'rows' => Payment::with('contract.tenant', 'contract.unit.building')
                     ->where('organization_id', $orgId)
-                    ->where('due_date', '<', now()->toDateString())
-                    ->where('status', '!=', 'paid')
+                    ->where('status', 'overdue')
+                    ->whereColumn('amount_paid', '<', 'amount_due')
+                    ->select('payments.*', DB::raw('amount_due - amount_paid as remaining_amount'))
                     ->orderBy('due_date')
                     ->get(),
             ],

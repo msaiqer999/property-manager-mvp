@@ -14,13 +14,38 @@ class Contract extends Model
 
     protected function casts(): array
     {
-        return ['start_date' => 'date', 'end_date' => 'date'];
+        return [
+            'start_date' => 'date',
+            'end_date' => 'date',
+            'terminated_at' => 'datetime',
+            'termination_effective_date' => 'date',
+        ];
     }
 
-    public function organization() { return $this->belongsTo(Organization::class); }
-    public function unit() { return $this->belongsTo(Unit::class); }
-    public function tenant() { return $this->belongsTo(Tenant::class); }
-    public function payments() { return $this->hasMany(Payment::class); }
+    public function organization()
+    {
+        return $this->belongsTo(Organization::class);
+    }
+
+    public function unit()
+    {
+        return $this->belongsTo(Unit::class);
+    }
+
+    public function tenant()
+    {
+        return $this->belongsTo(Tenant::class);
+    }
+
+    public function payments()
+    {
+        return $this->hasMany(Payment::class);
+    }
+
+    public function terminatedBy()
+    {
+        return $this->belongsTo(User::class, 'terminated_by');
+    }
 
     public function expiryWarningGroup(): ?string
     {

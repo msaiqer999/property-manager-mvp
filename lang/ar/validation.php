@@ -187,6 +187,7 @@ return [
         'payment_date' => 'تاريخ الدفع',
         'payment_frequency' => 'تكرار الدفع',
         'payment_method' => 'طريقة الدفع',
+        'termination_reason' => 'سبب الإنهاء',
         'phone' => 'رقم الهاتف',
         'proof_image' => 'صورة الإثبات',
         'rent_amount' => 'مبلغ الإيجار',

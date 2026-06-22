@@ -2,6 +2,7 @@
 
 namespace App\Policies;
 
+use App\Enums\Role;
 use App\Models\Contract;
 use App\Models\User;
 
@@ -33,6 +34,12 @@ class ContractPolicy
     public function delete(User $user, Contract $contract): bool
     {
         return $user->role->value === 'owner'
+            && $contract->organization_id === $user->organization_id;
+    }
+
+    public function terminate(User $user, Contract $contract): bool
+    {
+        return $user->role === Role::Owner
             && $contract->organization_id === $user->organization_id;
     }
 

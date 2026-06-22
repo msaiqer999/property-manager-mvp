@@ -48,8 +48,8 @@ class ContractRenewalTest extends TestCase
         $contracts = [
             $this->contract($data, ['contract_number' => 'RENEW-091', 'end_date' => now()->addDays(91)->toDateString()]),
             $this->contract($data, ['contract_number' => 'RENEW-EXPIRED', 'unit_id' => $data['secondUnit']->id, 'status' => 'expired']),
-            $this->contract($data, ['contract_number' => 'RENEW-TERMINATED', 'unit_id' => $data['thirdUnit']->id, 'status' => 'terminated']),
         ];
+        $terminated = $this->contract($data, ['contract_number' => 'RENEW-TERMINATED', 'unit_id' => $data['thirdUnit']->id, 'status' => 'terminated']);
 
         foreach ($contracts as $contract) {
             $this->actingAs($owner)->get(route('contracts.show', $contract))
@@ -59,6 +59,14 @@ class ContractRenewalTest extends TestCase
             $this->actingAs($owner)->get(route('contracts.create', ['renew_from' => $contract->id]))
                 ->assertNotFound();
         }
+
+        $this->actingAs($owner)->get(route('contracts.show', $terminated))
+            ->assertOk()
+            ->assertDontSee('Prepare renewal');
+
+        $this->actingAs($owner)->get(route('contracts.create', ['renew_from' => $terminated->id]))
+            ->assertStatus(422)
+            ->assertSee(__('contracts.lifecycle.cannot_renew_terminated'));
 
         Carbon::setTestNow();
     }

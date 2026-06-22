@@ -13,7 +13,9 @@
             @endif
         @endcan
         <a class="tap-target inline-flex items-center rounded border px-3 text-sm" href="{{ route('contracts.pdf', $contract) }}">{{ __('contracts.show.download_pdf') }}</a>
-        <a class="tap-target inline-flex items-center rounded border px-3 text-sm" href="{{ route('contracts.edit', $contract) }}">{{ __('contracts.show.edit') }}</a>
+        @if($contract->status !== 'terminated')
+            <a class="tap-target inline-flex items-center rounded border px-3 text-sm" href="{{ route('contracts.edit', $contract) }}">{{ __('contracts.show.edit') }}</a>
+        @endif
     </div>
 </div>
 
@@ -44,6 +46,26 @@
     <p><span class="font-medium">{{ __('contracts.show.status') }}</span> {{ __('contracts.statuses.'.$contract->status) }}</p>
 </div>
 
+@if($contract->status === 'terminated')
+    <div class="mt-4 grid gap-3 rounded border border-amber-200 bg-amber-50 p-4 text-sm text-amber-950 sm:grid-cols-2">
+        <p><span class="font-medium">{{ __('contracts.lifecycle.termination_reason') }}:</span> {{ $contract->termination_reason ?? __('payments.not_available') }}</p>
+        <p><span class="font-medium">{{ __('contracts.lifecycle.termination_effective_date') }}:</span> <bdi>{{ $contract->termination_effective_date?->toDateString() ?? __('payments.not_available') }}</bdi></p>
+        <p><span class="font-medium">{{ __('contracts.lifecycle.terminated_at') }}:</span> <bdi>{{ $contract->terminated_at?->toDateTimeString() ?? __('payments.not_available') }}</bdi></p>
+        <p><span class="font-medium">{{ __('contracts.lifecycle.terminated_by') }}:</span> {{ $contract->terminatedBy?->name ?? __('payments.not_available') }}</p>
+    </div>
+@elseif(auth()->user()?->can('terminate', $contract) && $contract->status === 'active' && $contract->end_date->toDateString() >= now()->toDateString())
+    <form method="post" action="{{ route('contracts.terminate', $contract) }}" class="mt-4 space-y-3 rounded border border-amber-200 bg-amber-50 p-4">
+        @csrf
+        @method('patch')
+        <label class="block text-sm font-medium">{{ __('contracts.lifecycle.termination_reason') }}
+            <textarea name="termination_reason" rows="3" required class="mt-1 w-full rounded border p-2">{{ old('termination_reason') }}</textarea>
+            @error('termination_reason')<span class="mt-1 block text-sm text-red-700">{{ $message }}</span>@enderror
+        </label>
+        <p class="text-sm text-amber-900">{{ __('contracts.lifecycle.confirm_terminate') }}</p>
+        <button class="tap-target rounded bg-amber-700 px-4 text-sm text-white">{{ __('contracts.lifecycle.terminate') }}</button>
+    </form>
+@endif
+
 <h2 class="mb-2 mt-6 font-semibold">{{ __('contracts.show.payment_schedule') }}</h2>
 <x-table min-width="min-w-[36rem]">
     <tbody>
@@ -51,8 +73,23 @@
             <tr class="border-t">
                 <td class="bidi-isolate p-3 whitespace-nowrap" dir="ltr">{{ $payment->due_date->toDateString() }}</td>
                 <td class="bidi-isolate p-3 whitespace-nowrap" dir="ltr">{{ number_format($payment->amount_due, 2) }}</td>
-                <td class="p-3 whitespace-nowrap">{{ __('contracts.statuses.'.$payment->status) }}</td>
-                <td class="p-3 whitespace-nowrap"><a class="tap-target inline-flex items-center text-blue-700" href="{{ route('payments.edit', $payment) }}">{{ __('contracts.show.record_payment') }}</a></td>
+                <td class="p-3 whitespace-nowrap">
+                    {{ __('payments.statuses.'.$payment->status) }}
+                    @if($payment->status === 'cancelled')
+                        <span class="block text-xs text-slate-500">{{ __('payments.lifecycle.cancelled_due_to_contract_termination') }}</span>
+                    @endif
+                </td>
+                <td class="p-3 whitespace-nowrap">
+                    @if($payment->status === 'cancelled')
+                        @if($payment->amount_paid > 0)
+                            <a class="tap-target inline-flex items-center text-blue-700" href="{{ route('payments.receipt', $payment) }}">{{ __('payments.view_receipt') }}</a>
+                        @else
+                            <span class="text-sm text-slate-500">{{ __('payments.lifecycle.cancelled_due_to_contract_termination') }}</span>
+                        @endif
+                    @else
+                        <a class="tap-target inline-flex items-center text-blue-700" href="{{ route('payments.edit', $payment) }}">{{ __('contracts.show.record_payment') }}</a>
+                    @endif
+                </td>
             </tr>
         @endforeach
     </tbody>
