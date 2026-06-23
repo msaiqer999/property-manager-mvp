@@ -9,6 +9,7 @@ return [
     'overdue' => 'متأخرة',
     'view_receipt' => 'عرض الإيصال',
     'record_payment' => 'تسجيل دفعة',
+    'download_proof' => 'تنزيل إثبات الدفع',
     'download_receipt_pdf' => 'تنزيل إيصال PDF',
     'not_available' => 'غير متاح',
 

@@ -10,6 +10,8 @@ use App\Services\ActivityLogger;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 
 class ExpenseController extends Controller
@@ -72,6 +74,22 @@ class ExpenseController extends Controller
         $expense->load('voidedBy');
 
         return view('expenses.show', compact('expense'));
+    }
+
+    public function downloadInvoice(Expense $expense)
+    {
+        Gate::authorize('view', $expense);
+
+        $path = $this->validatedPrivatePath($expense->invoice_image, 'expense-invoices');
+
+        if (! Storage::disk('local')->exists($path)) {
+            abort(404);
+        }
+
+        return Storage::disk('local')->download($path, $this->safeDownloadName('expense-invoice', $expense->id, $path), [
+            'Cache-Control' => 'private, no-store',
+            'X-Content-Type-Options' => 'nosniff',
+        ]);
     }
 
     public function edit(Expense $expense)
@@ -200,5 +218,38 @@ class ExpenseController extends Controller
             'invoice_image' => ['nullable', 'image', 'max:4096'],
             'notes' => ['nullable', 'string'],
         ]);
+    }
+
+    private function validatedPrivatePath(?string $storedPath, string $prefix): string
+    {
+        $rawPath = trim((string) $storedPath);
+
+        if ($rawPath === ''
+            || str_contains($rawPath, '\\')
+            || str_starts_with($rawPath, '/')
+            || preg_match('/^[A-Za-z]:\//', $rawPath)
+        ) {
+            abort(404);
+        }
+
+        $path = preg_replace('#/+#', '/', $rawPath);
+        $segments = explode('/', $path);
+
+        if (in_array('..', $segments, true)
+            || in_array('', $segments, true)
+            || ! Str::startsWith($path, $prefix.'/')
+        ) {
+            abort(404);
+        }
+
+        return $path;
+    }
+
+    private function safeDownloadName(string $label, int $id, string $path): string
+    {
+        $extension = pathinfo($path, PATHINFO_EXTENSION);
+        $extension = preg_match('/^[A-Za-z0-9]{1,10}$/', $extension) ? strtolower($extension) : 'bin';
+
+        return "{$label}-{$id}.{$extension}";
     }
 }

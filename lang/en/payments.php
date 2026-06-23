@@ -9,6 +9,7 @@ return [
     'overdue' => 'Overdue',
     'view_receipt' => 'View receipt',
     'record_payment' => 'Record payment',
+    'download_proof' => 'Download proof',
     'download_receipt_pdf' => 'Download receipt PDF',
     'not_available' => 'N/A',
 

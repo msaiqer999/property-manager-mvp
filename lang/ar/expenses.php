@@ -7,6 +7,7 @@ return [
     'edit' => 'تعديل المصروف',
     'view' => 'عرض',
     'edit_action' => 'تعديل',
+    'download_invoice' => 'تنزيل الفاتورة',
     'not_available' => 'غير متاح',
     'empty' => 'لا توجد مصروفات.',
 

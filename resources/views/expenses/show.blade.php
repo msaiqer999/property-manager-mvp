@@ -12,6 +12,9 @@
         </p>
     </div>
     <div class="flex flex-wrap gap-2">
+        @if($expense->invoice_image)
+            <a class="tap-target inline-flex items-center rounded border px-3 text-sm" href="{{ route('expenses.invoice.download', $expense) }}">{{ __('expenses.download_invoice') }}</a>
+        @endif
         @can('update', $expense)
             @if(! $expense->voided_at)
                 <a class="tap-target inline-flex items-center rounded border px-3 text-sm" href="{{ route('expenses.edit', $expense) }}">{{ __('expenses.edit_action') }}</a>

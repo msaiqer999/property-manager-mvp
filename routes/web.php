@@ -25,11 +25,11 @@ Route::post('/locale/{locale}', LocaleController::class)
 
 Route::middleware('guest')->group(function () {
     Route::get('/login', [AuthenticatedSessionController::class, 'create'])->name('login');
-    Route::post('/login', [AuthenticatedSessionController::class, 'store']);
+    Route::post('/login', [AuthenticatedSessionController::class, 'store'])->middleware('throttle:login');
     Route::get('/forgot-password', [PasswordResetLinkController::class, 'create'])->name('password.request');
-    Route::post('/forgot-password', [PasswordResetLinkController::class, 'store'])->name('password.email');
+    Route::post('/forgot-password', [PasswordResetLinkController::class, 'store'])->middleware('throttle:password-reset-email')->name('password.email');
     Route::get('/reset-password/{token}', [NewPasswordController::class, 'create'])->name('password.reset');
-    Route::post('/reset-password', [NewPasswordController::class, 'store'])->name('password.store');
+    Route::post('/reset-password', [NewPasswordController::class, 'store'])->middleware('throttle:password-reset-submit')->name('password.store');
 });
 
 Route::middleware(['guest', EnsureRegistrationIsEnabled::class])->group(function () {
@@ -62,10 +62,12 @@ Route::middleware('auth')->group(function () {
     Route::middleware(EnsureAbility::class.':view-payments')->group(function () {
         Route::resource('payments', PaymentController::class)->only(['index', 'show', 'edit', 'update']);
         Route::get('payments/{payment}/receipt', [PaymentController::class, 'receipt'])->name('payments.receipt');
+        Route::get('payments/{payment}/proof', [PaymentController::class, 'downloadProof'])->name('payments.proof.download');
     });
 
     Route::middleware(EnsureAbility::class.':view-expenses')->group(function () {
         Route::patch('expenses/{expense}/void', [ExpenseController::class, 'voidExpense'])->name('expenses.void');
+        Route::get('expenses/{expense}/invoice', [ExpenseController::class, 'downloadInvoice'])->name('expenses.invoice.download');
         Route::resource('expenses', ExpenseController::class);
     });
 

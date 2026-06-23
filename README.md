@@ -71,14 +71,14 @@ Run migrations and seed demo data:
 
 ```bash
 php artisan migrate:fresh --seed
-php artisan storage:link
 ```
 
 Never run php artisan migrate:fresh, php artisan db:wipe, or demo seeders against the real pilot database.
 
-The public storage link is only for local/demo public files. Payment proofs and
-expense invoices are stored on the private local disk; do not expose private
-uploads through a public storage link in production.
+Payment proofs and expense invoices are stored on the private local disk and
+are downloaded only through authorized application routes. Do not expose private
+uploads with `php artisan storage:link`; use `storage:link` only if genuinely
+public assets are added later and require it.
 
 Run the frontend and backend:
 
@@ -145,6 +145,7 @@ soon, latest payments, and latest expenses.
 
 ```bash
 php artisan pilot:create-owner
+php artisan pilot:reset-owner-password {email}
 php artisan payments:mark-overdue
 php artisan test
 php artisan route:list
@@ -166,8 +167,12 @@ first owner from a trusted server console instead:
 8. Run `php artisan pilot:create-owner` from the trusted server console.
 9. Verify owner login through restricted access.
 10. Verify as a guest that GET and POST `/register` return 404.
-11. Only then expose the application to intended pilot users.
-12. Keep `REGISTRATION_ENABLED=false`.
+11. Use `php artisan pilot:reset-owner-password {email}` only from a trusted
+    server console if an existing pilot owner loses access. Never pass the new
+    password as a command-line argument or through shell history.
+12. Verify `/up` returns healthy.
+13. Only then expose the application to intended pilot users.
+14. Keep `REGISTRATION_ENABLED=false`.
 
 Automated tests should explicitly configure registration state and use an
 isolated test database.
@@ -187,17 +192,12 @@ isolated test database.
 - Authorization is MVP-level and should be moved to Laravel Policies or Spatie Permission.
 - Reports are basic business summaries, not audited accounting reports.
 - Payment schedules do not prorate partial periods.
-- Uploaded images are stored on the local private disk; add signed download routes when viewing files is needed.
 - Arabic RTL direction is prepared, but translation files are not complete.
 - Browser verification must be performed after installing PHP/Composer/Node locally.
 
 ## Future Roadmap
 
 - Full Arabic translations and RTL QA.
-- Policies and complete role matrix tests.
 - Date range filters for reports.
-- Automatic overdue scheduler in production cron.
-- Contract renewal and termination workflows.
 - Payment ledger with multiple receipts per scheduled payment.
-- Private file storage and secure document access.
 - PWA support for smartphone field usage.

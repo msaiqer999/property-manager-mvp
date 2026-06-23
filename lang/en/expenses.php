@@ -7,6 +7,7 @@ return [
     'edit' => 'Edit expense',
     'view' => 'View',
     'edit_action' => 'Edit',
+    'download_invoice' => 'Download invoice',
     'not_available' => 'N/A',
     'empty' => 'No expenses found.',
 

@@ -125,7 +125,47 @@ Pilot rules:
 - Back up `storage/app/private` every day.
 - Do not use `php artisan storage:link` to expose private uploads.
 - Do not move private uploads to the public disk.
-- Secure authorized viewing/download routes are not implemented yet and remain a must-fix bounded batch.
+- Payment proofs are downloaded only through `payments.proof.download`.
+- Expense invoices are downloaded only through `expenses.invoice.download`.
+- The application authorizes the underlying payment or expense before checking
+  stored path validity or file existence.
+
+Use `php artisan storage:link` only if the app later adds genuinely public
+assets that require the public disk. It must not expose payment proofs or
+expense invoices.
+
+## Trusted Owner Recovery
+
+If a pilot owner loses access and email recovery is unavailable, a trusted
+server operator may reset the password from the server console:
+
+```bash
+php artisan pilot:reset-owner-password owner@example.com
+```
+
+Rules:
+
+- Run it only from a trusted server console by an operator authorized to manage
+  the private pilot.
+- The command prompts for the new password using hidden input and asks for
+  confirmation.
+- Never supply the password as a command-line argument, paste it into shell
+  history, write it in tickets, or log it.
+- The command only resets an existing user whose role is `owner`.
+- It writes a structured security notice with user ID and organization ID only;
+  the log write is not a database row and does not provide transactional audit
+  persistence.
+- Existing sessions may persist until normal expiry because the current session
+  architecture does not provide a safe targeted invalidation path.
+- The command does not enable public registration.
+
+## Contract Termination
+
+Contract termination behavior must be verified exactly as implemented:
+
+- Payments due on or before the termination date remain collectible.
+- Future unpaid payments become `cancelled`.
+- Future partial payments remain `partial` and retain the actual paid income.
 
 ## Backup Plan
 
@@ -182,7 +222,8 @@ Pass all items before live pilot use:
 - Expense can be created.
 - Expense can be voided with a reason.
 - Tenant can be archived when lifecycle rules allow it.
-- Contract can be terminated and future unpaid/partial payments become cancelled.
+- Contract can be terminated: due-on/before payments remain collectible, future
+  unpaid payments become cancelled, and future partial payments remain partial.
 - Dashboard totals match the test records.
 - Reports and PDFs download and match expected totals.
 - Arabic and English UI can be switched.
@@ -193,7 +234,4 @@ Pass all items before live pilot use:
 
 ## Known Must-Fix Items Still Pending
 
-- Dependency lockfiles and reproducible install policy.
-- Secure authorized upload access for payment proofs and expense invoices.
-- Authentication throttling for login and password reset.
 - HTTPS/security headers/trusted proxy hardening.

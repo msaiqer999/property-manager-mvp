@@ -3,13 +3,31 @@
 namespace App\Providers;
 
 use App\Models\User;
+use Illuminate\Cache\RateLimiting\Limit;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\ServiceProvider;
+use Illuminate\Support\Str;
 
 class AppServiceProvider extends ServiceProvider
 {
     public function boot(): void
     {
+        RateLimiter::for('login', function (Request $request) {
+            return Limit::perMinute(5)->by($this->normalizedEmailIpKey($request));
+        });
+
+        RateLimiter::for('password-reset-email', function (Request $request) {
+            return Limit::perMinute(3)->by($this->normalizedEmailIpKey($request));
+        });
+
+        RateLimiter::for('password-reset-submit', function (Request $request) {
+            $token = hash('sha256', (string) $request->input('token', ''));
+
+            return Limit::perMinute(5)->by($token.'|'.$request->ip());
+        });
+
         Gate::before(function (User $user, string $ability) {
             $legacyRouteAbilities = [
                 'manage-properties',
@@ -28,5 +46,10 @@ class AppServiceProvider extends ServiceProvider
 
             return $user->role->can($ability) ? true : null;
         });
+    }
+
+    private function normalizedEmailIpKey(Request $request): string
+    {
+        return Str::lower(trim((string) $request->input('email'))).'|'.$request->ip();
     }
 }

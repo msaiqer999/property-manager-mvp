@@ -22,6 +22,7 @@ From the project root:
 
 ```bash
 composer install
+npm ci
 cp .env.example .env
 php artisan key:generate
 ```
@@ -67,6 +68,7 @@ npm run dev
 The GitHub Actions workflow runs:
 
 - `composer install`
+- `composer validate --strict`
 - `composer check-platform-reqs`
 - `php artisan test`
 - `npm ci`
@@ -74,3 +76,14 @@ The GitHub Actions workflow runs:
 
 Tests use SQLite in CI. Do not treat the application as runtime verified until
 the workflow completes successfully.
+
+## Private Pilot Runtime Checks
+
+- Verify `/up` after deployment.
+- Verify payment proof and expense invoice downloads through the application,
+  not through `/storage`.
+- Verify `php artisan payments:mark-overdue` and `php artisan contracts:expire`
+  can run safely on staging.
+- Rehearse `php artisan pilot:reset-owner-password {email}` only against a
+  non-production owner account, entering the new password through the hidden
+  prompt.

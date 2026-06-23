@@ -8,6 +8,8 @@ use App\Services\ActivityLogger;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 
 class PaymentController extends Controller
 {
@@ -103,10 +105,59 @@ class PaymentController extends Controller
         return Pdf::loadView('pdf.receipt', compact('payment'))->download("payment-receipt-{$payment->id}.pdf");
     }
 
+    public function downloadProof(Payment $payment)
+    {
+        Gate::authorize('view', $payment);
+
+        $path = $this->validatedPrivatePath($payment->proof_image, 'payment-proofs');
+
+        if (! Storage::disk('local')->exists($path)) {
+            abort(404);
+        }
+
+        return Storage::disk('local')->download($path, $this->safeDownloadName('payment-proof', $payment->id, $path), [
+            'Cache-Control' => 'private, no-store',
+            'X-Content-Type-Options' => 'nosniff',
+        ]);
+    }
+
     private function abortIfCancelled(Payment $payment): void
     {
         if ($payment->status === 'cancelled') {
             abort(422, __('payments.validation.cannot_record_cancelled'));
         }
+    }
+
+    private function validatedPrivatePath(?string $storedPath, string $prefix): string
+    {
+        $rawPath = trim((string) $storedPath);
+
+        if ($rawPath === ''
+            || str_contains($rawPath, '\\')
+            || str_starts_with($rawPath, '/')
+            || preg_match('/^[A-Za-z]:\//', $rawPath)
+        ) {
+            abort(404);
+        }
+
+        $path = preg_replace('#/+#', '/', $rawPath);
+        $segments = explode('/', $path);
+
+        if (in_array('..', $segments, true)
+            || in_array('', $segments, true)
+            || ! Str::startsWith($path, $prefix.'/')
+        ) {
+            abort(404);
+        }
+
+        return $path;
+    }
+
+    private function safeDownloadName(string $label, int $id, string $path): string
+    {
+        $extension = pathinfo($path, PATHINFO_EXTENSION);
+        $extension = preg_match('/^[A-Za-z0-9]{1,10}$/', $extension) ? strtolower($extension) : 'bin';
+
+        return "{$label}-{$id}.{$extension}";
     }
 }
