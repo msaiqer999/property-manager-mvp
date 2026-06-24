@@ -22,7 +22,16 @@
 @if($contract->exists || $isRenewal)
 <div class="block text-sm font-medium">{{ __('contracts.form.tenant') }} <div class="tap-target mt-1 w-full rounded border bg-slate-50 p-2">{{ $displayContract->tenant?->full_name }}</div><span class="mt-1 block text-xs text-slate-500">{{ $isRenewal ? __('contracts.form.tenant_fixed_renewal') : __('contracts.form.tenant_locked') }}</span></div>
 @else
-<label id="existing-tenant-fields" class="block text-sm font-medium {{ $tenantMode === 'new' ? 'hidden' : '' }}">{{ __('contracts.form.tenant') }} <select name="tenant_id" class="tap-target mt-1 w-full rounded border p-2" @disabled($tenantMode === 'new')>@foreach($tenants as $tenant)<option value="{{ $tenant->id }}" @selected(old('tenant_id', $contract->tenant_id)==$tenant->id)>{{ $tenant->full_name }}</option>@endforeach</select><span class="mt-1 block text-xs text-slate-500">{{ __('contracts.form.select_existing_tenant_hint') }}</span></label>
+<label id="existing-tenant-fields" class="block text-sm font-medium {{ $tenantMode === 'new' ? 'hidden' : '' }}">
+    {{ __('contracts.form.tenant') }}
+    <select name="tenant_id" class="tap-target mt-1 w-full rounded border p-2" @disabled($tenantMode === 'new')>
+        <option value="">{{ __('contracts.form.select_tenant') }}</option>
+        @foreach($tenants as $tenant)
+            <option value="{{ $tenant->id }}" @selected((string) old('tenant_id', $contract->tenant_id) === (string) $tenant->id)>{{ $tenant->full_name }}</option>
+        @endforeach
+    </select>
+    <span class="mt-1 block text-xs text-slate-500">{{ __('contracts.form.select_existing_tenant_hint') }}</span>
+</label>
 @endif
 @if(! $contract->exists && ! $isRenewal)
 <div id="new-tenant-fields" class="grid gap-4 rounded border border-dashed p-3 md:col-span-2 md:grid-cols-2 {{ $tenantMode === 'new' ? '' : 'hidden' }}">

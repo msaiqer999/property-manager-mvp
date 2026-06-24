@@ -15,6 +15,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Validation\ValidationException;
 
 class ContractController extends Controller
@@ -262,7 +263,11 @@ class ContractController extends Controller
 
         return [
             'contract' => $contract,
-            'tenants' => Tenant::where('organization_id', $this->organizationId())->notArchived()->orderBy('full_name')->get(),
+            'tenants' => Tenant::query()
+                ->where('organization_id', $this->organizationId())
+                ->when(Schema::hasColumn('tenants', 'archived_at'), fn ($query) => $query->whereNull('archived_at'))
+                ->orderBy('full_name')
+                ->get(['id', 'full_name']),
             'units' => $units,
         ];
     }

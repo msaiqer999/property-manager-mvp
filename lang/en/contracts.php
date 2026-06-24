@@ -33,6 +33,7 @@ return [
         'number_read_only' => 'The contract number is read-only.',
         'number_generated' => 'The contract number will be generated automatically.',
         'tenant' => 'Tenant',
+        'select_tenant' => 'Select tenant',
         'select_existing_tenant' => 'Select existing tenant',
         'add_new_tenant' => 'Add new tenant',
         'tenant_fixed_renewal' => 'Tenant is fixed for this renewal preparation.',

@@ -95,7 +95,7 @@ class ContractLifecycleCommandTest extends TestCase
         Carbon::setTestNow();
     }
 
-    public function test_future_contract_does_not_mark_unit_rented_today(): void
+    public function test_future_active_contract_marks_unit_rented(): void
     {
         Carbon::setTestNow('2026-06-17');
         $data = $this->scenario();
@@ -111,7 +111,7 @@ class ContractLifecycleCommandTest extends TestCase
 
         $this->artisan('contracts:expire')->assertSuccessful();
 
-        $this->assertSame('vacant', $data['unit']->fresh()->status);
+        $this->assertSame('rented', $data['unit']->fresh()->status);
         Carbon::setTestNow();
     }
 

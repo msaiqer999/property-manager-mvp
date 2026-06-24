@@ -152,6 +152,42 @@ class ContractOccupancyProtectionTest extends TestCase
             ->assertRedirect();
     }
 
+    public function test_create_contract_tenant_selector_lists_only_tenants_in_current_organization(): void
+    {
+        [$owner, $data, $otherData] = $this->scenario();
+        $activeTenantName = $this->unicode('\u0645\u0633\u062a\u0623\u062c\u0631 \u0627\u062e\u062a\u0628\u0627\u0631 \u0627\u0644\u0645\u0631\u062d\u0644\u0629 \u0627\u0644\u0623\u0648\u0644\u0649');
+        $otherTenantName = $this->unicode('\u0645\u0633\u062a\u0623\u062c\u0631 \u0645\u0646\u0638\u0645\u0629 \u0623\u062e\u0631\u0649 \u0644\u0627 \u064a\u0638\u0647\u0631');
+        $selectTenantLabel = $this->unicode('\u0627\u062e\u062a\u0631 \u0627\u0644\u0645\u0633\u062a\u0623\u062c\u0631');
+
+        $activeTenant = Tenant::create([
+            'organization_id' => $data['organization']->id,
+            'full_name' => $activeTenantName,
+        ]);
+        Tenant::create([
+            'organization_id' => $otherData['organization']->id,
+            'full_name' => $otherTenantName,
+        ]);
+
+        $this->actingAs($owner)
+            ->withSession(['locale' => 'en'])
+            ->get(route('contracts.create'))
+            ->assertOk()
+            ->assertSee('Select tenant')
+            ->assertSee('name="tenant_id"', false)
+            ->assertSee('value="'.$activeTenant->id.'"', false)
+            ->assertSeeText($activeTenantName)
+            ->assertDontSeeText($otherTenantName);
+
+        $this->actingAs($owner)
+            ->withSession(['locale' => 'ar'])
+            ->get(route('contracts.create'))
+            ->assertOk()
+            ->assertSeeText($selectTenantLabel)
+            ->assertSee('value="'.$activeTenant->id.'"', false)
+            ->assertSeeText($activeTenantName)
+            ->assertDontSeeText($otherTenantName);
+    }
+
     public function test_tenant_and_unit_cannot_be_changed_after_contract_creation(): void
     {
         [$owner, $data] = $this->scenario();
@@ -304,7 +340,7 @@ class ContractOccupancyProtectionTest extends TestCase
             ->assertStatus(422);
     }
 
-    public function test_current_active_contract_marks_unit_rented_and_future_contract_does_not(): void
+    public function test_active_contract_marks_unit_rented_even_when_start_date_is_future(): void
     {
         [$owner, $data] = $this->scenario();
 
@@ -315,6 +351,10 @@ class ContractOccupancyProtectionTest extends TestCase
             ]))
             ->assertRedirect();
 
+        $this->assertDatabaseHas('contracts', [
+            'unit_id' => $data['unit']->id,
+            'status' => 'active',
+        ]);
         $this->assertSame('rented', $data['unit']->fresh()->status);
 
         $this->actingAs($owner)
@@ -325,10 +365,10 @@ class ContractOccupancyProtectionTest extends TestCase
             ]))
             ->assertRedirect();
 
-        $this->assertSame('vacant', $data['secondUnit']->fresh()->status);
+        $this->assertSame('rented', $data['secondUnit']->fresh()->status);
     }
 
-    public function test_ending_contract_makes_unit_vacant_unless_another_current_contract_exists(): void
+    public function test_ending_contract_makes_unit_vacant_unless_another_active_contract_exists(): void
     {
         [$owner, $data] = $this->scenario();
         $contract = $this->contract($data, [
@@ -357,7 +397,7 @@ class ContractOccupancyProtectionTest extends TestCase
         $this->assertSame('vacant', $data['unit']->fresh()->status);
     }
 
-    public function test_another_current_active_contract_keeps_unit_rented_and_maintenance_is_not_overwritten(): void
+    public function test_another_active_contract_keeps_unit_rented_and_maintenance_is_not_overwritten(): void
     {
         [$owner, $data] = $this->scenario();
         $first = $this->contract($data, [
@@ -695,5 +735,10 @@ class ContractOccupancyProtectionTest extends TestCase
             'status' => $contract->status,
             'notes' => $contract->notes,
         ], $overrides);
+    }
+
+    private function unicode(string $escaped): string
+    {
+        return json_decode('"'.$escaped.'"', true, flags: JSON_THROW_ON_ERROR);
     }
 }

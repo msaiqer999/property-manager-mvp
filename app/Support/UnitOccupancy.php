@@ -12,12 +12,10 @@ class UnitOccupancy
             return;
         }
 
-        $hasCurrentActiveContract = $unit->contracts()
+        $hasActiveContract = $unit->contracts()
             ->where('status', 'active')
-            ->whereDate('start_date', '<=', now()->toDateString())
-            ->whereDate('end_date', '>=', now()->toDateString())
             ->exists();
 
-        $unit->update(['status' => $hasCurrentActiveContract ? 'rented' : 'vacant']);
+        $unit->update(['status' => $hasActiveContract ? 'rented' : 'vacant']);
     }
 }

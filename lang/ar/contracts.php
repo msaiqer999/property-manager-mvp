@@ -25,6 +25,7 @@ return [
     ],
 
     'form' => [
+        'select_tenant' => 'اختر المستأجر',
         'add_title' => 'إضافة عقد',
         'edit_title' => 'تعديل العقد',
         'prepare_renewal_title' => 'إعداد التجديد',
