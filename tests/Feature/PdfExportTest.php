@@ -99,6 +99,13 @@ class PdfExportTest extends TestCase
         $html = $this->renderReceiptHtml($payment, 'ar');
         $this->assertStringContainsString('إيصال دفع', $html);
         $this->assertStringContainsString('أحمد سالم التجريبي', $html);
+        $this->assertStringContainsString((string) $payment->id, $html);
+        $this->assertStringContainsString($payment->contract->contract_number, $html);
+        $this->assertStringContainsString($payment->contract->unit->unit_number, $html);
+        $this->assertStringContainsString($payment->due_date->toDateString(), $html);
+        $this->assertStringContainsString($payment->payment_date->toDateString(), $html);
+        $this->assertStringContainsString(number_format((float) $payment->amount_due, 2), $html);
+        $this->assertStringContainsString(number_format((float) $payment->amount_paid, 2), $html);
         $this->assertStringContainsString('تحويل بنكي', $html);
         $this->assertStringContainsString('مدفوع', $html);
         $this->assertStringNotContainsString('???', $html);
