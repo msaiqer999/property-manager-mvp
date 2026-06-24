@@ -6,8 +6,8 @@ use App\Http\Controllers\Concerns\ScopesOrganization;
 use App\Models\Expense;
 use App\Models\Payment;
 use App\Models\Unit;
+use App\Support\PdfRenderer;
 use App\Support\ReportAuthorization;
-use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Support\Facades\DB;
 
 class ReportController extends Controller
@@ -23,7 +23,7 @@ class ReportController extends Controller
         return view('reports.index', $this->summaryData());
     }
 
-    public function pdf(string $type, ReportAuthorization $authorization)
+    public function pdf(string $type, ReportAuthorization $authorization, PdfRenderer $pdf)
     {
         abort_if(auth()->user()->role->value === 'caretaker', 403);
         abort_unless(in_array($type, ['building-income', 'unit-statement', 'expenses', 'overdue', 'net-profit', 'monthly-summary'], true), 404);
@@ -33,7 +33,7 @@ class ReportController extends Controller
             abort_unless($authorization->viewProfitData(auth()->user()), 403);
         }
 
-        return Pdf::loadView('pdf.report', $this->reportData($type) + ['type' => $type])->download($this->pdfFilename($type));
+        return $pdf->download('pdf.report', $this->reportData($type) + ['type' => $type], $this->pdfFilename($type));
     }
 
     private function summaryData(): array

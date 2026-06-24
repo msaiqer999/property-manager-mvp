@@ -17,3 +17,6 @@
 /.fleet
 /.idea
 /.vscode
+
+/.phpunit.result.cache
+/storage/logs/*.log

@@ -9,8 +9,8 @@ use App\Models\Tenant;
 use App\Models\Unit;
 use App\Services\ActivityLogger;
 use App\Support\PaymentSchedule;
+use App\Support\PdfRenderer;
 use App\Support\UnitOccupancy;
-use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
@@ -244,11 +244,11 @@ class ContractController extends Controller
         abort(422, __('contracts.validation.cannot_delete'));
     }
 
-    public function pdf(Contract $contract)
+    public function pdf(Contract $contract, PdfRenderer $pdf)
     {
         Gate::authorize('exportPdf', $contract);
 
-        return Pdf::loadView('pdf.contract', compact('contract'))->download("contract-{$contract->contract_number}.pdf");
+        return $pdf->download('pdf.contract', compact('contract'), "contract-{$contract->contract_number}.pdf");
     }
 
     private function formData(Contract $contract): array

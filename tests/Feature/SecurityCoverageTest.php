@@ -11,8 +11,7 @@ use App\Models\Payment;
 use App\Models\Tenant;
 use App\Models\Unit;
 use App\Models\User;
-use Barryvdh\DomPDF\Facade\Pdf;
-use Barryvdh\DomPDF\PDF as DomPdfDocument;
+use App\Support\PdfRenderer;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
@@ -1547,18 +1546,16 @@ class SecurityCoverageTest extends TestCase
 
     private function fakeReportPdf(int $times, array &$capturedReports = []): void
     {
-        $pdf = \Mockery::mock(DomPdfDocument::class);
-        $pdf->shouldReceive('download')
+        $renderer = \Mockery::mock(PdfRenderer::class);
+        $renderer->shouldReceive('download')
             ->times($times)
-            ->andReturnUsing(fn (string $filename) => response("fake {$filename}", 200));
-
-        Pdf::shouldReceive('loadView')
-            ->times($times)
-            ->withArgs(function (string $view, array $data) use (&$capturedReports) {
+            ->withArgs(function (string $view, array $data, string $filename) use (&$capturedReports) {
                 $capturedReports[$data['type']] = $data;
 
-                return $view === 'pdf.report';
+                return $view === 'pdf.report' && str_ends_with($filename, '.pdf');
             })
-            ->andReturn($pdf);
+            ->andReturnUsing(fn (string $view, array $data, string $filename) => response("fake {$filename}", 200));
+
+        $this->app->instance(PdfRenderer::class, $renderer);
     }
 }

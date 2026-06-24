@@ -56,6 +56,12 @@ return [
         'status' => 'الحالة',
     ],
 
+    'pdf' => [
+        'title' => 'إيصال دفع',
+        'generated_at' => 'تم الإنشاء في',
+        'receipt_number' => 'رقم الإيصال',
+    ],
+
     'lifecycle' => [
         'cancelled_due_to_contract_termination' => 'ملغاة بسبب إنهاء العقد',
     ],

@@ -84,6 +84,18 @@ return [
         'record_payment' => 'تسجيل',
     ],
 
+    'pdf' => [
+        'title' => 'عقد إيجار',
+        'generated_at' => 'تم الإنشاء في',
+        'contract_details' => 'تفاصيل العقد',
+        'parties' => 'الأطراف والوحدة',
+        'deposit' => 'مبلغ التأمين',
+        'tenant_email' => 'بريد المستأجر',
+        'tenant_phone' => 'هاتف المستأجر',
+        'notes' => 'ملاحظات',
+        'not_available' => 'غير متاح',
+    ],
+
     'lifecycle' => [
         'terminate' => 'إنهاء العقد',
         'termination_reason' => 'سبب الإنهاء',

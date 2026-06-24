@@ -56,6 +56,12 @@ return [
         'status' => 'Status',
     ],
 
+    'pdf' => [
+        'title' => 'Payment Receipt',
+        'generated_at' => 'Generated at',
+        'receipt_number' => 'Receipt number',
+    ],
+
     'lifecycle' => [
         'cancelled_due_to_contract_termination' => 'Cancelled due to contract termination',
     ],

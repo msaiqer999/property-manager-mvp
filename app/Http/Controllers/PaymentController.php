@@ -5,7 +5,7 @@ namespace App\Http\Controllers;
 use App\Http\Controllers\Concerns\ScopesOrganization;
 use App\Models\Payment;
 use App\Services\ActivityLogger;
-use Barryvdh\DomPDF\Facade\Pdf;
+use App\Support\PdfRenderer;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Storage;
@@ -94,7 +94,7 @@ class PaymentController extends Controller
         return ((int) $whole * 100) + (int) str_pad($fraction, 2, '0');
     }
 
-    public function receipt(Payment $payment)
+    public function receipt(Payment $payment, PdfRenderer $pdf)
     {
         Gate::authorize('exportReceiptPdf', $payment);
 
@@ -102,7 +102,7 @@ class PaymentController extends Controller
             abort(422, __('payments.validation.receipt_unavailable_without_recorded_money'));
         }
 
-        return Pdf::loadView('pdf.receipt', compact('payment'))->download("payment-receipt-{$payment->id}.pdf");
+        return $pdf->download('pdf.receipt', compact('payment'), "payment-receipt-{$payment->id}.pdf");
     }
 
     public function downloadProof(Payment $payment)

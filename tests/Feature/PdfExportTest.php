@@ -2,20 +2,32 @@
 
 namespace Tests\Feature;
 
-use App\Models\Contract;
 use App\Models\Building;
+use App\Models\Contract;
+use App\Models\Expense;
 use App\Models\Organization;
 use App\Models\Payment;
 use App\Models\Tenant;
 use App\Models\Unit;
 use App\Models\User;
+use App\Support\PdfRenderer;
 use Database\Seeders\DatabaseSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Testing\TestResponse;
 use Tests\TestCase;
 
 class PdfExportTest extends TestCase
 {
     use RefreshDatabase;
+
+    private const REPORT_TYPES = [
+        'building-income',
+        'unit-statement',
+        'expenses',
+        'overdue',
+        'net-profit',
+        'monthly-summary',
+    ];
 
     public function test_owner_can_export_contract_receipt_and_report_pdfs(): void
     {
@@ -31,8 +43,7 @@ class PdfExportTest extends TestCase
             ->assertSee('Download contract PDF');
 
         $contractResponse = $this->actingAs($owner)->get(route('contracts.pdf', $contract));
-        $contractResponse->assertOk();
-        $this->assertStringContainsString("contract-{$contract->contract_number}.pdf", (string) $contractResponse->headers->get('content-disposition'));
+        $this->assertPdfResponse($contractResponse, "contract-{$contract->contract_number}.pdf");
 
         $this->actingAs($owner)->get(route('payments.show', $payment))
             ->assertOk()
@@ -44,8 +55,7 @@ class PdfExportTest extends TestCase
             ->assertSee('Record payment');
 
         $receiptResponse = $this->actingAs($owner)->get(route('payments.receipt', $payment));
-        $receiptResponse->assertOk();
-        $this->assertStringContainsString("payment-receipt-{$payment->id}.pdf", (string) $receiptResponse->headers->get('content-disposition'));
+        $this->assertPdfResponse($receiptResponse, "payment-receipt-{$payment->id}.pdf");
 
         $this->actingAs($owner)->get(route('reports.index'))
             ->assertOk()
@@ -56,10 +66,123 @@ class PdfExportTest extends TestCase
             ->assertSee('Export monthly summary PDF')
             ->assertSee('Export net profit PDF');
 
-        foreach (['building-income', 'unit-statement', 'expenses', 'overdue', 'net-profit', 'monthly-summary'] as $type) {
+        foreach (self::REPORT_TYPES as $type) {
             $response = $this->actingAs($owner)->get(route('reports.pdf', $type));
-            $response->assertOk();
-            $this->assertStringContainsString($this->expectedReportFilename($type), (string) $response->headers->get('content-disposition'));
+            $this->assertPdfResponse($response, $this->expectedReportFilename($type));
+        }
+    }
+
+    public function test_arabic_contract_pdf_uses_translated_labels_and_values(): void
+    {
+        [$owner, $contract] = $this->arabicPdfScenario();
+
+        $response = $this->withSession(['locale' => 'ar'])->actingAs($owner)->get(route('contracts.pdf', $contract));
+        $this->assertPdfResponse($response, "contract-{$contract->contract_number}.pdf");
+
+        $html = $this->renderContractHtml($contract, 'ar');
+        $this->assertStringContainsString('عقد إيجار', $html);
+        $this->assertStringContainsString('أحمد سالم التجريبي', $html);
+        $this->assertStringContainsString('منشأة المدير العقاري التجريبية', $html);
+        $this->assertStringContainsString('شهري', $html);
+        $this->assertStringContainsString('نشط', $html);
+        $this->assertStringNotContainsString('???', $html);
+        $this->assertRawValuesAbsent($html, ['monthly', 'active']);
+    }
+
+    public function test_arabic_payment_receipt_pdf_uses_translated_method_and_status(): void
+    {
+        [$owner, , $payment] = $this->arabicPdfScenario();
+
+        $response = $this->withSession(['locale' => 'ar'])->actingAs($owner)->get(route('payments.receipt', $payment));
+        $this->assertPdfResponse($response, "payment-receipt-{$payment->id}.pdf");
+
+        $html = $this->renderReceiptHtml($payment, 'ar');
+        $this->assertStringContainsString('إيصال دفع', $html);
+        $this->assertStringContainsString('أحمد سالم التجريبي', $html);
+        $this->assertStringContainsString('تحويل بنكي', $html);
+        $this->assertStringContainsString('مدفوع', $html);
+        $this->assertStringNotContainsString('???', $html);
+        $this->assertRawValuesAbsent($html, ['bank_transfer', 'paid']);
+    }
+
+    public function test_arabic_report_pdfs_cover_every_report_type_without_raw_identifiers(): void
+    {
+        [$owner] = $this->arabicPdfScenario();
+
+        foreach (self::REPORT_TYPES as $type) {
+            $response = $this->withSession(['locale' => 'ar'])->actingAs($owner)->get(route('reports.pdf', $type));
+            $this->assertPdfResponse($response, $this->expectedReportFilename($type));
+
+            $html = $this->renderReportHtml($type, 'ar');
+            $this->assertStringContainsString(__('reports.types.'.$type), $html);
+            $this->assertStringContainsString('منشأة المدير العقاري التجريبية', $html);
+            $this->assertStringNotContainsString('???', $html);
+            $this->assertRawValuesAbsent($html, array_merge(self::REPORT_TYPES, [
+                'monthly',
+                'bank_transfer',
+                'paid',
+                'pending',
+                'overdue',
+                'voided',
+            ]));
+        }
+    }
+
+    public function test_english_pdfs_render_human_readable_values(): void
+    {
+        [$owner, $contract, $payment] = $this->arabicPdfScenario();
+
+        $this->assertPdfResponse(
+            $this->withSession(['locale' => 'en'])->actingAs($owner)->get(route('contracts.pdf', $contract)),
+            "contract-{$contract->contract_number}.pdf"
+        );
+        $this->assertPdfResponse(
+            $this->withSession(['locale' => 'en'])->actingAs($owner)->get(route('payments.receipt', $payment)),
+            "payment-receipt-{$payment->id}.pdf"
+        );
+
+        $contractHtml = $this->renderContractHtml($contract, 'en');
+        $receiptHtml = $this->renderReceiptHtml($payment, 'en');
+        $reportHtml = $this->renderReportHtml('monthly-summary', 'en');
+
+        $this->assertStringContainsString('Rental Contract', $contractHtml);
+        $this->assertStringContainsString('Monthly', $contractHtml);
+        $this->assertStringContainsString('Active', $contractHtml);
+        $this->assertStringContainsString('Payment Receipt', $receiptHtml);
+        $this->assertStringContainsString('Bank transfer', $receiptHtml);
+        $this->assertStringContainsString('Paid', $receiptHtml);
+        $this->assertStringContainsString('Monthly summary', $reportHtml);
+        $this->assertRawValuesAbsent($contractHtml.$receiptHtml.$reportHtml, ['monthly', 'bank_transfer']);
+    }
+
+    public function test_pdf_translation_keys_cover_all_allowed_enum_values_and_report_types(): void
+    {
+        foreach (['en', 'ar'] as $locale) {
+            app()->setLocale($locale);
+
+            foreach (['monthly', 'quarterly', 'semi_annual', 'annual'] as $value) {
+                $this->assertTranslatedValueDiffersFromRaw("contracts.frequencies.{$value}", $value);
+            }
+
+            foreach (['active', 'expired', 'terminated'] as $value) {
+                $this->assertTranslatedValueDiffersFromRaw("contracts.statuses.{$value}", $value);
+            }
+
+            foreach (['cash', 'bank_transfer', 'cheque', 'other'] as $value) {
+                $this->assertTranslatedValueDiffersFromRaw("payments.methods.{$value}", $value);
+            }
+
+            foreach (['pending', 'paid', 'partial', 'overdue', 'cancelled'] as $value) {
+                $this->assertTranslatedValueDiffersFromRaw("payments.statuses.{$value}", $value);
+            }
+
+            foreach (['active', 'voided'] as $value) {
+                $this->assertTranslatedValueDiffersFromRaw("expenses.lifecycle.{$value}", $value);
+            }
+
+            foreach (self::REPORT_TYPES as $value) {
+                $this->assertTranslatedValueDiffersFromRaw("reports.types.{$value}", $value);
+            }
         }
     }
 
@@ -74,6 +197,22 @@ class PdfExportTest extends TestCase
         $this->actingAs($ownerB)->get(route('payments.receipt', $paymentB))->assertOk();
     }
 
+    public function test_pdf_renderer_uses_local_mpdf_defaults_and_dedicated_temp_directory(): void
+    {
+        $renderer = app(PdfRenderer::class);
+        $mpdf = $renderer->mpdf();
+        $tempDir = storage_path('framework/cache/mpdf');
+
+        $this->assertDirectoryExists($tempDir);
+        $this->assertTrue(is_writable($tempDir));
+        $this->assertSame('dejavusans', $mpdf->default_font);
+        $this->assertTrue($mpdf->autoScriptToLang);
+        $this->assertTrue($mpdf->autoArabic);
+        $this->assertArrayHasKey('dejavusans', $mpdf->fontdata);
+        $this->assertSame(255, $mpdf->fontdata['dejavusans']['useOTL']);
+        $this->assertSame(75, $mpdf->fontdata['dejavusans']['useKashida']);
+    }
+
     public function test_empty_report_pdf_does_not_error(): void
     {
         $organization = Organization::create(['name' => 'Empty Report Org']);
@@ -85,9 +224,60 @@ class PdfExportTest extends TestCase
             'role' => 'owner',
         ]);
 
-        foreach (['building-income', 'unit-statement', 'expenses', 'overdue', 'net-profit', 'monthly-summary'] as $type) {
-            $this->actingAs($owner)->get(route('reports.pdf', $type))->assertOk();
+        foreach (self::REPORT_TYPES as $type) {
+            $this->assertPdfResponse(
+                $this->actingAs($owner)->get(route('reports.pdf', $type)),
+                $this->expectedReportFilename($type)
+            );
         }
+    }
+
+    private function assertPdfResponse(TestResponse $response, string $filename): void
+    {
+        $response->assertOk();
+        $this->assertSame('application/pdf', $response->headers->get('content-type'));
+        $this->assertStringContainsString($filename, (string) $response->headers->get('content-disposition'));
+        $this->assertStringStartsWith('%PDF-', $response->getContent());
+        $this->assertGreaterThan(1000, strlen($response->getContent()));
+    }
+
+    private function assertRawValuesAbsent(string $html, array $rawValues): void
+    {
+        foreach ($rawValues as $rawValue) {
+            $this->assertStringNotContainsString($rawValue, $html);
+        }
+    }
+
+    private function assertTranslatedValueDiffersFromRaw(string $key, string $raw): void
+    {
+        $translation = __($key);
+
+        $this->assertNotSame($key, $translation);
+        $this->assertNotSame($raw, $translation);
+    }
+
+    private function renderContractHtml(Contract $contract, string $locale): string
+    {
+        app()->setLocale($locale);
+
+        return view('pdf.contract', ['contract' => $contract->loadMissing('tenant', 'unit.building')])->render();
+    }
+
+    private function renderReceiptHtml(Payment $payment, string $locale): string
+    {
+        app()->setLocale($locale);
+
+        return view('pdf.receipt', ['payment' => $payment->loadMissing('contract.tenant', 'contract.unit.building')])->render();
+    }
+
+    private function renderReportHtml(string $type, string $locale): string
+    {
+        app()->setLocale($locale);
+        $controller = app(\App\Http\Controllers\ReportController::class);
+        $method = new \ReflectionMethod($controller, 'reportData');
+        $method->setAccessible(true);
+
+        return view('pdf.report', $method->invoke($controller, $type) + ['type' => $type])->render();
     }
 
     private function expectedReportFilename(string $type): string
@@ -102,6 +292,81 @@ class PdfExportTest extends TestCase
             'net-profit' => "net-profit-{$period}.pdf",
             'monthly-summary' => "monthly-summary-{$period}.pdf",
         };
+    }
+
+    private function arabicPdfScenario(): array
+    {
+        $organization = Organization::create(['name' => 'منشأة المدير العقاري التجريبية']);
+        $owner = User::create([
+            'organization_id' => $organization->id,
+            'name' => 'Owner',
+            'email' => 'arabic-pdf-owner@example.test',
+            'password' => 'password',
+            'role' => 'owner',
+        ]);
+        $building = Building::create([
+            'organization_id' => $organization->id,
+            'name' => 'منشأة المدير العقاري التجريبية',
+            'location' => 'دبي',
+        ]);
+        $unit = Unit::create([
+            'building_id' => $building->id,
+            'unit_number' => 'Unit 101',
+            'type' => 'apartment',
+            'status' => 'rented',
+            'rent_amount' => 5000,
+        ]);
+        $tenant = Tenant::create([
+            'organization_id' => $organization->id,
+            'full_name' => 'أحمد سالم التجريبي',
+            'phone' => '+971500000001',
+            'email' => 'tenant.test@example.test',
+            'id_number' => 'ID-2026-000001',
+        ]);
+        $contract = Contract::create([
+            'organization_id' => $organization->id,
+            'unit_id' => $unit->id,
+            'tenant_id' => $tenant->id,
+            'contract_number' => 'CN-2026-000001',
+            'start_date' => '2026-07-01',
+            'end_date' => '2027-06-30',
+            'rent_amount' => 5000,
+            'payment_frequency' => 'monthly',
+            'deposit_amount' => 5000,
+            'status' => 'active',
+            'notes' => '<script>alert("escaped")</script>',
+        ]);
+        $payment = Payment::create([
+            'organization_id' => $organization->id,
+            'contract_id' => $contract->id,
+            'due_date' => '2026-07-01',
+            'amount_due' => 5000,
+            'amount_paid' => 5000,
+            'payment_date' => '2026-07-01',
+            'payment_method' => 'bank_transfer',
+            'status' => 'paid',
+        ]);
+        Payment::create([
+            'organization_id' => $organization->id,
+            'contract_id' => $contract->id,
+            'due_date' => '2026-08-01',
+            'amount_due' => 5000,
+            'amount_paid' => 0,
+            'payment_method' => 'cash',
+            'status' => 'overdue',
+        ]);
+        Expense::create([
+            'organization_id' => $organization->id,
+            'building_id' => $building->id,
+            'unit_id' => $unit->id,
+            'category' => 'maintenance',
+            'amount' => 250,
+            'expense_date' => '2026-07-03',
+            'notes' => '<strong>escaped</strong>',
+            'created_by' => $owner->id,
+        ]);
+
+        return [$owner, $contract, $payment];
     }
 
     private function twoOrganizationPdfScenario(): array

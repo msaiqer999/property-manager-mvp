@@ -84,6 +84,18 @@ return [
         'record_payment' => 'Record',
     ],
 
+    'pdf' => [
+        'title' => 'Rental Contract',
+        'generated_at' => 'Generated at',
+        'contract_details' => 'Contract details',
+        'parties' => 'Parties and unit',
+        'deposit' => 'Deposit',
+        'tenant_email' => 'Tenant email',
+        'tenant_phone' => 'Tenant phone',
+        'notes' => 'Notes',
+        'not_available' => 'N/A',
+    ],
+
     'lifecycle' => [
         'terminate' => 'Terminate contract',
         'termination_reason' => 'Termination reason',
