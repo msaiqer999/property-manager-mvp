@@ -968,6 +968,77 @@ class SecurityCoverageTest extends TestCase
         }
     }
 
+    public function test_caretaker_dashboard_and_navigation_are_limited_to_payment_workflow(): void
+    {
+        [, , , $caretakerA, , $dataA] = $this->createTwoOrganizationScenario();
+
+        $this->actingAs($caretakerA)
+            ->get(route('dashboard'))
+            ->assertOk()
+            ->assertSee('>Dashboard<', false)
+            ->assertSee('>Payments<', false)
+            ->assertSee(__('app.dashboard.latest_payments'))
+            ->assertDontSee('>Reports<', false)
+            ->assertDontSee('>Users<', false)
+            ->assertDontSee('>Activity<', false)
+            ->assertDontSee('>Contracts<', false)
+            ->assertDontSee('>Tenants<', false)
+            ->assertDontSee('>Expenses<', false)
+            ->assertDontSee('>Buildings<', false)
+            ->assertDontSee('>Units<', false)
+            ->assertDontSee(__('app.dashboard.monthly_income'))
+            ->assertDontSee(__('app.dashboard.monthly_expenses'))
+            ->assertDontSee(__('app.dashboard.net_profit'))
+            ->assertDontSee(__('app.dashboard.latest_expenses'))
+            ->assertDontSee(__('app.dashboard.contracts_expiring_soon'));
+
+        $this->actingAs($caretakerA)->get(route('reports.index'))->assertForbidden();
+        $this->actingAs($caretakerA)->get(route('users.index'))->assertForbidden();
+        $this->actingAs($caretakerA)->get(route('activity-logs.index'))->assertForbidden();
+        $this->actingAs($caretakerA)->get(route('contracts.index'))->assertForbidden();
+        $this->actingAs($caretakerA)->get(route('tenants.index'))->assertForbidden();
+        $this->actingAs($caretakerA)->get(route('expenses.index'))->assertForbidden();
+
+        $this->actingAs($caretakerA)->get(route('payments.index'))->assertOk();
+        $this->actingAs($caretakerA)->get(route('payments.edit', $dataA['payment']))->assertOk();
+    }
+
+    public function test_owner_manager_and_accountant_navigation_remains_role_appropriate(): void
+    {
+        [$ownerA, $managerA, $accountantA] = $this->createTwoOrganizationScenario();
+
+        $this->actingAs($ownerA)
+            ->get(route('dashboard'))
+            ->assertOk()
+            ->assertSee('>Reports<', false)
+            ->assertSee('>Users<', false)
+            ->assertSee('>Activity<', false)
+            ->assertSee(__('app.dashboard.monthly_income'))
+            ->assertSee(__('app.dashboard.monthly_expenses'))
+            ->assertSee(__('app.dashboard.net_profit'));
+
+        $this->actingAs($managerA)
+            ->get(route('dashboard'))
+            ->assertOk()
+            ->assertSee('>Reports<', false)
+            ->assertSee('>Contracts<', false)
+            ->assertSee('>Tenants<', false)
+            ->assertSee('>Expenses<', false)
+            ->assertDontSee('>Users<', false)
+            ->assertDontSee('>Activity<', false);
+
+        $this->actingAs($accountantA)
+            ->get(route('dashboard'))
+            ->assertOk()
+            ->assertSee('>Reports<', false)
+            ->assertSee('>Payments<', false)
+            ->assertSee('>Expenses<', false)
+            ->assertDontSee('>Contracts<', false)
+            ->assertDontSee('>Tenants<', false)
+            ->assertDontSee('>Buildings<', false)
+            ->assertDontSee('>Units<', false);
+    }
+
     public function test_dashboard_financial_totals_are_scoped_to_current_organization(): void
     {
         [$ownerA, , , , $dataB, $dataA] = $this->createTwoOrganizationScenario();

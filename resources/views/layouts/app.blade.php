@@ -16,10 +16,35 @@
     <div class="min-h-screen pb-20 sm:pb-0">
         @auth
             @php
-                $navigation = ['dashboard' => '/', 'units' => 'units', 'payments' => 'payments', 'contracts' => 'contracts', 'tenants' => 'tenants', 'expenses' => 'expenses', 'reports' => 'reports', 'buildings' => 'buildings', 'users' => 'users', 'activity' => 'activity-logs'];
+                $role = auth()->user()->role;
+                $navigation = ['dashboard' => '/'];
 
-                if (auth()->user()->role->value !== 'owner') {
-                    unset($navigation['users'], $navigation['activity']);
+                if ($role->can('manage-properties')) {
+                    $navigation += ['units' => 'units', 'buildings' => 'buildings'];
+                }
+
+                if ($role->can('view-payments')) {
+                    $navigation += ['payments' => 'payments'];
+                }
+
+                if ($role->can('manage-contracts')) {
+                    $navigation += ['contracts' => 'contracts'];
+                }
+
+                if ($role->can('manage-tenants')) {
+                    $navigation += ['tenants' => 'tenants'];
+                }
+
+                if ($role->can('view-expenses')) {
+                    $navigation += ['expenses' => 'expenses'];
+                }
+
+                if ($role->can('view-reports')) {
+                    $navigation += ['reports' => 'reports'];
+                }
+
+                if ($role->can('manage-users')) {
+                    $navigation += ['users' => 'users', 'activity' => 'activity-logs'];
                 }
             @endphp
             <header class="sticky top-0 z-20 border-b bg-white/95 backdrop-blur">
