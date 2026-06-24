@@ -29,7 +29,7 @@ class LocalizationFoundationTest extends TestCase
         $this->get(route('login'))
             ->assertOk()
             ->assertSee('<html lang="ar" dir="rtl">', false)
-            ->assertSee('مدير العقارات')
+            ->assertSee('المدير العقاري')
             ->assertSee('تسجيل الدخول')
             ->assertSee('English');
 

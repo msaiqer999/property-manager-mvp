@@ -28,11 +28,15 @@ class UnitController extends Controller
         return view('units.index', ['units' => $units, 'buildings' => $this->buildings()]);
     }
 
-    public function create()
+    public function create(Request $request)
     {
         Gate::authorize('create', Unit::class);
 
-        return view('units.form', ['unit' => new Unit, 'buildings' => $this->buildings()]);
+        $unit = new Unit([
+            'building_id' => $request->integer('building_id') ?: null,
+        ]);
+
+        return view('units.form', ['unit' => $unit, 'buildings' => $this->buildings()]);
     }
 
     public function store(Request $request, ActivityLogger $logger)

@@ -149,24 +149,51 @@ class UnitLocalizationTest extends TestCase
             'type' => 'warehouse',
             'status' => 'maintenance',
             'rent' => 9876.54,
+            'size' => 125.5,
+            'rooms' => 3,
+            'notes' => 'Unit show notes remain visible.',
         ]);
+
+        app()->setLocale('ar');
+        $buildingLabel = __('units.labels.building');
+        $statusLabel = __('units.labels.status');
+        $typeLabel = __('units.labels.type');
+        $rentLabel = __('units.labels.rent');
+        $sizeLabel = __('units.fields.size').':';
+        $roomsLabel = __('units.fields.rooms').':';
+        $notesLabel = __('units.fields.notes').':';
+        $maintenanceStatus = __('units.statuses.maintenance');
+        $warehouseType = __('units.types.warehouse');
 
         $this->actingAs($owner)
             ->withSession(['locale' => 'ar'])
             ->get(route('units.show', $unit))
             ->assertOk()
-            ->assertSee('الوحدة')
+            ->assertSee(__('units.fields.unit'))
             ->assertSeeHtml('<bdi dir="ltr">RTL-UNIT-909</bdi>')
-            ->assertSee('المبنى: Unit Show Localization Building')
-            ->assertSee('الحالة: قيد الصيانة')
-            ->assertSee('النوع: مستودع')
-            ->assertSeeHtml('قيمة الإيجار: <bdi dir="ltr">9,876.54</bdi>');
+            ->assertSee($buildingLabel)
+            ->assertSee('Unit Show Localization Building')
+            ->assertSee($statusLabel)
+            ->assertSee($maintenanceStatus)
+            ->assertSee($typeLabel)
+            ->assertSee($warehouseType)
+            ->assertSee($rentLabel)
+            ->assertSee($sizeLabel)
+            ->assertSee($roomsLabel)
+            ->assertSee($notesLabel)
+            ->assertSeeHtml('<bdi dir="ltr">9,876.54</bdi>')
+            ->assertSeeHtml('<bdi dir="ltr">125.50</bdi>')
+            ->assertSeeHtml('<bdi dir="ltr">3</bdi>')
+            ->assertSee('Unit show notes remain visible.');
 
         $freshUnit = $unit->fresh()->load('building');
         $this->assertSame('RTL-UNIT-909', $freshUnit->unit_number);
         $this->assertSame('warehouse', $freshUnit->type);
         $this->assertSame('maintenance', $freshUnit->status);
         $this->assertSame('9876.54', number_format((float) $freshUnit->rent_amount, 2, '.', ''));
+        $this->assertSame('125.50', number_format((float) $freshUnit->size, 2, '.', ''));
+        $this->assertSame(3, $freshUnit->rooms);
+        $this->assertSame('Unit show notes remain visible.', $freshUnit->notes);
     }
 
     public function test_unit_routes_authorization_and_organization_isolation_remain_unchanged(): void
@@ -223,6 +250,9 @@ class UnitLocalizationTest extends TestCase
             'type' => $values['type'],
             'status' => $values['status'],
             'rent_amount' => $values['rent'],
+            'size' => $values['size'] ?? null,
+            'rooms' => $values['rooms'] ?? null,
+            'notes' => $values['notes'] ?? null,
         ]);
 
         if (isset($values['created_at'])) {

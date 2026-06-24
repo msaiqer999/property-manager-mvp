@@ -1001,6 +1001,19 @@ class SecurityCoverageTest extends TestCase
 
         $this->actingAs($caretakerA)->get(route('payments.index'))->assertOk();
         $this->actingAs($caretakerA)->get(route('payments.edit', $dataA['payment']))->assertOk();
+
+        $this->actingAs($caretakerA)
+            ->withSession(['locale' => 'ar'])
+            ->get(route('dashboard'))
+            ->assertOk()
+            ->assertSee('لوحة التحكم')
+            ->assertSee('الدفعات')
+            ->assertSee('أحدث الدفعات')
+            ->assertSee('مدفوع')
+            ->assertDontSee('التقارير')
+            ->assertDontSee('صافي الربح')
+            ->assertDontSee('الدخل الشهري')
+            ->assertDontSee('المصروفات الشهرية');
     }
 
     public function test_owner_manager_and_accountant_navigation_remains_role_appropriate(): void

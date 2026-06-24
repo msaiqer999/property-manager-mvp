@@ -1,7 +1,7 @@
 <?php
 
 return [
-    'name' => 'مدير العقارات',
+    'name' => 'المدير العقاري',
     'switch_language' => 'تغيير اللغة إلى :language',
     'navigation_label' => 'التنقل الرئيسي',
     'mobile_navigation_label' => 'التنقل الرئيسي للجوال',

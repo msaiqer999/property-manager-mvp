@@ -122,6 +122,7 @@ class BuildingLocalizationTest extends TestCase
         $response->assertOk()
             ->assertSee('تعديل')
             ->assertSee('الوحدات')
+            ->assertSee('href="'.route('units.create', ['building_id' => $building->id]).'"', false)
             ->assertSee('Arabic Building Data Name')
             ->assertSee('Al Reem Island, Abu Dhabi')
             ->assertSee('Arabic building description remains user content.')

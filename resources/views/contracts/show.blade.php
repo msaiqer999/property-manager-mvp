@@ -86,8 +86,12 @@
                         @else
                             <span class="text-sm text-slate-500">{{ __('payments.lifecycle.cancelled_due_to_contract_termination') }}</span>
                         @endif
-                    @else
+                    @elseif($payment->status === 'paid')
+                        <a class="tap-target inline-flex items-center text-blue-700" href="{{ route('payments.show', $payment) }}">{{ __('payments.view_receipt') }}</a>
+                    @elseif(in_array($payment->status, ['pending', 'partial', 'overdue'], true))
                         <a class="tap-target inline-flex items-center text-blue-700" href="{{ route('payments.edit', $payment) }}">{{ __('contracts.show.record_payment') }}</a>
+                    @else
+                        <a class="tap-target inline-flex items-center text-blue-700" href="{{ route('payments.show', $payment) }}">{{ __('app.actions.view') }}</a>
                     @endif
                 </td>
             </tr>

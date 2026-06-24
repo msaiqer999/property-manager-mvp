@@ -60,6 +60,12 @@ class ContractLocalizationTest extends TestCase
 
         $owner = User::where('email', 'owner@example.com')->firstOrFail();
         $contract = Contract::with(['tenant', 'unit.building'])->firstOrFail();
+        $paidPayment = $contract->payments()->firstOrFail();
+        $paidPayment->update([
+            'amount_paid' => $paidPayment->amount_due,
+            'payment_date' => now()->toDateString(),
+            'status' => 'paid',
+        ]);
         $renewalContract = Contract::with(['tenant', 'unit.building'])
             ->where('status', 'active')
             ->get()
@@ -96,7 +102,9 @@ class ContractLocalizationTest extends TestCase
             ->assertSee($contract->contract_number)
             ->assertSee($contract->tenant->full_name)
             ->assertSee($contract->unit->unit_number)
-            ->assertSee(number_format($contract->rent_amount, 2));
+            ->assertSee(number_format($contract->rent_amount, 2))
+            ->assertSee('href="'.route('payments.show', $paidPayment).'"', false)
+            ->assertDontSee('href="'.route('payments.edit', $paidPayment).'"', false);
 
         $this->actingAs($owner)
             ->withSession(['locale' => 'ar'])
