@@ -4,10 +4,15 @@
 <div class="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
     <h1 class="text-xl font-semibold">{{ $building->name }}</h1>
     <div class="flex flex-wrap gap-2">
+        <a class="tap-target inline-flex items-center rounded bg-slate-900 px-3 text-sm text-white" href="{{ route('buildings.units.bulk.create', $building) }}">{{ __('units.bulk.add_multiple') }}</a>
         <a class="tap-target inline-flex items-center rounded bg-slate-900 px-3 text-sm text-white" href="{{ route('units.create', ['building_id' => $building->id]) }}">{{ __('units.add') }}</a>
         <a class="tap-target inline-flex items-center rounded border px-3 text-sm" href="{{ route('buildings.edit', $building) }}">{{ __('app.actions.edit') }}</a>
     </div>
 </div>
+
+@if(session('status'))
+    <p class="mb-4 rounded bg-green-50 p-3 text-sm text-green-700">{{ session('status') }}</p>
+@endif
 
 <div class="rounded border bg-white p-4">
     <p>{{ $building->location }}</p>

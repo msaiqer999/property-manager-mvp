@@ -5,6 +5,7 @@ use App\Http\Controllers\Auth\AuthenticatedSessionController;
 use App\Http\Controllers\Auth\NewPasswordController;
 use App\Http\Controllers\Auth\PasswordResetLinkController;
 use App\Http\Controllers\Auth\RegisteredUserController;
+use App\Http\Controllers\BulkUnitController;
 use App\Http\Controllers\BuildingController;
 use App\Http\Controllers\ContractController;
 use App\Http\Controllers\DashboardController;
@@ -45,6 +46,10 @@ Route::middleware('auth')->group(function () {
     Route::get('/', DashboardController::class)->name('dashboard');
 
     Route::middleware(EnsureAbility::class.':manage-properties')->group(function () {
+        Route::get('buildings/{building}/units/bulk-create', [BulkUnitController::class, 'create'])->name('buildings.units.bulk.create');
+        Route::get('buildings/{building}/units/bulk-preview', [BulkUnitController::class, 'expiredPreview'])->name('buildings.units.bulk.preview.expired');
+        Route::post('buildings/{building}/units/bulk-preview', [BulkUnitController::class, 'preview'])->name('buildings.units.bulk.preview');
+        Route::post('buildings/{building}/units/bulk-store', [BulkUnitController::class, 'store'])->name('buildings.units.bulk.store');
         Route::resource('buildings', BuildingController::class);
         Route::resource('units', UnitController::class);
     });
