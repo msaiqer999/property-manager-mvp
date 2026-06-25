@@ -21,29 +21,29 @@
 <div data-mobile-tenants-list class="grid gap-3 md:hidden">
     @foreach($tenants as $tenant)
         <article data-tenant-mobile-card class="rounded border bg-white p-4 shadow-sm">
-            <div class="flex items-start justify-between gap-3">
-                <h2 class="break-words text-base font-semibold">{{ $tenant->full_name }}</h2>
+            <div class="grid gap-2">
+                <h2 class="min-w-0 break-words text-base font-semibold">{{ $tenant->full_name }}</h2>
                 @if($tenant->archived_at)
-                    <span class="shrink-0 rounded bg-amber-100 px-2 py-1 text-xs font-medium text-amber-800">{{ __('tenants.lifecycle.archived') }}</span>
+                    <span class="w-fit rounded bg-amber-100 px-2 py-1 text-xs font-medium text-amber-800">{{ __('tenants.lifecycle.archived') }}</span>
                 @else
-                    <span class="shrink-0 rounded bg-emerald-100 px-2 py-1 text-xs font-medium text-emerald-800">{{ __('tenants.lifecycle.active') }}</span>
+                    <span class="w-fit rounded bg-emerald-100 px-2 py-1 text-xs font-medium text-emerald-800">{{ __('tenants.lifecycle.active') }}</span>
                 @endif
             </div>
             <dl class="mt-3 grid gap-2 text-sm">
-                <div class="flex items-center justify-between gap-3">
+                <div class="grid min-w-0 gap-1">
                     <dt class="text-slate-500">{{ __('tenants.fields.phone') }}</dt>
-                    <dd><bdi dir="ltr">{{ $tenant->phone ?: __('payments.not_available') }}</bdi></dd>
+                    <dd class="min-w-0 break-words"><bdi dir="ltr">{{ $tenant->phone ?: __('payments.not_available') }}</bdi></dd>
                 </div>
                 @if($tenant->email)
-                    <div class="flex items-center justify-between gap-3">
+                    <div class="grid min-w-0 gap-1">
                         <dt class="text-slate-500">{{ __('tenants.fields.email') }}</dt>
                         <dd class="min-w-0 break-words"><bdi dir="ltr">{{ $tenant->email }}</bdi></dd>
                     </div>
                 @endif
                 @if($tenant->id_number)
-                    <div class="flex items-center justify-between gap-3">
+                    <div class="grid min-w-0 gap-1">
                         <dt class="text-slate-500">{{ __('tenants.fields.id_number') }}</dt>
-                        <dd><bdi dir="ltr">{{ $tenant->id_number }}</bdi></dd>
+                        <dd class="min-w-0 break-words"><bdi dir="ltr">{{ $tenant->id_number }}</bdi></dd>
                     </div>
                 @endif
             </dl>

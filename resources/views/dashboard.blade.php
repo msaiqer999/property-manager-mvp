@@ -13,23 +13,23 @@
         <section class="rounded border bg-white p-5 shadow-sm">
             <h2 class="text-lg font-semibold">{{ __('app.dashboard.empty_no_buildings_title') }}</h2>
             <p class="mt-2 text-sm text-slate-600">{{ __('app.dashboard.empty_no_buildings_body') }}</p>
-            <a class="tap-target mt-4 inline-flex items-center rounded bg-slate-900 px-4 text-sm text-white" href="{{ route('buildings.create') }}">{{ __('buildings.add') }}</a>
+            <a class="tap-target mt-4 inline-flex min-h-11 items-center justify-center rounded bg-slate-900 px-4 text-center text-sm font-medium text-white" href="{{ route('buildings.create') }}">{{ __('buildings.add') }}</a>
         </section>
     @else
         @if($unitCount === 0)
             <section class="mb-4 rounded border bg-white p-5 shadow-sm">
                 <h2 class="text-lg font-semibold">{{ __('app.dashboard.empty_no_units_title') }}</h2>
                 <p class="mt-2 text-sm text-slate-600">{{ __('app.dashboard.empty_no_units_body') }}</p>
-                <div class="mt-4 flex flex-wrap gap-2">
-                    <a class="tap-target inline-flex items-center rounded bg-slate-900 px-4 text-sm text-white" href="{{ route('units.create', ['building_id' => $firstBuilding->id]) }}">{{ __('units.add') }}</a>
-                    <a class="tap-target inline-flex items-center rounded border px-4 text-sm" href="{{ route('buildings.units.bulk.create', $firstBuilding) }}">{{ __('units.bulk.add_multiple') }}</a>
+                <div class="mt-4 grid gap-3 sm:flex sm:flex-wrap">
+                    <a class="tap-target inline-flex min-h-11 items-center justify-center rounded bg-slate-900 px-4 text-center text-sm font-medium text-white" href="{{ route('units.create', ['building_id' => $firstBuilding->id]) }}">{{ __('units.add') }}</a>
+                    <a class="tap-target inline-flex min-h-11 items-center justify-center rounded border px-4 text-center text-sm font-medium" href="{{ route('buildings.units.bulk.create', $firstBuilding) }}">{{ __('units.bulk.add_multiple') }}</a>
                 </div>
             </section>
         @elseif($contractCount === 0)
             <section class="mb-4 rounded border bg-white p-5 shadow-sm">
                 <h2 class="text-lg font-semibold">{{ __('app.dashboard.empty_no_contracts_title') }}</h2>
                 <p class="mt-2 text-sm text-slate-600">{{ __('app.dashboard.empty_no_contracts_body') }}</p>
-                <a class="tap-target mt-4 inline-flex items-center rounded bg-slate-900 px-4 text-sm text-white" href="{{ route('contracts.create') }}">{{ __('contracts.add') }}</a>
+                <a class="tap-target mt-4 inline-flex min-h-11 items-center justify-center rounded bg-slate-900 px-4 text-center text-sm font-medium text-white" href="{{ route('contracts.create') }}">{{ __('contracts.add') }}</a>
             </section>
         @endif
 
