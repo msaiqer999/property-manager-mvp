@@ -15,6 +15,99 @@ class DashboardLocalizationTest extends TestCase
 {
     use RefreshDatabase;
 
+    public function test_owner_dashboard_shows_guided_summary_attention_and_quick_actions(): void
+    {
+        $this->seed(DatabaseSeeder::class);
+
+        $owner = User::where('email', 'owner@example.com')->firstOrFail();
+
+        $this->actingAs($owner)
+            ->withSession(['locale' => 'en'])
+            ->get(route('dashboard'))
+            ->assertOk()
+            ->assertSee('Collected this month')
+            ->assertSee('Overdue amount')
+            ->assertSee('Vacant units')
+            ->assertSee('Contracts expiring soon')
+            ->assertSee('Needs your attention')
+            ->assertSee('Overdue payments')
+            ->assertSee('Contracts ending soon')
+            ->assertSee('Payments waiting to be recorded')
+            ->assertSee('Quick actions')
+            ->assertSee('Record payment')
+            ->assertSee('Add contract')
+            ->assertSee('Add tenant')
+            ->assertSee('Add building')
+            ->assertSee('Add multiple units')
+            ->assertDontSee('Monthly expenses')
+            ->assertDontSee('Net profit');
+    }
+
+    public function test_owner_dashboard_shows_first_building_empty_state_without_metric_noise(): void
+    {
+        $organization = Organization::create(['name' => 'Empty Dashboard Organization']);
+        $owner = User::create([
+            'organization_id' => $organization->id,
+            'name' => 'Empty Dashboard Owner',
+            'email' => 'empty-dashboard-owner@example.com',
+            'password' => 'password',
+            'role' => 'owner',
+        ]);
+
+        $this->actingAs($owner)
+            ->withSession(['locale' => 'en'])
+            ->get(route('dashboard'))
+            ->assertOk()
+            ->assertSee('Start by adding your first building')
+            ->assertSee('Add building')
+            ->assertDontSee('Collected this month')
+            ->assertDontSee('Needs your attention')
+            ->assertDontSee('Quick actions');
+    }
+
+    public function test_caretaker_dashboard_remains_limited_to_payment_context(): void
+    {
+        $this->seed(DatabaseSeeder::class);
+
+        $caretaker = User::where('email', 'caretaker@example.com')->firstOrFail();
+
+        $this->actingAs($caretaker)
+            ->withSession(['locale' => 'en'])
+            ->get(route('dashboard'))
+            ->assertOk()
+            ->assertSee('Latest payments')
+            ->assertDontSee('Collected this month')
+            ->assertDontSee('Monthly income')
+            ->assertDontSee('Monthly expenses')
+            ->assertDontSee('Net profit')
+            ->assertDontSee('Reports')
+            ->assertDontSee('Contracts')
+            ->assertDontSee('Tenants')
+            ->assertDontSee('Expenses')
+            ->assertDontSee('Users')
+            ->assertDontSee('Activity');
+    }
+
+    public function test_dashboard_guided_sections_render_in_arabic_locale(): void
+    {
+        $this->seed(DatabaseSeeder::class);
+
+        $owner = User::where('email', 'owner@example.com')->firstOrFail();
+
+        app()->setLocale('ar');
+        $this->actingAs($owner)
+            ->withSession(['locale' => 'ar'])
+            ->get(route('dashboard'))
+            ->assertOk()
+            ->assertSee('<html lang="ar" dir="rtl">', false)
+            ->assertSee(__('app.dashboard.collected_this_month'))
+            ->assertSee(__('app.dashboard.needs_attention'))
+            ->assertSee(__('app.dashboard.quick_actions'))
+            ->assertSee(__('payments.record_payment'))
+            ->assertSee(__('contracts.add'))
+            ->assertSee(__('units.bulk.add_multiple'));
+    }
+
     public function test_dashboard_displays_english_expense_category_label_without_changing_stored_value(): void
     {
         $this->seed(DatabaseSeeder::class);

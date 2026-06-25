@@ -1026,9 +1026,11 @@ class SecurityCoverageTest extends TestCase
             ->assertSee('>Reports<', false)
             ->assertSee('>Users<', false)
             ->assertSee('>Activity<', false)
-            ->assertSee(__('app.dashboard.monthly_income'))
-            ->assertSee(__('app.dashboard.monthly_expenses'))
-            ->assertSee(__('app.dashboard.net_profit'));
+            ->assertSee(__('app.dashboard.collected_this_month'))
+            ->assertSee(__('app.dashboard.needs_attention'))
+            ->assertSee(__('app.dashboard.quick_actions'))
+            ->assertDontSee(__('app.dashboard.monthly_expenses'))
+            ->assertDontSee(__('app.dashboard.net_profit'));
 
         $this->actingAs($managerA)
             ->get(route('dashboard'))

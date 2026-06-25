@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Http\Controllers\Concerns\ScopesOrganization;
+use App\Models\Building;
 use App\Models\Contract;
 use App\Models\Expense;
 use App\Models\Payment;
@@ -33,6 +34,12 @@ class DashboardController extends Controller
             '60' => $expiringSoon->filter(fn (Contract $contract) => $contract->expiryWarningGroup() === '60')->count(),
             '90' => $expiringSoon->filter(fn (Contract $contract) => $contract->expiryWarningGroup() === '90')->count(),
         ];
+        $buildings = Building::where('organization_id', $orgId)->orderBy('name')->get();
+        $unitCount = Unit::whereHas('building', fn ($q) => $q->where('organization_id', $orgId))->count();
+        $contractCount = Contract::where('organization_id', $orgId)->count();
+        $pendingPaymentCount = Payment::where('organization_id', $orgId)
+            ->whereIn('status', ['pending', 'partial'])
+            ->count();
 
         return view('dashboard', [
             'monthlyIncome' => Payment::where('organization_id', $orgId)
@@ -43,10 +50,23 @@ class DashboardController extends Controller
             'overdueAmount' => Payment::where('organization_id', $orgId)
                 ->where('status', 'overdue')
                 ->sum(DB::raw('amount_due - amount_paid')),
+            'overduePaymentCount' => Payment::where('organization_id', $orgId)
+                ->where('status', 'overdue')
+                ->count(),
             'vacantUnits' => Unit::whereHas('building', fn ($q) => $q->where('organization_id', $orgId))->where('status', 'vacant')->count(),
             'rentedUnits' => Unit::whereHas('building', fn ($q) => $q->where('organization_id', $orgId))->where('status', 'rented')->count(),
+            'buildingCount' => $buildings->count(),
+            'unitCount' => $unitCount,
+            'contractCount' => $contractCount,
+            'firstBuilding' => $buildings->first(),
             'expiringSoon' => $expiringSoon->take(5),
             'expiryCounts' => $expiryCounts,
+            'expiringSoonCount' => $expiringSoon->count(),
+            'pendingPaymentCount' => $pendingPaymentCount,
+            'nextPaymentToRecord' => Payment::where('organization_id', $orgId)
+                ->whereIn('status', ['pending', 'partial', 'overdue'])
+                ->orderBy('due_date')
+                ->first(),
             'latestPayments' => Payment::where('organization_id', $orgId)->latest()->take(5)->get(),
             'latestExpenses' => Expense::where('organization_id', $orgId)->notVoided()->latest()->take(5)->get(),
         ]);
