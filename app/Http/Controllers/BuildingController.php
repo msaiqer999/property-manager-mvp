@@ -16,7 +16,10 @@ class BuildingController extends Controller
     {
         Gate::authorize('viewAny', Building::class);
 
-        $buildings = Building::where('organization_id', $this->organizationId())->latest()->paginate(15);
+        $buildings = Building::withCount('units')
+            ->where('organization_id', $this->organizationId())
+            ->latest()
+            ->paginate(15);
 
         return view('buildings.index', compact('buildings'));
     }

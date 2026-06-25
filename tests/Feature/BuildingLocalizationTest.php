@@ -27,6 +27,8 @@ class BuildingLocalizationTest extends TestCase
             ->assertSee('<html lang="en" dir="ltr">', false)
             ->assertSee('Buildings')
             ->assertSee('Add building')
+            ->assertSee('data-mobile-buildings-list', false)
+            ->assertSee('data-building-mobile-card', false)
             ->assertSee('Name')
             ->assertSee('Location')
             ->assertSee('View');
@@ -139,6 +141,39 @@ class BuildingLocalizationTest extends TestCase
         $this->assertSame('Arabic Building Data Name', $freshBuilding->name);
         $this->assertSame('Al Reem Island, Abu Dhabi', $freshBuilding->location);
         $this->assertSame('Arabic building description remains user content.', $freshBuilding->description);
+    }
+
+    public function test_building_show_has_mobile_friendly_actions_and_unit_cards(): void
+    {
+        $this->seed(DatabaseSeeder::class);
+
+        $owner = User::where('email', 'owner@example.com')->firstOrFail();
+        $building = $this->localizedBuilding($owner, [
+            'name' => 'Mobile Building Experience Tower',
+            'location' => 'Al Reem Island',
+            'description' => 'Mobile building experience description.',
+        ]);
+        $unit = $this->localizedUnit($building, [
+            'unit' => 'MOB-BLDG-101',
+            'status' => 'vacant',
+            'rent' => 4321.09,
+        ]);
+
+        $this->actingAs($owner)
+            ->withSession(['locale' => 'en'])
+            ->get(route('buildings.show', $building))
+            ->assertOk()
+            ->assertSee('data-building-actions', false)
+            ->assertSee('data-building-units-mobile-list', false)
+            ->assertSee('data-building-unit-mobile-card', false)
+            ->assertSee('min-h-11', false)
+            ->assertSee('Add multiple units')
+            ->assertSee('Add unit')
+            ->assertSee('Edit')
+            ->assertSee('MOB-BLDG-101')
+            ->assertSee('Vacant')
+            ->assertSee('4,321.09')
+            ->assertSee('href="'.route('units.show', $unit).'"', false);
     }
 
     public function test_building_routes_authorization_and_organization_isolation_remain_unchanged(): void
