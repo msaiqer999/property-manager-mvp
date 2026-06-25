@@ -29,6 +29,8 @@ class TenantLocalizationTest extends TestCase
             ->assertSee('<html lang="en" dir="ltr">', false)
             ->assertSee('Tenants')
             ->assertSee('Add tenant')
+            ->assertSee('data-mobile-tenants-list', false)
+            ->assertSee('data-tenant-mobile-card', false)
             ->assertSee('Search tenants')
             ->assertSeeHtml('>Search</button>')
             ->assertSee('View');
@@ -65,6 +67,39 @@ class TenantLocalizationTest extends TestCase
         $freshTenant = $tenant->fresh();
         $this->assertSame('Arabic Tenant Index Name', $freshTenant->full_name);
         $this->assertSame('+971501234567', $freshTenant->phone);
+    }
+
+    public function test_tenant_index_mobile_card_displays_existing_tenant_details(): void
+    {
+        $organization = Organization::create(['name' => 'Tenant Mobile Card Organization']);
+        $owner = User::create([
+            'organization_id' => $organization->id,
+            'name' => 'Tenant Mobile Owner',
+            'email' => 'tenant-mobile-owner@example.com',
+            'password' => 'password',
+            'role' => 'owner',
+        ]);
+        $tenant = Tenant::create([
+            'organization_id' => $organization->id,
+            'full_name' => 'Tenant Mobile Card Name',
+            'phone' => '+971501010101',
+            'email' => 'tenant-mobile-card@example.com',
+            'id_number' => 'TENANT-MOBILE-1',
+            'nationality' => 'UAE',
+            'notes' => 'Tenant mobile card note.',
+        ]);
+
+        $this->actingAs($owner)
+            ->withSession(['locale' => 'en'])
+            ->get(route('tenants.index'))
+            ->assertOk()
+            ->assertSee('data-mobile-tenants-list', false)
+            ->assertSee('data-tenant-mobile-card', false)
+            ->assertSee('Tenant Mobile Card Name')
+            ->assertSee('+971501010101')
+            ->assertSee('tenant-mobile-card@example.com')
+            ->assertSee('TENANT-MOBILE-1')
+            ->assertSee('href="'.route('tenants.show', $tenant).'"', false);
     }
 
     public function test_tenant_form_renders_arabic_labels_and_preserves_stored_values(): void
@@ -179,6 +214,40 @@ class TenantLocalizationTest extends TestCase
         $this->assertSame('TENANT-CONTRACT-TERMINATED-406', $terminatedContract->fresh()->contract_number);
         $this->assertSame('terminated', $terminatedContract->fresh()->status);
         $this->assertSame('Arabic Tenant Show Name', $tenant->fresh()->full_name);
+    }
+
+    public function test_tenant_mobile_show_and_form_markers_are_present(): void
+    {
+        $this->seed(DatabaseSeeder::class);
+
+        $owner = User::where('email', 'owner@example.com')->firstOrFail();
+        $tenant = $this->localizedTenant($owner, [
+            'full_name' => 'Mobile Tenant Experience Name',
+            'phone' => '+971500001111',
+            'email' => 'mobile-tenant@example.com',
+            'id_number' => 'MOBILE-TENANT-1',
+            'nationality' => 'UAE',
+            'notes' => 'Mobile tenant note.',
+        ]);
+
+        $this->actingAs($owner)
+            ->withSession(['locale' => 'en'])
+            ->get(route('tenants.show', $tenant))
+            ->assertOk()
+            ->assertSee('data-tenant-show-card', false)
+            ->assertSee('min-h-11', false)
+            ->assertSee('Mobile Tenant Experience Name')
+            ->assertSee('+971500001111')
+            ->assertSee('mobile-tenant@example.com')
+            ->assertSee('MOBILE-TENANT-1');
+
+        $this->actingAs($owner)
+            ->withSession(['locale' => 'en'])
+            ->get(route('tenants.edit', $tenant))
+            ->assertOk()
+            ->assertSee('data-tenant-form', false)
+            ->assertSee('min-h-11', false)
+            ->assertSee('Mobile Tenant Experience Name');
     }
 
     public function test_tenant_routes_authorization_and_organization_isolation_remain_unchanged(): void

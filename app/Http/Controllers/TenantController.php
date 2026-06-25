@@ -20,13 +20,22 @@ class TenantController extends Controller
 
         $lifecycle = $this->lifecycleFilter($request);
 
-        $tenants = Tenant::where('organization_id', $this->organizationId())
-            ->when($lifecycle === 'active', fn ($q) => $q->notArchived())
-            ->when($lifecycle === 'archived', fn ($q) => $q->onlyArchived())
-            ->when($request->search, fn ($q, $s) => $q->where(fn ($sub) => $sub->where('full_name', 'like', "%{$s}%")->orWhere('phone', 'like', "%{$s}%")))
+        $tenants = $this->tenantIndexQuery($request, $lifecycle)
             ->latest()
             ->paginate(15)
             ->withQueryString();
+
+        if (! $request->has('lifecycle')
+            && ! $request->filled('search')
+            && $lifecycle === 'active'
+            && $tenants->count() === 0
+            && Tenant::where('organization_id', $this->organizationId())->exists()) {
+            $lifecycle = 'all';
+            $tenants = $this->tenantIndexQuery($request, $lifecycle)
+                ->latest()
+                ->paginate(15)
+                ->withQueryString();
+        }
 
         return view('tenants.index', compact('tenants', 'lifecycle'));
     }
@@ -130,6 +139,14 @@ class TenantController extends Controller
         $lifecycle = $request->query('lifecycle', 'active');
 
         return in_array($lifecycle, ['active', 'archived', 'all'], true) ? $lifecycle : 'active';
+    }
+
+    private function tenantIndexQuery(Request $request, string $lifecycle)
+    {
+        return Tenant::where('organization_id', $this->organizationId())
+            ->when($lifecycle === 'active', fn ($q) => $q->notArchived())
+            ->when($lifecycle === 'archived', fn ($q) => $q->onlyArchived())
+            ->when($request->search, fn ($q, $s) => $q->where(fn ($sub) => $sub->where('full_name', 'like', "%{$s}%")->orWhere('phone', 'like', "%{$s}%")));
     }
 
     private function ensureTenantNotArchived(Tenant $tenant): void

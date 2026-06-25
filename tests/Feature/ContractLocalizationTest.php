@@ -29,6 +29,8 @@ class ContractLocalizationTest extends TestCase
             ->assertOk()
             ->assertSee('<html lang="en" dir="ltr">', false)
             ->assertSee('Contracts')
+            ->assertSee('data-mobile-contracts-list', false)
+            ->assertSee('data-contract-mobile-card', false)
             ->assertSee('Contract number')
             ->assertSee('View contract')
             ->assertSee('Active')
@@ -77,6 +79,7 @@ class ContractLocalizationTest extends TestCase
             ->withSession(['locale' => 'en'])
             ->get(route('contracts.create'))
             ->assertOk()
+            ->assertSee('data-contract-form', false)
             ->assertSee('Add contract')
             ->assertSee('Select existing tenant')
             ->assertSee($contract->tenant->full_name)
@@ -126,6 +129,34 @@ class ContractLocalizationTest extends TestCase
             ->assertSee($renewalContract->tenant->full_name)
             ->assertSee($renewalContract->unit->building->name)
             ->assertSee($renewalContract->unit->unit_number);
+    }
+
+    public function test_contract_show_and_form_have_mobile_friendly_markers(): void
+    {
+        $this->seed(DatabaseSeeder::class);
+
+        $owner = User::where('email', 'owner@example.com')->firstOrFail();
+        $contract = Contract::with(['tenant', 'unit.building', 'payments'])->firstOrFail();
+
+        $this->actingAs($owner)
+            ->withSession(['locale' => 'en'])
+            ->get(route('contracts.show', $contract))
+            ->assertOk()
+            ->assertSee('data-contract-show-card', false)
+            ->assertSee('data-contract-payments-mobile-list', false)
+            ->assertSee('data-contract-payment-mobile-card', false)
+            ->assertSee('min-h-11', false)
+            ->assertSee($contract->contract_number)
+            ->assertSee($contract->tenant->full_name)
+            ->assertSee($contract->unit->unit_number)
+            ->assertSee(number_format($contract->rent_amount, 2));
+
+        $this->actingAs($owner)
+            ->withSession(['locale' => 'en'])
+            ->get(route('contracts.edit', $contract))
+            ->assertOk()
+            ->assertSee('data-contract-form', false)
+            ->assertSee($contract->contract_number);
     }
 
     public function test_contract_urls_authorization_organization_isolation_and_pdf_routes_remain_unchanged(): void

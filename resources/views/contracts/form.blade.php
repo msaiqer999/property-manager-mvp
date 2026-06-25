@@ -7,7 +7,7 @@
     <p class="mt-1 text-sm text-slate-600">{{ $isRenewal ? __('contracts.form.renewal_description') : __('contracts.form.description').' '.($contract->exists ? __('contracts.form.number_read_only') : __('contracts.form.number_generated')) }}</p>
 </div>
 @php($tenantMode = old('tenant_mode', 'existing'))
-<form method="post" action="{{ $contract->exists ? route('contracts.update', $contract) : route('contracts.store') }}" class="grid max-w-3xl gap-4 rounded border bg-white p-4 shadow-sm md:grid-cols-2">
+<form data-contract-form method="post" action="{{ $contract->exists ? route('contracts.update', $contract) : route('contracts.store') }}" class="grid max-w-3xl gap-4 rounded border bg-white p-4 shadow-sm md:grid-cols-2">
 @csrf @if($contract->exists) @method('put') @endif
 @if($isRenewal)<input type="hidden" name="renew_from" value="{{ $renewalSource->id }}">@endif
 @if(! $contract->exists && ! $isRenewal)
