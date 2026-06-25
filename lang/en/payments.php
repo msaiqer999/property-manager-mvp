@@ -40,6 +40,7 @@ return [
     ],
 
     'form' => [
+        'summary' => 'Payment summary',
         'due' => 'Due',
         'amount_paid' => 'Amount paid',
         'payment_date' => 'Payment date',

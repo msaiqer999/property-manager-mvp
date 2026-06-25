@@ -40,6 +40,7 @@ return [
     ],
 
     'form' => [
+        'summary' => 'ملخص الدفعة',
         'due' => 'مستحق في',
         'amount_paid' => 'المبلغ المدفوع',
         'payment_date' => 'تاريخ الدفع',

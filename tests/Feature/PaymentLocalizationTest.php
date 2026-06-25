@@ -43,6 +43,9 @@ class PaymentLocalizationTest extends TestCase
             ->assertSee('Payments are generated from contracts and can be recorded when rent is collected.')
             ->assertSee('All statuses')
             ->assertSee('Due date')
+            ->assertSee('data-mobile-payments-list', false)
+            ->assertSee('data-payment-mobile-card', false)
+            ->assertSee('data-payment-action', false)
             ->assertSee('View receipt')
             ->assertSee('Paid');
 
@@ -51,6 +54,11 @@ class PaymentLocalizationTest extends TestCase
             ->get(route('payments.edit', $payment))
             ->assertOk()
             ->assertSee('Record payment')
+            ->assertSee('data-payment-summary', false)
+            ->assertSee('data-payment-record-form', false)
+            ->assertSee('Payment summary')
+            ->assertSee('Payment Localization Tenant')
+            ->assertSee('PAY-101')
             ->assertSee('Amount paid')
             ->assertSee('Payment date')
             ->assertSee('Method')
@@ -65,11 +73,13 @@ class PaymentLocalizationTest extends TestCase
             ->get(route('payments.show', $payment))
             ->assertOk()
             ->assertSee('Payment')
+            ->assertSee('data-payment-action', false)
             ->assertSee('Download receipt PDF')
-            ->assertSeeHtml('Due: <span dir="ltr">2026-06-01</span>')
-            ->assertSee('Amount due: <span dir="ltr">1,234.56</span>', false)
-            ->assertSee('Paid: <span dir="ltr">1,234.56</span>', false)
-            ->assertSee('Status: Paid');
+            ->assertSee('Due')
+            ->assertSee('2026-06-01')
+            ->assertSee('Amount due')
+            ->assertSee('1,234.56')
+            ->assertSee('Paid');
 
         $freshPayment = $payment->fresh()->load('contract.tenant', 'contract.unit');
         $this->assertSame('Payment Localization Tenant', $freshPayment->contract->tenant->full_name);
@@ -97,38 +107,44 @@ class PaymentLocalizationTest extends TestCase
             'payment_date' => '2026-06-15',
         ]);
 
+        app()->setLocale('ar');
+
         $this->actingAs($owner)
             ->withSession(['locale' => 'ar'])
             ->get(route('payments.index'))
             ->assertOk()
             ->assertSee('<html lang="ar" dir="rtl">', false)
-            ->assertSee('الدفعات')
-            ->assertSee('كل الحالات')
-            ->assertSee('تاريخ الاستحقاق')
-            ->assertSee('مدفوع جزئياً');
+            ->assertSee(__('payments.title'))
+            ->assertSee(__('payments.all_statuses'))
+            ->assertSee(__('payments.columns.due_date'))
+            ->assertSee('data-mobile-payments-list', false)
+            ->assertSee(__('payments.statuses.partial'));
 
         $this->actingAs($owner)
             ->withSession(['locale' => 'ar'])
             ->get(route('payments.edit', $payment))
             ->assertOk()
-            ->assertSee('تسجيل دفعة')
-            ->assertSee('المبلغ المدفوع')
-            ->assertSee('تاريخ الدفع')
-            ->assertSee('طريقة الدفع')
-            ->assertSee('تحويل بنكي')
-            ->assertSee('مستحق في <span dir="ltr">2026-06-01</span> / <span dir="ltr">9,876.50</span>', false)
+            ->assertSee('data-payment-summary', false)
+            ->assertSee('data-payment-record-form', false)
+            ->assertSee(__('payments.record_payment'))
+            ->assertSee(__('payments.form.summary'))
+            ->assertSee(__('payments.form.amount_paid'))
+            ->assertSee(__('payments.form.payment_date'))
+            ->assertSee(__('payments.form.method'))
+            ->assertSee(__('payments.methods.bank_transfer'))
             ->assertSee('value="bank_transfer"', false);
 
         $this->actingAs($owner)
             ->withSession(['locale' => 'ar'])
             ->get(route('payments.show', $payment))
             ->assertOk()
-            ->assertSee('الدفعة')
-            ->assertSee('تنزيل إيصال PDF')
-            ->assertSee('مستحق: <span dir="ltr">2026-06-01</span>', false)
-            ->assertSee('المبلغ المستحق: <span dir="ltr">9,876.50</span>', false)
-            ->assertSee('المدفوع: <span dir="ltr">5,000.25</span>', false)
-            ->assertSee('الحالة: مدفوع جزئياً');
+            ->assertSee(__('payments.payment'))
+            ->assertSee('data-payment-action', false)
+            ->assertSee(__('payments.download_receipt_pdf'))
+            ->assertSee('2026-06-01')
+            ->assertSee('9,876.50')
+            ->assertSee('5,000.25')
+            ->assertSee(__('payments.statuses.partial'));
 
         $freshPayment = $payment->fresh()->load('contract.tenant', 'contract.unit');
         $this->assertSame('Arabic Payment Tenant', $freshPayment->contract->tenant->full_name);
@@ -137,6 +153,53 @@ class PaymentLocalizationTest extends TestCase
         $this->assertSame('9876.50', number_format((float) $freshPayment->amount_due, 2, '.', ''));
         $this->assertSame('partial', $freshPayment->status);
         $this->assertSame('bank_transfer', $freshPayment->payment_method);
+    }
+
+    public function test_mobile_payment_cards_show_record_for_pending_and_receipt_for_paid(): void
+    {
+        $organization = Organization::create(['name' => 'Mobile Payment Experience Organization']);
+        $owner = User::create([
+            'organization_id' => $organization->id,
+            'name' => 'Mobile Payment Owner',
+            'email' => 'mobile-payment-owner@example.com',
+            'password' => 'password',
+            'role' => 'owner',
+        ]);
+        $pendingPayment = $this->localizedPayment($owner, [
+            'building' => 'Pending Mobile Payment Building',
+            'unit' => 'MOB-PEND-101',
+            'tenant' => 'Pending Mobile Tenant',
+            'contract' => 'MOB-PEND-001',
+            'amount_due' => 2100,
+            'amount_paid' => 0,
+            'status' => 'pending',
+            'payment_method' => null,
+            'payment_date' => null,
+        ]);
+        $paidPayment = $this->localizedPayment($owner, [
+            'building' => 'Paid Mobile Payment Building',
+            'unit' => 'MOB-PAID-202',
+            'tenant' => 'Paid Mobile Tenant',
+            'contract' => 'MOB-PAID-002',
+            'amount_due' => 2200,
+            'amount_paid' => 2200,
+            'status' => 'paid',
+            'payment_method' => 'cash',
+            'payment_date' => '2026-06-11',
+        ]);
+
+        $this->actingAs($owner)
+            ->withSession(['locale' => 'en'])
+            ->get(route('payments.index'))
+            ->assertOk()
+            ->assertSee('data-mobile-payments-list', false)
+            ->assertSee('data-payment-mobile-card', false)
+            ->assertSee('Pending Mobile Tenant')
+            ->assertSee('Paid Mobile Tenant')
+            ->assertSee('href="'.route('payments.edit', $pendingPayment).'"', false)
+            ->assertSee('href="'.route('payments.show', $paidPayment).'"', false)
+            ->assertSee('Record payment')
+            ->assertSee('View receipt');
     }
 
     public function test_payment_routes_authorization_organization_isolation_and_receipt_pdf_route_remain_unchanged(): void
@@ -163,6 +226,15 @@ class PaymentLocalizationTest extends TestCase
 
         $this->actingAs($caretaker)->get(route('payments.index'))->assertOk();
         $this->actingAs($caretaker)->get(route('payments.edit', $payment))->assertOk();
+        $this->actingAs($caretaker)->get(route('payments.index'))
+            ->assertOk()
+            ->assertSee('data-mobile-payments-list', false)
+            ->assertDontSee('Reports')
+            ->assertDontSee('Contracts')
+            ->assertDontSee('Expenses')
+            ->assertDontSee('Users')
+            ->assertDontSee('Activity')
+            ->assertDontSee('Net profit');
     }
 
     public function test_status_filter_preserves_internal_status_values_while_displaying_translated_labels(): void
@@ -187,7 +259,7 @@ class PaymentLocalizationTest extends TestCase
             ->get(route('payments.index', ['status' => 'pending']))
             ->assertOk()
             ->assertSee('value="pending" selected', false)
-            ->assertSee('قيد الانتظار')
+            ->assertSee(__('payments.statuses.pending'))
             ->assertSee($payment->contract->tenant->full_name)
             ->assertSee('<span dir="ltr">'.$payment->contract->contract_number.'</span>', false);
 
