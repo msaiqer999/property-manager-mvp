@@ -33,35 +33,35 @@
             </section>
         @endif
 
-        <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-            <div class="rounded border bg-white p-4 shadow-sm">
+        <div data-mobile-owner-dashboard class="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+            <div data-dashboard-kpi-card class="rounded border bg-white p-4 shadow-sm sm:p-5">
                 <p class="text-sm font-medium text-slate-500">{{ __('app.dashboard.collected_this_month') }}</p>
-                <p class="bidi-isolate mt-2 break-words text-2xl font-semibold leading-tight" dir="ltr">{{ number_format($monthlyIncome, 2) }}</p>
+                <p class="bidi-isolate mt-2 break-words text-3xl font-semibold leading-tight sm:text-2xl" dir="ltr">{{ number_format($monthlyIncome, 2) }}</p>
             </div>
-            <div class="rounded border bg-white p-4 shadow-sm">
+            <div data-dashboard-kpi-card class="rounded border bg-white p-4 shadow-sm sm:p-5">
                 <p class="text-sm font-medium text-slate-500">{{ __('app.dashboard.overdue_amount') }}</p>
-                <p class="bidi-isolate mt-2 break-words text-2xl font-semibold leading-tight" dir="ltr">{{ number_format($overdueAmount, 2) }}</p>
+                <p class="bidi-isolate mt-2 break-words text-3xl font-semibold leading-tight sm:text-2xl" dir="ltr">{{ number_format($overdueAmount, 2) }}</p>
             </div>
-            <a href="{{ route('units.index', ['status' => 'vacant']) }}" class="tap-target rounded border bg-white p-4 shadow-sm">
+            <a data-dashboard-kpi-card href="{{ route('units.index', ['status' => 'vacant']) }}" class="tap-target rounded border bg-white p-4 shadow-sm sm:p-5">
                 <p class="text-sm font-medium text-slate-500">{{ __('app.dashboard.vacant_units') }}</p>
-                <p class="bidi-isolate mt-2 text-2xl font-semibold" dir="ltr">{{ $vacantUnits }}</p>
+                <p class="bidi-isolate mt-2 text-3xl font-semibold sm:text-2xl" dir="ltr">{{ $vacantUnits }}</p>
             </a>
-            <div class="rounded border bg-white p-4 shadow-sm">
+            <div data-dashboard-kpi-card class="rounded border bg-white p-4 shadow-sm sm:p-5">
                 <p class="text-sm font-medium text-slate-500">{{ __('app.dashboard.contracts_expiring_soon') }}</p>
-                <p class="bidi-isolate mt-2 text-2xl font-semibold" dir="ltr">{{ $expiringSoonCount }}</p>
+                <p class="bidi-isolate mt-2 text-3xl font-semibold sm:text-2xl" dir="ltr">{{ $expiringSoonCount }}</p>
             </div>
         </div>
 
-        <section class="mt-6 rounded border bg-white p-4 shadow-sm">
-            <h2 class="mb-3 font-semibold">{{ __('app.dashboard.needs_attention') }}</h2>
-            <div class="grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
+        <section data-attention-section class="mt-6 rounded border bg-white p-4 shadow-sm sm:p-5">
+            <h2 class="mb-3 text-lg font-semibold sm:text-base">{{ __('app.dashboard.needs_attention') }}</h2>
+            <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
                 @foreach([
                     __('app.dashboard.attention_overdue_payments') => [$overduePaymentCount, route('payments.index', ['overdue' => 1])],
                     __('app.dashboard.attention_expiring_contracts') => [$expiringSoonCount, route('contracts.index')],
                     __('app.dashboard.attention_vacant_units') => [$vacantUnits, route('units.index', ['status' => 'vacant'])],
                     __('app.dashboard.attention_pending_payments') => [$pendingPaymentCount, route('payments.index', ['status' => 'pending'])],
                 ] as $label => [$count, $href])
-                    <a href="{{ $href }}" class="tap-target rounded border p-3">
+                    <a href="{{ $href }}" class="tap-target rounded border p-4">
                         <p class="text-sm text-slate-500">{{ $label }}</p>
                         <p class="bidi-isolate mt-1 text-xl font-semibold" dir="ltr">{{ $count }}</p>
                     </a>
@@ -94,15 +94,15 @@
             </div>
         </section>
 
-        <section class="mt-6 rounded border bg-white p-4 shadow-sm">
-            <h2 class="mb-3 font-semibold">{{ __('app.dashboard.quick_actions') }}</h2>
-            <div class="flex flex-wrap gap-2">
-                <a class="tap-target inline-flex items-center rounded bg-slate-900 px-4 text-sm text-white" href="{{ $nextPaymentToRecord ? route('payments.edit', $nextPaymentToRecord) : route('payments.index') }}">{{ __('payments.record_payment') }}</a>
-                <a class="tap-target inline-flex items-center rounded border px-4 text-sm" href="{{ route('contracts.create') }}">{{ __('contracts.add') }}</a>
-                <a class="tap-target inline-flex items-center rounded border px-4 text-sm" href="{{ route('tenants.create') }}">{{ __('tenants.add') }}</a>
-                <a class="tap-target inline-flex items-center rounded border px-4 text-sm" href="{{ route('buildings.create') }}">{{ __('buildings.add') }}</a>
+        <section data-quick-actions class="mt-6 rounded border bg-white p-4 shadow-sm sm:p-5">
+            <h2 class="mb-3 text-lg font-semibold sm:text-base">{{ __('app.dashboard.quick_actions') }}</h2>
+            <div class="grid gap-3 sm:flex sm:flex-wrap">
+                <a class="tap-target inline-flex min-h-11 items-center justify-center rounded bg-slate-900 px-4 text-center text-sm font-medium text-white" href="{{ $nextPaymentToRecord ? route('payments.edit', $nextPaymentToRecord) : route('payments.index') }}">{{ __('payments.record_payment') }}</a>
+                <a class="tap-target inline-flex min-h-11 items-center justify-center rounded border px-4 text-center text-sm font-medium" href="{{ route('contracts.create') }}">{{ __('contracts.add') }}</a>
+                <a class="tap-target inline-flex min-h-11 items-center justify-center rounded border px-4 text-center text-sm font-medium" href="{{ route('tenants.create') }}">{{ __('tenants.add') }}</a>
+                <a class="tap-target inline-flex min-h-11 items-center justify-center rounded border px-4 text-center text-sm font-medium" href="{{ route('buildings.create') }}">{{ __('buildings.add') }}</a>
                 @if($firstBuilding)
-                    <a class="tap-target inline-flex items-center rounded border px-4 text-sm" href="{{ route('buildings.units.bulk.create', $firstBuilding) }}">{{ __('units.bulk.add_multiple') }}</a>
+                    <a class="tap-target inline-flex min-h-11 items-center justify-center rounded border px-4 text-center text-sm font-medium" href="{{ route('buildings.units.bulk.create', $firstBuilding) }}">{{ __('units.bulk.add_multiple') }}</a>
                 @endif
             </div>
         </section>
@@ -123,7 +123,7 @@
     </div>
 @endif
 
-<div class="mt-6 grid gap-4 {{ $role->can('manage-contracts') && $role->can('view-expenses') ? 'lg:grid-cols-3' : '' }}">
+<div data-dashboard-secondary-lists class="mt-6 grid gap-4 {{ $role->can('manage-contracts') && $role->can('view-expenses') ? 'lg:grid-cols-3' : '' }}">
     @if($role->can('manage-contracts') && ! $role->can('manage-properties'))
         <section class="rounded border bg-white p-4 shadow-sm">
             <h2 class="mb-3 font-semibold">{{ __('app.dashboard.contracts_expiring_soon') }}</h2>
@@ -139,7 +139,7 @@
         </section>
     @endif
 
-    <section class="rounded border bg-white p-4 shadow-sm">
+    <section data-latest-payments class="rounded border bg-white p-4 shadow-sm">
         <h2 class="mb-3 font-semibold">{{ __('app.dashboard.latest_payments') }}</h2>
         @forelse($latestPayments as $payment)
             <div class="flex items-center justify-between gap-3 border-t py-3 text-sm">
@@ -152,7 +152,7 @@
     </section>
 
     @if($role->can('view-expenses'))
-        <section class="rounded border bg-white p-4 shadow-sm">
+        <section data-latest-expenses class="rounded border bg-white p-4 shadow-sm">
             <h2 class="mb-3 font-semibold">{{ __('app.dashboard.latest_expenses') }}</h2>
             @forelse($latestExpenses as $expense)
                 <div class="flex items-center justify-between gap-3 border-t py-3 text-sm">

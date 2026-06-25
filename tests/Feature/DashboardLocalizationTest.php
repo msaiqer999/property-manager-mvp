@@ -43,6 +43,29 @@ class DashboardLocalizationTest extends TestCase
             ->assertDontSee('Net profit');
     }
 
+    public function test_owner_dashboard_has_mobile_friendly_structure_and_large_quick_actions(): void
+    {
+        $this->seed(DatabaseSeeder::class);
+
+        $owner = User::where('email', 'owner@example.com')->firstOrFail();
+
+        $response = $this->actingAs($owner)
+            ->withSession(['locale' => 'en'])
+            ->get(route('dashboard'));
+
+        $response->assertOk()
+            ->assertSee('data-mobile-owner-dashboard', false)
+            ->assertSee('data-dashboard-kpi-card', false)
+            ->assertSee('data-attention-section', false)
+            ->assertSee('data-quick-actions', false)
+            ->assertSee('data-dashboard-secondary-lists', false)
+            ->assertSee('data-latest-payments', false)
+            ->assertSee('data-latest-expenses', false)
+            ->assertSee('min-h-11', false)
+            ->assertSee('justify-center', false)
+            ->assertSee('grid gap-3 sm:flex sm:flex-wrap', false);
+    }
+
     public function test_owner_dashboard_shows_first_building_empty_state_without_metric_noise(): void
     {
         $organization = Organization::create(['name' => 'Empty Dashboard Organization']);
