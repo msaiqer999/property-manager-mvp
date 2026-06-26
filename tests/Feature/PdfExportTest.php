@@ -152,7 +152,7 @@ class PdfExportTest extends TestCase
         $receiptHtml = $this->renderReceiptHtml($payment, 'en');
         $reportHtml = $this->renderReportHtml('monthly-summary', 'en');
 
-        $this->assertStringContainsString('Rental Contract', $contractHtml);
+        $this->assertStringContainsString('Lease Agreement', $contractHtml);
         $this->assertStringContainsString('Monthly', $contractHtml);
         $this->assertStringContainsString('Active', $contractHtml);
         $this->assertStringContainsString('Payment Receipt', $receiptHtml);
