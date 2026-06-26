@@ -73,6 +73,12 @@ return [
         'no_payments' => 'لا توجد دفعات بعد.',
         'latest_expenses' => 'أحدث المصروفات',
         'no_expenses' => 'لا توجد مصروفات بعد.',
+        'empty_no_buildings_title' => 'ابدأ بإضافة أول مبنى',
+        'empty_no_buildings_body' => 'أضف المبنى أولًا، ثم أضف الوحدات والمستأجرين والعقود.',
+        'empty_no_units_title' => 'أضف وحدات للمبنى',
+        'empty_no_units_body' => 'المبنى جاهز. أضف وحدة واحدة أو استخدم إضافة وحدات متعددة.',
+        'empty_no_contracts_title' => 'أنشئ أول عقد لبدء متابعة الدفعات',
+        'empty_no_contracts_body' => 'العقد يربط المستأجر بالوحدة وينشئ جدول الدفعات.',
     ],
 
     'actions' => [
