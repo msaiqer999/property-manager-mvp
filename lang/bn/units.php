@@ -1,0 +1,56 @@
+<?php
+
+return [
+    'title' => 'ইউনিট',
+    'add' => 'ইউনিট যোগ করুন',
+    'edit' => 'ইউনিট সম্পাদনা',
+    'filters' => [
+        'all_buildings' => 'সব ভবন',
+        'all_statuses' => 'সব অবস্থা',
+    ],
+    'fields' => [
+        'unit' => 'ইউনিট',
+        'building' => 'ভবন',
+        'status' => 'অবস্থা',
+        'rent' => 'ভাড়া',
+        'unit_number' => 'ইউনিট নম্বর',
+        'type' => 'ধরন',
+        'size' => 'আয়তন',
+        'rooms' => 'রুম',
+        'notes' => 'নোট',
+    ],
+    'labels' => [
+        'building' => 'ভবন:',
+        'status' => 'অবস্থা:',
+        'type' => 'ধরন:',
+        'rent' => 'ভাড়া:',
+    ],
+    'statuses' => [
+        'vacant' => 'খালি',
+        'rented' => 'ভাড়া দেওয়া',
+        'maintenance' => 'রক্ষণাবেক্ষণ',
+    ],
+    'types' => [
+        'apartment' => 'অ্যাপার্টমেন্ট',
+        'shop' => 'দোকান',
+        'office' => 'অফিস',
+        'warehouse' => 'গুদাম',
+        'villa' => 'ভিলা',
+        'chalet' => 'চ্যালেট',
+        'other' => 'অন্যান্য',
+    ],
+    'bulk' => [
+        'add_multiple' => 'একাধিক ইউনিট যোগ করুন',
+        'title' => 'একাধিক ইউনিট যোগ করুন',
+        'generate_preview' => 'প্রিভিউ তৈরি করুন',
+        'create_units' => 'ইউনিট তৈরি করুন',
+        'start_number' => 'শুরুর নম্বর',
+        'end_number' => 'শেষ নম্বর',
+        'default_rent' => 'ডিফল্ট ভাড়া',
+        'default_rooms' => 'ডিফল্ট রুম',
+        'default_size' => 'ডিফল্ট আয়তন',
+        'default_status' => 'ডিফল্ট অবস্থা',
+        'default_notes' => 'ডিফল্ট নোট',
+        'created_success' => ':count ইউনিট সফলভাবে তৈরি হয়েছে।',
+    ],
+];

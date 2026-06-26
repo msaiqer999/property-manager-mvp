@@ -157,6 +157,56 @@ class ExpenseLocalizationTest extends TestCase
         $this->assertSame('Arabic expense note remains database content.', $freshExpense->notes);
     }
 
+    public function test_expense_index_uses_operational_translations_for_new_locales(): void
+    {
+        $this->seed(DatabaseSeeder::class);
+
+        $owner = User::where('email', 'owner@example.com')->firstOrFail();
+
+        foreach ([
+            'bn' => 'ltr',
+            'ur' => 'rtl',
+            'hi' => 'ltr',
+        ] as $locale => $direction) {
+            app()->setLocale($locale);
+
+            $this->actingAs($owner)
+                ->withSession(['locale' => $locale])
+                ->get(route('expenses.index'))
+                ->assertOk()
+                ->assertSee('<html lang="'.$locale.'" dir="'.$direction.'">', false)
+                ->assertSee(__('expenses.title'))
+                ->assertSee(__('expenses.add'))
+                ->assertSee(__('expenses.form.building'))
+                ->assertSee(__('expenses.form.unit'))
+                ->assertSee(__('expenses.form.category'))
+                ->assertSee(__('expenses.show.status'))
+                ->assertSee(__('expenses.filters.all_buildings'))
+                ->assertSee(__('expenses.filters.all_units'))
+                ->assertSee(__('expenses.filters.all_categories'))
+                ->assertSee(__('expenses.show.date'))
+                ->assertSee(__('expenses.show.amount'))
+                ->assertSee(__('expenses.show.action'))
+                ->assertDontSee('Expenses')
+                ->assertDontSee('Add expense')
+                ->assertDontSee('Building')
+                ->assertDontSee('Unit')
+                ->assertDontSee('Category')
+                ->assertDontSee('Status')
+                ->assertDontSee('Active')
+                ->assertDontSee('Date')
+                ->assertDontSee('Amount')
+                ->assertDontSee('Action')
+                ->assertDontSee('All buildings')
+                ->assertDontSee('All units')
+                ->assertDontSee('All categories')
+                ->assertDontSee('No expenses found.')
+                ->assertDontSee('expenses.title')
+                ->assertDontSee('expenses.filters.all_buildings')
+                ->assertDontSee('expenses.show.status');
+        }
+    }
+
     public function test_expense_routes_authorization_and_organization_isolation_remain_unchanged(): void
     {
         $this->seed(DatabaseSeeder::class);

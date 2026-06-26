@@ -18,10 +18,11 @@ use App\Http\Controllers\UnitController;
 use App\Http\Controllers\UserController;
 use App\Http\Middleware\EnsureAbility;
 use App\Http\Middleware\EnsureRegistrationIsEnabled;
+use App\Support\SupportedLocales;
 use Illuminate\Support\Facades\Route;
 
 Route::post('/locale/{locale}', LocaleController::class)
-    ->whereIn('locale', ['en', 'ar'])
+    ->whereIn('locale', SupportedLocales::codes())
     ->name('locale.switch');
 
 Route::middleware('guest')->group(function () {

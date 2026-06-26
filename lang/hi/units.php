@@ -1,0 +1,56 @@
+<?php
+
+return [
+    'title' => 'यूनिट',
+    'add' => 'यूनिट जोड़ें',
+    'edit' => 'यूनिट संपादित करें',
+    'filters' => [
+        'all_buildings' => 'सभी भवन',
+        'all_statuses' => 'सभी स्थितियां',
+    ],
+    'fields' => [
+        'unit' => 'यूनिट',
+        'building' => 'भवन',
+        'status' => 'स्थिति',
+        'rent' => 'किराया',
+        'unit_number' => 'यूनिट नंबर',
+        'type' => 'प्रकार',
+        'size' => 'क्षेत्रफल',
+        'rooms' => 'कमरे',
+        'notes' => 'नोट्स',
+    ],
+    'labels' => [
+        'building' => 'भवन:',
+        'status' => 'स्थिति:',
+        'type' => 'प्रकार:',
+        'rent' => 'किराया:',
+    ],
+    'statuses' => [
+        'vacant' => 'खाली',
+        'rented' => 'किराए पर',
+        'maintenance' => 'रखरखाव',
+    ],
+    'types' => [
+        'apartment' => 'अपार्टमेंट',
+        'shop' => 'दुकान',
+        'office' => 'ऑफिस',
+        'warehouse' => 'गोदाम',
+        'villa' => 'विला',
+        'chalet' => 'चैलेट',
+        'other' => 'अन्य',
+    ],
+    'bulk' => [
+        'add_multiple' => 'कई यूनिट जोड़ें',
+        'title' => 'कई यूनिट जोड़ें',
+        'generate_preview' => 'पूर्वावलोकन बनाएं',
+        'create_units' => 'यूनिट बनाएं',
+        'start_number' => 'शुरुआती नंबर',
+        'end_number' => 'अंतिम नंबर',
+        'default_rent' => 'डिफ़ॉल्ट किराया',
+        'default_rooms' => 'डिफ़ॉल्ट कमरे',
+        'default_size' => 'डिफ़ॉल्ट क्षेत्रफल',
+        'default_status' => 'डिफ़ॉल्ट स्थिति',
+        'default_notes' => 'डिफ़ॉल्ट नोट्स',
+        'created_success' => ':count यूनिट सफलतापूर्वक बनाई गईं।',
+    ],
+];

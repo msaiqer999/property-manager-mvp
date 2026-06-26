@@ -1,0 +1,56 @@
+<?php
+
+return [
+    'title' => 'یونٹس',
+    'add' => 'یونٹ شامل کریں',
+    'edit' => 'یونٹ میں ترمیم',
+    'filters' => [
+        'all_buildings' => 'تمام عمارتیں',
+        'all_statuses' => 'تمام حالتیں',
+    ],
+    'fields' => [
+        'unit' => 'یونٹ',
+        'building' => 'عمارت',
+        'status' => 'حالت',
+        'rent' => 'کرایہ',
+        'unit_number' => 'یونٹ نمبر',
+        'type' => 'قسم',
+        'size' => 'رقبہ',
+        'rooms' => 'کمرے',
+        'notes' => 'نوٹس',
+    ],
+    'labels' => [
+        'building' => 'عمارت:',
+        'status' => 'حالت:',
+        'type' => 'قسم:',
+        'rent' => 'کرایہ:',
+    ],
+    'statuses' => [
+        'vacant' => 'خالی',
+        'rented' => 'کرایہ پر',
+        'maintenance' => 'مرمت',
+    ],
+    'types' => [
+        'apartment' => 'اپارٹمنٹ',
+        'shop' => 'دکان',
+        'office' => 'دفتر',
+        'warehouse' => 'گودام',
+        'villa' => 'ولا',
+        'chalet' => 'شالیہ',
+        'other' => 'دیگر',
+    ],
+    'bulk' => [
+        'add_multiple' => 'متعدد یونٹس شامل کریں',
+        'title' => 'متعدد یونٹس شامل کریں',
+        'generate_preview' => 'پری ویو بنائیں',
+        'create_units' => 'یونٹس بنائیں',
+        'start_number' => 'ابتدائی نمبر',
+        'end_number' => 'آخری نمبر',
+        'default_rent' => 'ڈیفالٹ کرایہ',
+        'default_rooms' => 'ڈیفالٹ کمرے',
+        'default_size' => 'ڈیفالٹ رقبہ',
+        'default_status' => 'ڈیفالٹ حالت',
+        'default_notes' => 'ڈیفالٹ نوٹس',
+        'created_success' => ':count یونٹس کامیابی سے بن گئے۔',
+    ],
+];
