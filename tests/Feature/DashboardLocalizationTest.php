@@ -271,7 +271,9 @@ class DashboardLocalizationTest extends TestCase
 
         auth()->logout();
 
-        $this->get(route('dashboard'))->assertRedirect(route('login'));
+        $this->get(route('dashboard'))
+            ->assertOk()
+            ->assertSee(__('landing.hero_title'));
     }
 
     private function dashboardExpense(User $owner, array $values): Expense

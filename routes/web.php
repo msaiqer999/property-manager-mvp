@@ -18,6 +18,7 @@ use App\Http\Controllers\UnitController;
 use App\Http\Controllers\UserController;
 use App\Http\Middleware\EnsureAbility;
 use App\Http\Middleware\EnsureRegistrationIsEnabled;
+use App\Support\DashboardAuthorization;
 use App\Support\SupportedLocales;
 use Illuminate\Support\Facades\Route;
 
@@ -43,8 +44,16 @@ Route::post('/logout', [AuthenticatedSessionController::class, 'destroy'])
     ->middleware('auth')
     ->name('logout');
 
+Route::get('/', function () {
+    if (auth()->check()) {
+        return app(DashboardController::class)(app(DashboardAuthorization::class));
+    }
+
+    return view('landing');
+})->name('dashboard');
+
 Route::middleware('auth')->group(function () {
-    Route::get('/', DashboardController::class)->name('dashboard');
+    Route::get('/dashboard', DashboardController::class)->name('dashboard.show');
 
     Route::middleware(EnsureAbility::class.':manage-properties')->group(function () {
         Route::get('buildings/{building}/units/bulk-create', [BulkUnitController::class, 'create'])->name('buildings.units.bulk.create');
