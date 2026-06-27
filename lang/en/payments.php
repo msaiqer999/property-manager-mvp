@@ -27,7 +27,8 @@ return [
     'statuses' => [
         'pending' => 'Pending',
         'paid' => 'Paid',
-        'partial' => 'Partial',
+        'partial' => 'Partially paid',
+        'partial_overdue' => 'Partially paid, balance overdue',
         'overdue' => 'Overdue',
         'cancelled' => 'Cancelled',
     ],
@@ -54,6 +55,7 @@ return [
         'due' => 'Due',
         'amount_due' => 'Amount due',
         'paid' => 'Paid',
+        'remaining' => 'Remaining amount',
         'status' => 'Status',
     ],
 
@@ -65,6 +67,10 @@ return [
 
     'lifecycle' => [
         'cancelled_due_to_contract_termination' => 'Cancelled due to contract termination',
+    ],
+
+    'receipt' => [
+        'partial_note' => 'This receipt confirms the received amount only. A remaining balance is still due.',
     ],
 
     'validation' => [

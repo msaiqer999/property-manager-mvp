@@ -118,7 +118,7 @@ class PaymentLocalizationTest extends TestCase
             ->assertSee(__('payments.all_statuses'))
             ->assertSee(__('payments.columns.due_date'))
             ->assertSee('data-mobile-payments-list', false)
-            ->assertSee(__('payments.statuses.partial'));
+            ->assertSee(__('payments.statuses.partial_overdue'));
 
         $this->actingAs($owner)
             ->withSession(['locale' => 'ar'])
@@ -144,7 +144,7 @@ class PaymentLocalizationTest extends TestCase
             ->assertSee('2026-06-01')
             ->assertSee('9,876.50')
             ->assertSee('5,000.25')
-            ->assertSee(__('payments.statuses.partial'));
+            ->assertSee(__('payments.statuses.partial_overdue'));
 
         $freshPayment = $payment->fresh()->load('contract.tenant', 'contract.unit');
         $this->assertSame('Arabic Payment Tenant', $freshPayment->contract->tenant->full_name);
@@ -249,6 +249,7 @@ class PaymentLocalizationTest extends TestCase
             'contract' => 'PAY-PENDING-003',
             'amount_due' => 3210,
             'amount_paid' => 0,
+            'due_date' => now()->addMonth()->toDateString(),
             'status' => 'pending',
             'payment_method' => null,
             'payment_date' => null,
@@ -261,9 +262,84 @@ class PaymentLocalizationTest extends TestCase
             ->assertSee('value="pending" selected', false)
             ->assertSee(__('payments.statuses.pending'))
             ->assertSee($payment->contract->tenant->full_name)
-            ->assertSee('<span dir="ltr">'.$payment->contract->contract_number.'</span>', false);
+            ->assertSee('<bdi dir="ltr">'.$payment->contract->contract_number.'</bdi>', false)
+            ->assertDontSee('payments.statuses.pending');
 
         $this->assertSame('pending', $payment->fresh()->status);
+    }
+
+    public function test_payment_status_clarity_receipt_actions_and_partial_receipt_amounts(): void
+    {
+        $organization = Organization::create(['name' => 'Payment Clarity Organization']);
+        $owner = User::create([
+            'organization_id' => $organization->id,
+            'name' => 'Payment Clarity Owner',
+            'email' => 'payment-clarity-owner@example.com',
+            'password' => 'password',
+            'role' => 'owner',
+        ]);
+
+        $paidPayment = $this->localizedPayment($owner, [
+            'building' => 'Paid Clarity Building',
+            'unit' => 'CLR-PAID-101',
+            'tenant' => 'Paid Clarity Tenant',
+            'contract' => 'CLR-PAID-001',
+            'amount_due' => 1000,
+            'amount_paid' => 1000,
+            'status' => 'paid',
+            'payment_method' => 'cash',
+            'payment_date' => '2026-06-05',
+        ]);
+        $partialPayment = $this->localizedPayment($owner, [
+            'building' => 'Partial Clarity Building',
+            'unit' => 'CLR-PART-202',
+            'tenant' => 'Partial Clarity Tenant',
+            'contract' => 'CLR-PART-002',
+            'amount_due' => 1000,
+            'amount_paid' => 400,
+            'status' => 'overdue',
+            'payment_method' => 'cash',
+            'payment_date' => '2026-06-06',
+        ]);
+        $unpaidPayment = $this->localizedPayment($owner, [
+            'building' => 'Unpaid Clarity Building',
+            'unit' => 'CLR-UNPAID-303',
+            'tenant' => 'Unpaid Clarity Tenant',
+            'contract' => 'CLR-UNPAID-003',
+            'amount_due' => 1200,
+            'amount_paid' => 0,
+            'status' => 'overdue',
+            'payment_method' => null,
+            'payment_date' => null,
+        ]);
+
+        $this->actingAs($owner)
+            ->withSession(['locale' => 'en'])
+            ->get(route('payments.index'))
+            ->assertOk()
+            ->assertSee('Paid')
+            ->assertSee('Partially paid, balance overdue')
+            ->assertSee('Overdue')
+            ->assertSee('href="'.route('payments.show', $paidPayment).'"', false)
+            ->assertSee('href="'.route('payments.show', $partialPayment).'"', false)
+            ->assertSee('href="'.route('payments.edit', $partialPayment).'"', false)
+            ->assertSee('href="'.route('payments.edit', $unpaidPayment).'"', false)
+            ->assertDontSee('href="'.route('payments.show', $unpaidPayment).'"', false)
+            ->assertDontSee('payments.statuses.partial_overdue');
+
+        app()->setLocale('en');
+        $receiptHtml = view('pdf.receipt', ['payment' => $partialPayment->fresh()->load('contract.tenant', 'contract.unit.building')])->render();
+
+        $this->assertStringContainsString('Partially paid', $receiptHtml);
+        $this->assertStringContainsString('Amount due', $receiptHtml);
+        $this->assertStringContainsString('1,000.00', $receiptHtml);
+        $this->assertStringContainsString('Paid', $receiptHtml);
+        $this->assertStringContainsString('400.00', $receiptHtml);
+        $this->assertStringContainsString('Remaining amount', $receiptHtml);
+        $this->assertStringContainsString('600.00', $receiptHtml);
+        $this->assertStringContainsString('This receipt confirms the received amount only. A remaining balance is still due.', $receiptHtml);
+        $this->assertStringNotContainsString('Overdue', $receiptHtml);
+        $this->assertStringNotContainsString('payments.', $receiptHtml);
     }
 
     private function localizedPayment(User $owner, array $values): Payment
@@ -304,7 +380,7 @@ class PaymentLocalizationTest extends TestCase
         return Payment::create([
             'organization_id' => $owner->organization_id,
             'contract_id' => $contract->id,
-            'due_date' => '2026-06-01',
+            'due_date' => $values['due_date'] ?? '2026-06-01',
             'amount_due' => $values['amount_due'],
             'amount_paid' => $values['amount_paid'],
             'payment_date' => $values['payment_date'],

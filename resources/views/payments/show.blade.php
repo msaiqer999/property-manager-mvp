@@ -9,7 +9,8 @@
         @endif
         @if($payment->amount_paid > 0)
             <a data-payment-action class="tap-target inline-flex min-h-11 items-center justify-center rounded bg-slate-900 px-4 text-center text-sm font-medium text-white" href="{{ route('payments.receipt', $payment) }}">{{ __('payments.download_receipt_pdf') }}</a>
-        @elseif($payment->status !== 'cancelled')
+        @endif
+        @if($payment->status !== 'cancelled' && $payment->amount_paid_minor < $payment->amount_due_minor)
             <a data-payment-action class="tap-target inline-flex min-h-11 items-center justify-center rounded bg-slate-900 px-4 text-center text-sm font-medium text-white" href="{{ route('payments.edit', $payment) }}">{{ __('payments.record_payment') }}</a>
         @endif
     </div>
@@ -30,8 +31,12 @@
             <dd class="mt-1 font-medium"><span dir="ltr">{{ number_format($payment->amount_paid, 2) }}</span></dd>
         </div>
         <div>
+            <dt class="text-slate-500">{{ __('payments.show.remaining') }}</dt>
+            <dd class="mt-1 font-medium"><span dir="ltr">{{ number_format($payment->remaining_amount, 2) }}</span></dd>
+        </div>
+        <div>
             <dt class="text-slate-500">{{ __('payments.show.status') }}</dt>
-            <dd class="mt-1"><span class="rounded bg-slate-100 px-2 py-1 text-xs text-slate-700">{{ __('payments.statuses.'.$payment->status) }}</span></dd>
+            <dd class="mt-1"><span class="rounded bg-slate-100 px-2 py-1 text-xs text-slate-700">{{ __('payments.statuses.'.$payment->display_status_key) }}</span></dd>
         </div>
     </dl>
     @if($payment->status === 'cancelled')

@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="{{ app()->getLocale() }}" dir="{{ app()->getLocale() === 'ar' ? 'rtl' : 'ltr' }}">
+<html lang="{{ app()->getLocale() }}" dir="{{ \App\Support\SupportedLocales::direction(app()->getLocale()) }}">
 <head>
     <meta charset="utf-8">
     <title>{{ __('payments.pdf.title') }}</title>
@@ -110,6 +110,17 @@
             font-weight: 700;
         }
 
+        .note {
+            margin-top: 14px;
+            border: 1px solid #bfdbfe;
+            border-radius: 6px;
+            padding: 10px 12px;
+            background: #eff6ff;
+            color: #1e3a8a;
+            font-size: 12.5px;
+            font-weight: 700;
+        }
+
         .ltr {
             direction: ltr;
             unicode-bidi: isolate;
@@ -130,7 +141,7 @@
                     <td class="summary-label">{{ __('payments.pdf.receipt_number') }}</td>
                     <td class="summary-value"><bdi class="ltr">{{ $payment->id }}</bdi></td>
                     <td class="summary-label">{{ __('payments.columns.status') }}</td>
-                    <td class="summary-value">{{ __('payments.statuses.'.$payment->status) }}</td>
+                    <td class="summary-value">{{ __('payments.statuses.'.$payment->receipt_status_key) }}</td>
                 </tr>
                 <tr>
                     <td class="summary-label">{{ __('payments.columns.tenant') }}</td>
@@ -175,14 +186,22 @@
                 <td class="amount"><bdi class="ltr">{{ number_format((float) $payment->amount_paid, 2) }}</bdi></td>
             </tr>
             <tr>
+                <th>{{ __('payments.show.remaining') }}</th>
+                <td class="amount"><bdi class="ltr">{{ number_format((float) $payment->remaining_amount, 2) }}</bdi></td>
+            </tr>
+            <tr>
                 <th>{{ __('payments.form.method') }}</th>
                 <td>{{ $payment->payment_method ? __('payments.methods.'.$payment->payment_method) : __('payments.not_available') }}</td>
             </tr>
             <tr>
                 <th>{{ __('payments.columns.status') }}</th>
-                <td><span class="status">{{ __('payments.statuses.'.$payment->status) }}</span></td>
+                <td><span class="status">{{ __('payments.statuses.'.$payment->receipt_status_key) }}</span></td>
             </tr>
         </table>
+
+        @if($payment->receipt_status_key === 'partial')
+            <div class="note">{{ __('payments.receipt.partial_note') }}</div>
+        @endif
     </div>
 </body>
 </html>

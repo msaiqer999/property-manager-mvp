@@ -12,6 +12,7 @@ return [
     'download_proof' => 'প্রমাণ ডাউনলোড',
     'download_receipt_pdf' => 'রসিদ PDF ডাউনলোড',
     'not_available' => 'প্রযোজ্য নয়',
+
     'columns' => [
         'due_date' => 'নির্ধারিত তারিখ',
         'tenant' => 'ভাড়াটিয়া',
@@ -22,19 +23,23 @@ return [
         'paid_date' => 'পেমেন্ট তারিখ',
         'action' => 'কাজ',
     ],
+
     'statuses' => [
         'pending' => 'অপেক্ষমাণ',
         'paid' => 'পরিশোধিত',
-        'partial' => 'আংশিক',
+        'partial' => 'আংশিক পরিশোধিত',
+        'partial_overdue' => 'আংশিক পরিশোধিত, বাকি টাকা বকেয়া',
         'overdue' => 'বকেয়া',
         'cancelled' => 'বাতিল',
     ],
+
     'methods' => [
         'cash' => 'নগদ',
         'bank_transfer' => 'ব্যাংক ট্রান্সফার',
         'cheque' => 'চেক',
         'other' => 'অন্যান্য',
     ],
+
     'form' => [
         'summary' => 'পেমেন্ট সারাংশ',
         'due' => 'নির্ধারিত',
@@ -45,10 +50,32 @@ return [
         'notes' => 'নোট',
         'save' => 'সংরক্ষণ',
     ],
+
     'show' => [
         'due' => 'নির্ধারিত',
         'amount_due' => 'বকেয়া পরিমাণ',
         'paid' => 'পরিশোধিত',
+        'remaining' => 'বাকি পরিমাণ',
         'status' => 'অবস্থা',
+    ],
+
+    'pdf' => [
+        'title' => 'পেমেন্ট রসিদ',
+        'generated_at' => 'তৈরির সময়',
+        'receipt_number' => 'রসিদ নম্বর',
+    ],
+
+    'lifecycle' => [
+        'cancelled_due_to_contract_termination' => 'চুক্তি শেষ হওয়ার কারণে বাতিল',
+    ],
+
+    'receipt' => [
+        'partial_note' => 'এই রসিদটি শুধু প্রাপ্ত টাকার প্রমাণ। বাকি টাকা এখনো বকেয়া আছে।',
+    ],
+
+    'validation' => [
+        'paid_amount_cannot_decrease' => 'রেকর্ড করা পরিশোধিত পরিমাণ কমানো যাবে না।',
+        'cannot_record_cancelled' => 'বাতিল পেমেন্ট রেকর্ড বা পরিবর্তন করা যাবে না।',
+        'receipt_unavailable_without_recorded_money' => 'এই পেমেন্টে কোনো টাকা রেকর্ড না হওয়ায় রসিদ পাওয়া যাচ্ছে না।',
     ],
 ];
