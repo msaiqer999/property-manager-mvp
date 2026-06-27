@@ -3,8 +3,11 @@
 namespace Tests\Feature;
 
 use App\Models\Building;
+use App\Models\Contract;
 use App\Models\Expense;
 use App\Models\Organization;
+use App\Models\Payment;
+use App\Models\Tenant;
 use App\Models\Unit;
 use App\Models\User;
 use Database\Seeders\DatabaseSeeder;
@@ -29,10 +32,13 @@ class DashboardLocalizationTest extends TestCase
             ->assertSee('Overdue amount')
             ->assertSee('Vacant units')
             ->assertSee('Contracts expiring soon')
+            ->assertSee('Start managing your property')
+            ->assertSee('Your property management basics are set up.')
+            ->assertSee('What should I do today?')
             ->assertSee('Needs your attention')
             ->assertSee('Overdue payments')
             ->assertSee('Contracts ending soon')
-            ->assertSee('Payments waiting to be recorded')
+            ->assertSee('Partial payments need follow-up')
             ->assertSee('Quick actions')
             ->assertSee('Record payment')
             ->assertSee('Add contract')
@@ -54,8 +60,11 @@ class DashboardLocalizationTest extends TestCase
             ->get(route('dashboard'));
 
         $response->assertOk()
+            ->assertSee('data-dashboard-guided-start', false)
+            ->assertSee('data-guided-start-step', false)
             ->assertSee('data-mobile-owner-dashboard', false)
             ->assertSee('data-dashboard-kpi-card', false)
+            ->assertSee('data-daily-actions', false)
             ->assertSee('data-attention-section', false)
             ->assertSee('data-quick-actions', false)
             ->assertSee('data-dashboard-secondary-lists', false)
@@ -81,6 +90,9 @@ class DashboardLocalizationTest extends TestCase
             ->withSession(['locale' => 'en'])
             ->get(route('dashboard'))
             ->assertOk()
+            ->assertSee('Start managing your property')
+            ->assertSee('Add a building')
+            ->assertSee('Next')
             ->assertSee('Start by adding your first building')
             ->assertSee('Add building')
             ->assertDontSee('Collected this month')
@@ -99,6 +111,8 @@ class DashboardLocalizationTest extends TestCase
             ->get(route('dashboard'))
             ->assertOk()
             ->assertSee('Latest payments')
+            ->assertDontSee('data-dashboard-guided-start', false)
+            ->assertDontSee('Start managing your property')
             ->assertDontSee('Collected this month')
             ->assertDontSee('Monthly income')
             ->assertDontSee('Monthly expenses')
@@ -123,12 +137,122 @@ class DashboardLocalizationTest extends TestCase
             ->get(route('dashboard'))
             ->assertOk()
             ->assertSee('<html lang="ar" dir="rtl">', false)
+            ->assertSee(__('app.dashboard.guided_start_title'))
+            ->assertSee(__('app.dashboard.daily_actions_title'))
             ->assertSee(__('app.dashboard.collected_this_month'))
             ->assertSee(__('app.dashboard.needs_attention'))
             ->assertSee(__('app.dashboard.quick_actions'))
             ->assertSee(__('payments.record_payment'))
             ->assertSee(__('contracts.add'))
             ->assertSee(__('units.bulk.add_multiple'));
+    }
+
+    public function test_incomplete_owner_sees_guided_start_progress_and_existing_next_route(): void
+    {
+        $organization = Organization::create(['name' => 'Guided Start Organization']);
+        $owner = User::create([
+            'organization_id' => $organization->id,
+            'name' => 'Guided Start Owner',
+            'email' => 'guided-start-owner@example.com',
+            'password' => 'password',
+            'role' => 'owner',
+        ]);
+        $building = Building::create([
+            'organization_id' => $organization->id,
+            'name' => 'Guided Start Building',
+            'location' => 'Riyadh',
+        ]);
+
+        $this->actingAs($owner)
+            ->withSession(['locale' => 'en'])
+            ->get(route('dashboard'))
+            ->assertOk()
+            ->assertSee('data-dashboard-guided-start', false)
+            ->assertSee('Add a building')
+            ->assertSee('Completed')
+            ->assertSee('Add units')
+            ->assertSee('Next')
+            ->assertSee('href="'.route('buildings.units.bulk.create', $building).'"', false)
+            ->assertDontSee('app.dashboard.guided_start_title');
+    }
+
+    public function test_daily_actions_show_overdue_partial_expiring_and_vacant_items(): void
+    {
+        $organization = Organization::create(['name' => 'Daily Actions Organization']);
+        $owner = User::create([
+            'organization_id' => $organization->id,
+            'name' => 'Daily Actions Owner',
+            'email' => 'daily-actions-owner@example.com',
+            'password' => 'password',
+            'role' => 'owner',
+        ]);
+        $building = Building::create([
+            'organization_id' => $organization->id,
+            'name' => 'Daily Actions Building',
+            'location' => 'Riyadh',
+        ]);
+        Unit::create([
+            'building_id' => $building->id,
+            'unit_number' => 'DA-VACANT-101',
+            'type' => 'apartment',
+            'status' => 'vacant',
+            'rent_amount' => 1000,
+        ]);
+        $rentedUnit = Unit::create([
+            'building_id' => $building->id,
+            'unit_number' => 'DA-RENTED-102',
+            'type' => 'apartment',
+            'status' => 'rented',
+            'rent_amount' => 1000,
+        ]);
+        $tenant = Tenant::create([
+            'organization_id' => $organization->id,
+            'full_name' => 'Daily Actions Tenant',
+            'phone' => '0500000000',
+        ]);
+        $contract = Contract::create([
+            'organization_id' => $organization->id,
+            'unit_id' => $rentedUnit->id,
+            'tenant_id' => $tenant->id,
+            'contract_number' => 'DA-2026-001',
+            'start_date' => now()->subMonth()->toDateString(),
+            'end_date' => now()->addDays(20)->toDateString(),
+            'rent_amount' => 1000,
+            'payment_frequency' => 'monthly',
+            'deposit_amount' => 0,
+            'status' => 'active',
+        ]);
+        Payment::create([
+            'organization_id' => $organization->id,
+            'contract_id' => $contract->id,
+            'due_date' => now()->subDays(5)->toDateString(),
+            'amount_due' => 1000,
+            'amount_paid' => 0,
+            'status' => 'overdue',
+        ]);
+        Payment::create([
+            'organization_id' => $organization->id,
+            'contract_id' => $contract->id,
+            'due_date' => now()->toDateString(),
+            'amount_due' => 1000,
+            'amount_paid' => 400,
+            'payment_date' => now()->toDateString(),
+            'status' => 'partial',
+        ]);
+
+        $this->actingAs($owner)
+            ->withSession(['locale' => 'en'])
+            ->get(route('dashboard'))
+            ->assertOk()
+            ->assertSee('What should I do today?')
+            ->assertSee('Overdue payments')
+            ->assertSee('Partial payments need follow-up')
+            ->assertSee('Contracts ending soon')
+            ->assertSee('Vacant units')
+            ->assertSee('href="'.route('payments.index', ['overdue' => 1]).'"', false)
+            ->assertSee('href="'.route('payments.index', ['status' => 'partial']).'"', false)
+            ->assertSee('href="'.route('units.index', ['status' => 'vacant']).'"', false)
+            ->assertDontSee('app.dashboard.daily_actions_title');
     }
 
     public function test_dashboard_displays_english_expense_category_label_without_changing_stored_value(): void

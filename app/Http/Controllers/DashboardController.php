@@ -7,6 +7,7 @@ use App\Models\Building;
 use App\Models\Contract;
 use App\Models\Expense;
 use App\Models\Payment;
+use App\Models\Tenant;
 use App\Models\Unit;
 use App\Support\DashboardAuthorization;
 use Illuminate\Support\Facades\DB;
@@ -36,12 +37,23 @@ class DashboardController extends Controller
         ];
         $buildings = Building::where('organization_id', $orgId)->orderBy('name')->get();
         $unitCount = Unit::whereHas('building', fn ($q) => $q->where('organization_id', $orgId))->count();
+        $tenantCount = Tenant::where('organization_id', $orgId)->count();
         $contractCount = Contract::where('organization_id', $orgId)->count();
         $pendingPaymentCount = Payment::where('organization_id', $orgId)
             ->whereIn('status', ['pending', 'partial'])
             ->count();
+        $partialPaymentCount = Payment::where('organization_id', $orgId)
+            ->where('status', 'partial')
+            ->count();
+        $recordedPaymentCount = Payment::where('organization_id', $orgId)
+            ->where(function ($query) {
+                $query->where('amount_paid', '>', 0)
+                    ->orWhere('status', 'paid');
+            })
+            ->count();
 
         return view('dashboard', [
+            'role' => auth()->user()->role,
             'monthlyIncome' => Payment::where('organization_id', $orgId)
                 ->where('amount_paid', '>', 0)
                 ->whereBetween('payment_date', [$start, $end])
@@ -57,12 +69,15 @@ class DashboardController extends Controller
             'rentedUnits' => Unit::whereHas('building', fn ($q) => $q->where('organization_id', $orgId))->where('status', 'rented')->count(),
             'buildingCount' => $buildings->count(),
             'unitCount' => $unitCount,
+            'tenantCount' => $tenantCount,
             'contractCount' => $contractCount,
+            'recordedPaymentCount' => $recordedPaymentCount,
             'firstBuilding' => $buildings->first(),
             'expiringSoon' => $expiringSoon->take(5),
             'expiryCounts' => $expiryCounts,
             'expiringSoonCount' => $expiringSoon->count(),
             'pendingPaymentCount' => $pendingPaymentCount,
+            'partialPaymentCount' => $partialPaymentCount,
             'nextPaymentToRecord' => Payment::where('organization_id', $orgId)
                 ->whereIn('status', ['pending', 'partial', 'overdue'])
                 ->orderBy('due_date')

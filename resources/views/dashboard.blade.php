@@ -1,15 +1,85 @@
 @extends('layouts.app')
 
 @section('content')
-@php($role = auth()->user()->role)
-@php($ownerOnboardingState = $role->can('manage-properties') ? ($buildingCount === 0 ? 'buildings' : ($unitCount === 0 ? 'units' : ($contractCount === 0 ? 'contracts' : null))) : null)
+@php
+    $dashboardUser = auth()->user();
+    $role = $role ?? $dashboardUser?->role;
+    $canManageProperties = $role?->can('manage-properties') ?? false;
+    $canManageContracts = $role?->can('manage-contracts') ?? false;
+    $canViewExpenses = $role?->can('view-expenses') ?? false;
+    $canViewReports = $role?->can('view-reports') ?? false;
+    $ownerOnboardingState = $canManageProperties ? ($buildingCount === 0 ? 'buildings' : ($unitCount === 0 ? 'units' : ($contractCount === 0 ? 'contracts' : null))) : null;
+    $guidedStartSteps = $canManageProperties ? [
+        [
+            'label' => __('app.dashboard.guided_step_building'),
+            'complete' => $buildingCount > 0,
+            'href' => route('buildings.create'),
+        ],
+        [
+            'label' => __('app.dashboard.guided_step_units'),
+            'complete' => $unitCount > 0,
+            'href' => $firstBuilding ? route('buildings.units.bulk.create', $firstBuilding) : route('buildings.create'),
+        ],
+        [
+            'label' => __('app.dashboard.guided_step_tenants'),
+            'complete' => $tenantCount > 0,
+            'href' => route('tenants.create'),
+        ],
+        [
+            'label' => __('app.dashboard.guided_step_contracts'),
+            'complete' => $contractCount > 0,
+            'href' => route('contracts.create'),
+        ],
+        [
+            'label' => __('app.dashboard.guided_step_payments'),
+            'complete' => $recordedPaymentCount > 0,
+            'href' => $nextPaymentToRecord ? route('payments.edit', $nextPaymentToRecord) : route('payments.index'),
+        ],
+    ] : [];
+    $guidedStartComplete = $guidedStartSteps !== [] && collect($guidedStartSteps)->every(fn ($step) => $step['complete']);
+    $nextGuidedIndex = collect($guidedStartSteps)->search(fn ($step) => ! $step['complete']);
+@endphp
 
 <div class="mb-4">
-    <p class="text-sm text-slate-500">{{ auth()->user()->organization->name }}</p>
+    <p class="text-sm text-slate-500">{{ $dashboardUser->organization->name }}</p>
     <h1 class="mt-1 text-2xl font-semibold">{{ __('app.dashboard.title') }}</h1>
 </div>
 
-@if($role->can('manage-properties'))
+@if($canManageProperties)
+    <section data-dashboard-guided-start class="mb-6 rounded border bg-white p-4 shadow-sm sm:p-5">
+        <div class="grid gap-3 sm:flex sm:items-start sm:justify-between">
+            <div>
+                <h2 class="text-lg font-semibold">{{ __('app.dashboard.guided_start_title') }}</h2>
+                <p class="mt-1 text-sm text-slate-600">
+                    {{ $guidedStartComplete ? __('app.dashboard.guided_start_complete') : __('app.dashboard.guided_start_body') }}
+                </p>
+            </div>
+            @if(! $guidedStartComplete && $nextGuidedIndex !== false)
+                <a class="tap-target inline-flex min-h-11 items-center justify-center rounded bg-slate-900 px-4 text-center text-sm font-medium text-white" href="{{ $guidedStartSteps[$nextGuidedIndex]['href'] }}">
+                    {{ __('app.dashboard.continue_setup') }}
+                </a>
+            @endif
+        </div>
+        <div class="mt-4 grid gap-3 lg:grid-cols-5">
+            @foreach($guidedStartSteps as $index => $step)
+                @php($isNext = ! $guidedStartComplete && $nextGuidedIndex === $index)
+                <div data-guided-start-step class="rounded border p-3 {{ $step['complete'] ? 'border-emerald-200 bg-emerald-50' : ($isNext ? 'border-blue-200 bg-blue-50' : 'bg-white') }}">
+                    <div class="flex items-start justify-between gap-3">
+                        <p class="text-sm font-semibold">{{ $step['label'] }}</p>
+                        <span class="shrink-0 rounded-full px-2 py-1 text-xs font-medium {{ $step['complete'] ? 'bg-emerald-100 text-emerald-800' : ($isNext ? 'bg-blue-100 text-blue-800' : 'bg-slate-100 text-slate-700') }}">
+                            {{ $step['complete'] ? __('app.dashboard.step_completed') : ($isNext ? __('app.dashboard.step_next') : __('app.dashboard.step_pending')) }}
+                        </span>
+                    </div>
+                    @if(! $step['complete'])
+                        <a class="tap-target mt-3 inline-flex min-h-10 w-full items-center justify-center rounded border bg-white px-3 text-center text-sm font-medium text-slate-800" href="{{ $step['href'] }}">
+                            {{ __('app.dashboard.step_action') }}
+                        </a>
+                    @endif
+                </div>
+            @endforeach
+        </div>
+    </section>
+
     @if($buildingCount === 0)
         <section data-owner-onboarding-empty-buildings class="rounded border bg-white p-5 shadow-sm sm:p-6">
             <h2 class="text-lg font-semibold">{{ __('app.dashboard.empty_no_buildings_title') }}</h2>
@@ -53,22 +123,51 @@
             </div>
         </div>
 
-        <section data-attention-section class="mt-6 rounded border bg-white p-4 shadow-sm sm:p-5">
-            <h2 class="mb-3 text-lg font-semibold sm:text-base">{{ __('app.dashboard.needs_attention') }}</h2>
+        <section data-daily-actions data-attention-section class="mt-6 rounded border bg-white p-4 shadow-sm sm:p-5">
+            <div class="mb-3">
+                <h2 class="text-lg font-semibold sm:text-base">{{ __('app.dashboard.daily_actions_title') }}</h2>
+                <p class="mt-1 text-sm text-slate-500">{{ __('app.dashboard.needs_attention') }}</p>
+            </div>
             <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
                 @foreach([
-                    __('app.dashboard.attention_overdue_payments') => [$overduePaymentCount, route('payments.index', ['overdue' => 1])],
-                    __('app.dashboard.attention_expiring_contracts') => [$expiringSoonCount, route('contracts.index')],
-                    __('app.dashboard.attention_vacant_units') => [$vacantUnits, route('units.index', ['status' => 'vacant'])],
-                    __('app.dashboard.attention_pending_payments') => [$pendingPaymentCount, route('payments.index', ['status' => 'pending'])],
-                ] as $label => [$count, $href])
-                    <a href="{{ $href }}" class="tap-target rounded border p-4">
-                        <p class="text-sm text-slate-500">{{ $label }}</p>
-                        <p class="bidi-isolate mt-1 text-xl font-semibold" dir="ltr">{{ $count }}</p>
+                    [
+                        'label' => __('app.dashboard.attention_overdue_payments'),
+                        'count' => $overduePaymentCount,
+                        'body' => __('app.dashboard.daily_overdue_body'),
+                        'action' => __('app.dashboard.view_overdue_payments'),
+                        'href' => route('payments.index', ['overdue' => 1]),
+                    ],
+                    [
+                        'label' => __('app.dashboard.attention_partial_payments'),
+                        'count' => $partialPaymentCount,
+                        'body' => __('app.dashboard.daily_partial_body'),
+                        'action' => __('app.dashboard.review_partial_payments'),
+                        'href' => route('payments.index', ['status' => 'partial']),
+                    ],
+                    [
+                        'label' => __('app.dashboard.attention_expiring_contracts'),
+                        'count' => $expiringSoonCount,
+                        'body' => __('app.dashboard.daily_expiring_body'),
+                        'action' => __('app.dashboard.view_expiring_contracts'),
+                        'href' => route('contracts.index'),
+                    ],
+                    [
+                        'label' => __('app.dashboard.attention_vacant_units'),
+                        'count' => $vacantUnits,
+                        'body' => __('app.dashboard.daily_vacant_body'),
+                        'action' => __('app.dashboard.view_vacant_units'),
+                        'href' => route('units.index', ['status' => 'vacant']),
+                    ],
+                ] as $item)
+                    <a href="{{ $item['href'] }}" class="tap-target rounded border p-4">
+                        <p class="text-sm text-slate-500">{{ $item['label'] }}</p>
+                        <p class="bidi-isolate mt-1 text-xl font-semibold" dir="ltr">{{ $item['count'] }}</p>
+                        <p class="mt-2 text-sm text-slate-600">{{ $item['body'] }}</p>
+                        <span class="mt-3 inline-flex text-sm font-medium text-blue-700">{{ $item['action'] }}</span>
                     </a>
                 @endforeach
             </div>
-            @if($overduePaymentCount === 0 && $expiringSoonCount === 0 && $vacantUnits === 0 && $pendingPaymentCount === 0)
+            @if($overduePaymentCount === 0 && $partialPaymentCount === 0 && $expiringSoonCount === 0 && $vacantUnits === 0)
                 <p class="mt-3 text-sm text-slate-500">{{ __('app.dashboard.no_attention_items') }}</p>
             @endif
             <div class="mt-4 border-t pt-3">
@@ -109,7 +208,7 @@
         </section>
         @endif
     @endif
-@elseif($role->can('view-reports') || $role->can('view-expenses'))
+@elseif($canViewReports || $canViewExpenses)
     <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
         @foreach([
             __('app.dashboard.monthly_income') => $monthlyIncome,
@@ -126,8 +225,8 @@
 @endif
 
 @if(! $ownerOnboardingState)
-<div data-dashboard-secondary-lists class="mt-6 grid gap-4 {{ $role->can('manage-contracts') && $role->can('view-expenses') ? 'lg:grid-cols-3' : '' }}">
-    @if($role->can('manage-contracts') && ! $role->can('manage-properties'))
+<div data-dashboard-secondary-lists class="mt-6 grid gap-4 {{ $canManageContracts && $canViewExpenses ? 'lg:grid-cols-3' : '' }}">
+    @if($canManageContracts && ! $canManageProperties)
         <section class="rounded border bg-white p-4 shadow-sm">
             <h2 class="mb-3 font-semibold">{{ __('app.dashboard.contracts_expiring_soon') }}</h2>
             @forelse($expiringSoon as $contract)
@@ -154,7 +253,7 @@
         @endforelse
     </section>
 
-    @if($role->can('view-expenses'))
+    @if($canViewExpenses)
         <section data-latest-expenses class="rounded border bg-white p-4 shadow-sm">
             <h2 class="mb-3 font-semibold">{{ __('app.dashboard.latest_expenses') }}</h2>
             @forelse($latestExpenses as $expense)
