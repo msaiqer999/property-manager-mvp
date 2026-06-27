@@ -9,6 +9,16 @@ return [
         'net_profit' => 'صافي الربح',
     ],
 
+    'filters' => [
+        'building' => 'المبنى',
+        'unit' => 'الوحدة',
+        'from' => 'من تاريخ',
+        'to' => 'إلى تاريخ',
+        'apply' => 'تطبيق',
+        'all_buildings' => 'كل المباني',
+        'all_units' => 'كل الوحدات',
+    ],
+
     'actions' => [
         'building_income' => 'تصدير تقرير دخل المباني PDF',
         'unit_statement' => 'تنزيل كشف الوحدة PDF',
@@ -36,8 +46,10 @@ return [
         'contracts' => 'العقود',
         'date' => 'التاريخ',
         'due_date' => 'تاريخ الاستحقاق',
+        'expenses' => 'المصروفات',
         'income' => 'الدخل',
         'method' => 'طريقة الدفع',
+        'net_profit' => 'صافي الربح',
         'remaining_amount' => 'المتبقي',
         'status' => 'الحالة',
         'tenant' => 'المستأجر',
@@ -46,8 +58,10 @@ return [
 
     'pdf' => [
         'generated_at' => 'تم الإنشاء في',
+        'metadata' => 'فلاتر التقرير',
         'no_data' => 'لا توجد بيانات متاحة لهذا التقرير.',
         'not_available' => 'غير متاح',
         'rows' => 'الصفوف',
+        'totals' => 'الإجماليات',
     ],
 ];

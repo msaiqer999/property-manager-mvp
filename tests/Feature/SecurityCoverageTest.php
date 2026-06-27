@@ -897,7 +897,7 @@ class SecurityCoverageTest extends TestCase
         Payment::create([
             'organization_id' => $ownerA->organization_id,
             'contract_id' => $dataA['contract']->id,
-            'due_date' => now()->subMonth()->toDateString(),
+            'due_date' => now()->toDateString(),
             'amount_due' => 111,
             'amount_paid' => 0,
             'status' => 'overdue',
@@ -906,7 +906,7 @@ class SecurityCoverageTest extends TestCase
         Payment::create([
             'organization_id' => $dataB['contract']->organization_id,
             'contract_id' => $dataB['contract']->id,
-            'due_date' => now()->subMonth()->toDateString(),
+            'due_date' => now()->toDateString(),
             'amount_due' => 222,
             'amount_paid' => 0,
             'status' => 'overdue',
@@ -939,6 +939,29 @@ class SecurityCoverageTest extends TestCase
             $this->assertSame(1000.0, (float) $capturedReports[$type]['income']);
             $this->assertSame(500.0, (float) $capturedReports[$type]['expensesTotal']);
             $this->assertSame(500.0, (float) $capturedReports[$type]['netProfit']);
+        }
+    }
+
+    public function test_report_pdf_filters_reject_cross_organization_and_mismatched_inputs(): void
+    {
+        [$ownerA, , , , $dataB, $dataA] = $this->createTwoOrganizationScenario();
+
+        foreach ($this->reportTypes() as $type) {
+            $this->actingAs($ownerA)->get(route('reports.pdf', [
+                'type' => $type,
+                'building_id' => $dataB['building']->id,
+            ]))->assertForbidden();
+
+            $this->actingAs($ownerA)->get(route('reports.pdf', [
+                'type' => $type,
+                'unit_id' => $dataB['unit']->id,
+            ]))->assertForbidden();
+
+            $this->actingAs($ownerA)->get(route('reports.pdf', [
+                'type' => $type,
+                'building_id' => $dataA['building']->id,
+                'unit_id' => $dataB['unit']->id,
+            ]))->assertForbidden();
         }
     }
 

@@ -41,12 +41,16 @@ class ReportLocalizationTest extends TestCase
             ->assertSee('Export overdue payments PDF')
             ->assertSee('Export net profit PDF')
             ->assertSee('Export monthly summary PDF')
+            ->assertSee('name="building_id"', false)
+            ->assertSee('name="unit_id"', false)
+            ->assertSee('name="from"', false)
+            ->assertSee('name="to"', false)
             ->assertSee('dir="ltr">'.number_format($income, 2).'</p>', false)
             ->assertSee('dir="ltr">'.number_format($expenses, 2).'</p>', false)
             ->assertSee('dir="ltr">'.number_format($netProfit, 2).'</p>', false);
 
         foreach ($this->reportTypes() as $type) {
-            $response->assertSee('href="'.route('reports.pdf', $type).'"', false);
+            $response->assertSee('href="'.e($this->filteredReportUrl($type)).'"', false);
             $this->assertSame("/reports/{$type}/pdf", route('reports.pdf', $type, absolute: false));
         }
     }
@@ -79,8 +83,135 @@ class ReportLocalizationTest extends TestCase
             ->assertSee('dir="ltr">'.number_format($netProfit, 2).'</p>', false);
 
         foreach ($this->reportTypes() as $type) {
-            $response->assertSee('href="'.route('reports.pdf', $type).'"', false);
+            $response->assertSee('href="'.e($this->filteredReportUrl($type)).'"', false);
         }
+    }
+
+    public function test_report_filters_scope_expenses_pdf_and_profit_totals(): void
+    {
+        $organization = Organization::create(['name' => 'Report Filter Org']);
+        $owner = User::create([
+            'organization_id' => $organization->id,
+            'name' => 'Report Filter Owner',
+            'email' => 'report-filter-owner@example.com',
+            'password' => 'password',
+            'role' => 'owner',
+        ]);
+        $buildingA = Building::create([
+            'organization_id' => $organization->id,
+            'name' => 'Report Filter Building A',
+            'location' => 'Riyadh',
+        ]);
+        $buildingB = Building::create([
+            'organization_id' => $organization->id,
+            'name' => 'Report Filter Building B',
+            'location' => 'Riyadh',
+        ]);
+        $unitA = Unit::create([
+            'building_id' => $buildingA->id,
+            'unit_number' => 'RPT-A-101',
+            'type' => 'apartment',
+            'status' => 'maintenance',
+            'rent_amount' => 1000,
+        ]);
+        $unitB = Unit::create([
+            'building_id' => $buildingB->id,
+            'unit_number' => 'RPT-B-202',
+            'type' => 'apartment',
+            'status' => 'maintenance',
+            'rent_amount' => 1000,
+        ]);
+
+        Expense::create([
+            'organization_id' => $organization->id,
+            'building_id' => $buildingA->id,
+            'unit_id' => $unitA->id,
+            'category' => 'maintenance',
+            'amount' => 321,
+            'expense_date' => '2026-06-12',
+            'notes' => 'Filtered expense should appear.',
+            'created_by' => $owner->id,
+        ]);
+
+        Expense::create([
+            'organization_id' => $organization->id,
+            'building_id' => $buildingB->id,
+            'unit_id' => $unitB->id,
+            'category' => 'maintenance',
+            'amount' => 654,
+            'expense_date' => '2026-06-12',
+            'notes' => 'Filtered expense should be hidden.',
+            'created_by' => $owner->id,
+        ]);
+
+        $filter = [
+            'unit_id' => $unitA->id,
+            'from' => '2026-06-01',
+            'to' => '2026-06-30',
+        ];
+        $buildingFilter = ['building_id' => $buildingA->id] + $filter;
+
+        $this->actingAs($owner)->get(route('expenses.index'))
+            ->assertOk()
+            ->assertSee('Report Filter Building A')
+            ->assertSee('RPT-A-101')
+            ->assertSee('321.00');
+
+        $this->actingAs($owner)->get(route('expenses.index', ['building_id' => $buildingA->id]))
+            ->assertOk()
+            ->assertSee('321.00')
+            ->assertDontSee('654.00');
+
+        $this->actingAs($owner)->get(route('expenses.index', ['unit_id' => $unitA->id]))
+            ->assertOk()
+            ->assertSee('321.00')
+            ->assertDontSee('654.00');
+
+        $this->actingAs($owner)->get(route('expenses.index', ['category' => 'maintenance']))
+            ->assertOk()
+            ->assertSee('321.00');
+
+        $reports = $this->actingAs($owner)->get(route('reports.index', $filter))
+            ->assertOk()
+            ->assertSee(__('reports.filters.all_buildings'))
+            ->assertSee('RPT-A-101')
+            ->assertSee('321.00')
+            ->assertSee('-321.00')
+            ->assertDontSee('654.00');
+
+        foreach ($this->reportTypes() as $type) {
+            $reports->assertSee('href="'.e(route('reports.pdf', ['type' => $type] + $filter)).'"', false);
+        }
+
+        $this->actingAs($owner)->get(route('reports.index', $buildingFilter))
+            ->assertOk()
+            ->assertSee('321.00')
+            ->assertDontSee('654.00');
+
+        $html = $this->actingAs($owner)->get(route('reports.pdf', ['type' => 'expenses'] + $filter))
+            ->assertOk();
+
+        $this->assertStringStartsWith('%PDF-', $html->getContent());
+
+        app()->setLocale('en');
+        $this->actingAs($owner);
+        $controller = app(\App\Http\Controllers\ReportController::class);
+        $filtersMethod = new \ReflectionMethod($controller, 'reportFilters');
+        $filtersMethod->setAccessible(true);
+        $reportFilters = $filtersMethod->invoke($controller, \Illuminate\Http\Request::create('/reports/expenses/pdf', 'GET', $filter));
+
+        $method = new \ReflectionMethod($controller, 'reportData');
+        $method->setAccessible(true);
+        $reportHtml = view('pdf.report', $method->invoke($controller, 'expenses', $reportFilters) + ['type' => 'expenses'])->render();
+
+        $this->assertStringContainsString('Report Filter Building A', $reportHtml);
+        $this->assertStringContainsString('RPT-A-101', $reportHtml);
+        $this->assertStringContainsString('All buildings', $reportHtml);
+        $this->assertStringContainsString('321.00', $reportHtml);
+        $this->assertStringNotContainsString('654.00', $reportHtml);
+        $this->assertStringContainsString('Report filters', $reportHtml);
+        $this->assertStringContainsString('Totals', $reportHtml);
+        $this->assertStringNotContainsString('reports.', $reportHtml);
     }
 
     public function test_report_authorization_remains_unchanged(): void
@@ -238,5 +369,14 @@ class ReportLocalizationTest extends TestCase
             'net-profit',
             'monthly-summary',
         ];
+    }
+
+    private function filteredReportUrl(string $type): string
+    {
+        return route('reports.pdf', [
+            'type' => $type,
+            'from' => now()->startOfMonth()->toDateString(),
+            'to' => now()->endOfMonth()->toDateString(),
+        ]);
     }
 }

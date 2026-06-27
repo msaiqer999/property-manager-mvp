@@ -239,6 +239,22 @@ class PdfExportTest extends TestCase
         }
     }
 
+    public function test_expense_report_pdf_uses_formal_layout_and_unit_isolation(): void
+    {
+        [$owner, , , $expense] = $this->arabicPdfScenario();
+
+        $this->actingAs($owner);
+        $html = $this->renderReportHtml('expenses', 'en');
+
+        $this->assertStringContainsString('class="hero"', $html);
+        $this->assertStringContainsString('class="summary-label"', $html);
+        $this->assertStringContainsString('class="text-end"', $html);
+        $this->assertStringContainsString($expense->building->name, $html);
+        $this->assertStringContainsString($expense->unit->unit_number, $html);
+        $this->assertStringContainsString('<bdi class="ltr">'.$expense->unit->unit_number.'</bdi>', $html);
+        $this->assertStringContainsString(number_format((float) $expense->amount, 2), $html);
+    }
+
     private function assertPdfResponse(TestResponse $response, string $filename): void
     {
         $response->assertOk();
@@ -303,6 +319,8 @@ class PdfExportTest extends TestCase
 
     private function arabicPdfScenario(): array
     {
+        $periodStart = now()->startOfMonth();
+        $periodEnd = now()->endOfMonth();
         $organization = Organization::create(['name' => 'منشأة المدير العقاري التجريبية']);
         $owner = User::create([
             'organization_id' => $organization->id,
@@ -335,8 +353,8 @@ class PdfExportTest extends TestCase
             'unit_id' => $unit->id,
             'tenant_id' => $tenant->id,
             'contract_number' => 'CN-2026-000001',
-            'start_date' => '2026-07-01',
-            'end_date' => '2027-06-30',
+            'start_date' => $periodStart->toDateString(),
+            'end_date' => $periodStart->copy()->addYear()->subDay()->toDateString(),
             'rent_amount' => 5000,
             'payment_frequency' => 'monthly',
             'deposit_amount' => 5000,
@@ -346,34 +364,34 @@ class PdfExportTest extends TestCase
         $payment = Payment::create([
             'organization_id' => $organization->id,
             'contract_id' => $contract->id,
-            'due_date' => '2026-07-01',
+            'due_date' => $periodStart->toDateString(),
             'amount_due' => 5000,
             'amount_paid' => 5000,
-            'payment_date' => '2026-07-01',
+            'payment_date' => $periodStart->toDateString(),
             'payment_method' => 'bank_transfer',
             'status' => 'paid',
         ]);
         Payment::create([
             'organization_id' => $organization->id,
             'contract_id' => $contract->id,
-            'due_date' => '2026-08-01',
+            'due_date' => $periodEnd->toDateString(),
             'amount_due' => 5000,
             'amount_paid' => 0,
             'payment_method' => 'cash',
             'status' => 'overdue',
         ]);
-        Expense::create([
+        $expense = Expense::create([
             'organization_id' => $organization->id,
             'building_id' => $building->id,
             'unit_id' => $unit->id,
             'category' => 'maintenance',
             'amount' => 250,
-            'expense_date' => '2026-07-03',
+            'expense_date' => $periodStart->copy()->addDays(2)->toDateString(),
             'notes' => '<strong>escaped</strong>',
             'created_by' => $owner->id,
         ]);
 
-        return [$owner, $contract, $payment];
+        return [$owner, $contract, $payment, $expense->load('building', 'unit')];
     }
 
     private function twoOrganizationPdfScenario(): array

@@ -9,6 +9,7 @@ return [
         'name' => 'اسم المبنى',
         'location' => 'الموقع',
         'description' => 'الوصف',
+        'action' => 'الإجراء',
     ],
 
     'sections' => [

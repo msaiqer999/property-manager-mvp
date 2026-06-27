@@ -24,10 +24,10 @@
 <div class="hidden md:block">
     <x-table min-width="min-w-[36rem]">
         <thead>
-            <tr class="text-start">
-                <th class="p-4">{{ __('buildings.fields.name') }}</th>
-                <th class="p-4">{{ __('buildings.fields.location') }}</th>
-                <th class="p-4"></th>
+            <tr>
+                <th class="p-4 text-start">{{ __('buildings.fields.name') }}</th>
+                <th class="p-4 text-start">{{ __('buildings.fields.location') }}</th>
+                <th class="p-4 text-center">{{ __('buildings.fields.action') }}</th>
             </tr>
         </thead>
         <tbody>
@@ -35,7 +35,7 @@
                 <tr class="border-t">
                     <td class="p-4 font-medium">{{ $building->name }}</td>
                     <td class="p-4">{{ $building->location }}</td>
-                    <td class="p-4"><a class="tap-target inline-flex items-center rounded border px-3 text-slate-700" href="{{ route('buildings.show', $building) }}">{{ __('app.actions.view') }}</a></td>
+                    <td class="p-4 text-center"><a class="tap-target inline-flex items-center rounded border px-3 text-slate-700" href="{{ route('buildings.show', $building) }}">{{ __('app.actions.view') }}</a></td>
                 </tr>
             @endforeach
         </tbody>

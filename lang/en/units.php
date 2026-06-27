@@ -20,6 +20,7 @@ return [
         'size' => 'Size',
         'rooms' => 'Rooms',
         'notes' => 'Notes',
+        'action' => 'Action',
     ],
 
     'labels' => [

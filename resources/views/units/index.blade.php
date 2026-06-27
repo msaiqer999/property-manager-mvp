@@ -50,12 +50,12 @@
 <div class="hidden md:block">
     <x-table min-width="min-w-[44rem]">
         <thead>
-            <tr class="text-start">
-                <th class="p-4">{{ __('units.fields.unit') }}</th>
-                <th class="p-4">{{ __('units.fields.building') }}</th>
-                <th class="p-4">{{ __('units.fields.status') }}</th>
-                <th class="p-4">{{ __('units.fields.rent') }}</th>
-                <th></th>
+            <tr>
+                <th class="p-4 text-start">{{ __('units.fields.unit') }}</th>
+                <th class="p-4 text-start">{{ __('units.fields.building') }}</th>
+                <th class="p-4 text-center">{{ __('units.fields.status') }}</th>
+                <th class="p-4 text-end">{{ __('units.fields.rent') }}</th>
+                <th class="p-4 text-center">{{ __('units.fields.action') }}</th>
             </tr>
         </thead>
         <tbody>
@@ -63,9 +63,9 @@
                 <tr class="border-t">
                     <td class="p-4 font-medium whitespace-nowrap"><bdi dir="ltr">{{ $unit->unit_number }}</bdi></td>
                     <td class="p-4">{{ $unit->building->name }}</td>
-                    <td class="p-4 whitespace-nowrap"><span class="rounded bg-slate-100 px-2 py-1 text-xs">{{ __('units.statuses.'.$unit->status) }}</span></td>
-                    <td class="p-4 whitespace-nowrap"><bdi dir="ltr">{{ number_format($unit->rent_amount, 2) }}</bdi></td>
-                    <td class="p-4 whitespace-nowrap"><a class="tap-target inline-flex items-center rounded border px-3 text-slate-700" href="{{ route('units.show', $unit) }}">{{ __('app.actions.view') }}</a></td>
+                    <td class="p-4 text-center whitespace-nowrap"><span class="rounded bg-slate-100 px-2 py-1 text-xs">{{ __('units.statuses.'.$unit->status) }}</span></td>
+                    <td class="p-4 text-end whitespace-nowrap"><bdi dir="ltr">{{ number_format($unit->rent_amount, 2) }}</bdi></td>
+                    <td class="p-4 text-center whitespace-nowrap"><a class="tap-target inline-flex items-center rounded border px-3 text-slate-700" href="{{ route('units.show', $unit) }}">{{ __('app.actions.view') }}</a></td>
                 </tr>
             @endforeach
         </tbody>

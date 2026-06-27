@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\Schema;
 
 class Expense extends Model
 {
@@ -47,11 +48,30 @@ class Expense extends Model
 
     public function scopeNotVoided(Builder $query): Builder
     {
-        return $query->whereNull('voided_at');
+        if (! self::hasVoidLifecycleColumn()) {
+            return $query;
+        }
+
+        return $query->where(function (Builder $query) {
+            $query->whereNull('voided_at')
+                ->orWhere('voided_at', '')
+                ->orWhere('voided_at', '0000-00-00 00:00:00');
+        });
     }
 
     public function scopeOnlyVoided(Builder $query): Builder
     {
-        return $query->whereNotNull('voided_at');
+        if (! self::hasVoidLifecycleColumn()) {
+            return $query->whereRaw('1 = 0');
+        }
+
+        return $query->whereNotNull('voided_at')
+            ->where('voided_at', '!=', '')
+            ->where('voided_at', '!=', '0000-00-00 00:00:00');
+    }
+
+    private static function hasVoidLifecycleColumn(): bool
+    {
+        return Schema::hasColumn((new self)->getTable(), 'voided_at');
     }
 }

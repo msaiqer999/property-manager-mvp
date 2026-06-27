@@ -12,6 +12,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
+use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
 
 class ExpenseController extends Controller
@@ -23,6 +24,7 @@ class ExpenseController extends Controller
         Gate::authorize('viewAny', Expense::class);
 
         $lifecycle = $this->lifecycleFilter($request);
+        $this->authorizeFilterOwnership($request);
 
         $expenses = Expense::with(['building', 'unit'])
             ->where('organization_id', $this->organizationId())
@@ -38,7 +40,7 @@ class ExpenseController extends Controller
         return view('expenses.index', [
             'expenses' => $expenses,
             'buildings' => $this->buildings(),
-            'units' => Unit::whereHas('building', fn ($q) => $q->where('organization_id', $this->organizationId()))->orderBy('unit_number')->get(),
+            'units' => $this->units(),
             'lifecycle' => $lifecycle,
         ]);
     }
@@ -47,12 +49,15 @@ class ExpenseController extends Controller
     {
         Gate::authorize('create', Expense::class);
 
-        return view('expenses.form', $this->formData(new Expense));
+        return view('expenses.form', $this->formData(new Expense([
+            'building_id' => request()->integer('building_id') ?: null,
+        ])));
     }
 
     public function store(Request $request, ActivityLogger $logger)
     {
         Gate::authorize('create', Expense::class);
+        $this->authorizeSubmittedOwnership($request);
         $data = $this->validated($request);
         $this->authorizeExpenseInputs($data);
         $data += ['organization_id' => $this->organizationId(), 'created_by' => auth()->id()];
@@ -105,6 +110,7 @@ class ExpenseController extends Controller
         Gate::authorize('update', $expense);
         $this->ensureExpenseNotVoided($expense);
 
+        $this->authorizeSubmittedOwnership($request);
         $data = $this->validated($request);
         $this->authorizeExpenseInputs($data);
 
@@ -159,7 +165,11 @@ class ExpenseController extends Controller
 
     private function formData(Expense $expense): array
     {
-        return ['expense' => $expense, 'buildings' => $this->buildings(), 'units' => Unit::whereHas('building', fn ($q) => $q->where('organization_id', $this->organizationId()))->get()];
+        return [
+            'expense' => $expense,
+            'buildings' => $this->buildings(),
+            'units' => $this->units(),
+        ];
     }
 
     private function buildings()
@@ -167,12 +177,66 @@ class ExpenseController extends Controller
         return Building::where('organization_id', $this->organizationId())->orderBy('name')->get();
     }
 
+    private function units(?int $buildingId = null)
+    {
+        return Unit::whereHas('building', fn ($q) => $q->where('organization_id', $this->organizationId()))
+            ->when($buildingId, fn ($q) => $q->where('building_id', $buildingId))
+            ->orderBy('unit_number')
+            ->get();
+    }
+
     private function authorizeExpenseInputs(array $data): void
     {
         Gate::authorize('view', Building::findOrFail($data['building_id']));
 
         if (! empty($data['unit_id'])) {
-            Gate::authorize('view', Unit::findOrFail($data['unit_id']));
+            $unit = Unit::findOrFail($data['unit_id']);
+
+            Gate::authorize('view', $unit);
+
+            if ((int) $unit->building_id !== (int) $data['building_id']) {
+                throw ValidationException::withMessages([
+                    'unit_id' => __('validation.exists', ['attribute' => __('expenses.form.unit')]),
+                ]);
+            }
+        }
+    }
+
+    private function authorizeSubmittedOwnership(Request $request): void
+    {
+        if ($request->filled('building_id')) {
+            $building = Building::find($request->input('building_id'));
+
+            if ($building !== null) {
+                Gate::authorize('view', $building);
+            }
+        }
+
+        if ($request->filled('unit_id')) {
+            $unit = Unit::find($request->input('unit_id'));
+
+            if ($unit !== null) {
+                Gate::authorize('view', $unit);
+            }
+        }
+    }
+
+    private function authorizeFilterOwnership(Request $request): void
+    {
+        $building = null;
+
+        if ($request->filled('building_id')) {
+            $building = Building::findOrFail($request->input('building_id'));
+            Gate::authorize('view', $building);
+        }
+
+        if ($request->filled('unit_id')) {
+            $unit = Unit::findOrFail($request->input('unit_id'));
+            Gate::authorize('view', $unit);
+
+            if ($building !== null && (int) $unit->building_id !== (int) $building->id) {
+                abort(403);
+            }
         }
     }
 
@@ -210,8 +274,11 @@ class ExpenseController extends Controller
     private function validated(Request $request): array
     {
         return $request->validate([
-            'building_id' => ['required', 'exists:buildings,id'],
-            'unit_id' => ['nullable', 'exists:units,id'],
+            'building_id' => ['required', Rule::exists('buildings', 'id')->where('organization_id', $this->organizationId())],
+            'unit_id' => [
+                'nullable',
+                Rule::exists('units', 'id')->where(fn ($query) => $query->where('building_id', $request->input('building_id'))),
+            ],
             'category' => ['required', 'in:maintenance,electricity,water,cleaning,security,management,other'],
             'amount' => ['required', 'numeric', 'min:0'],
             'expense_date' => ['required', 'date'],

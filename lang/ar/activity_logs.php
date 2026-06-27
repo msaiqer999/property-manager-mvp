@@ -3,6 +3,13 @@
 return [
     'title' => 'سجل النشاط',
 
+    'columns' => [
+        'date' => 'التاريخ',
+        'user' => 'المستخدم',
+        'action' => 'النشاط',
+        'description' => 'الوصف',
+    ],
+
     'actions' => [
         'building' => [
             'created' => 'تم إنشاء مبنى',

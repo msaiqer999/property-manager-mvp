@@ -1,119 +1,286 @@
+@php
+    $direction = \App\Support\SupportedLocales::direction(app()->getLocale());
+    $isRtl = $direction === 'rtl';
+    $na = __('reports.pdf.not_available');
+@endphp
 <!doctype html>
-<html lang="{{ app()->getLocale() }}" dir="{{ app()->getLocale() === 'ar' ? 'rtl' : 'ltr' }}">
+<html lang="{{ app()->getLocale() }}" dir="{{ $direction }}">
 <head>
     <meta charset="utf-8">
     <title>{{ __('reports.types.'.$type) }}</title>
     <style>
-        body { font-family: dejavusans, sans-serif; color: #111827; font-size: 11px; line-height: 1.55; }
-        h1 { margin: 0 0 14px; font-size: 21px; }
-        h2 { margin: 20px 0 8px; font-size: 14px; }
-        table { width: 100%; border-collapse: collapse; margin-top: 8px; }
-        th, td { border: 1px solid #d1d5db; padding: 7px; vertical-align: top; }
-        th { background: #f3f4f6; text-align: inherit; }
-        .summary td:first-child { font-weight: bold; width: 35%; }
-        .muted { color: #4b5563; }
-        .ltr { direction: ltr; unicode-bidi: isolate; white-space: nowrap; }
+        @page { margin: 9mm; }
+
+        body {
+            background: #ffffff;
+            color: #111827;
+            font-family: {{ $isRtl ? 'xbriyaz, dejavusans' : 'dejavusans' }}, sans-serif;
+            font-size: {{ $isRtl ? '11px' : '10.6px' }};
+            line-height: 1.42;
+        }
+
+        .hero {
+            background: #0f172a;
+            color: #ffffff;
+            margin-bottom: 8px;
+            padding: 10px 12px;
+        }
+
+        .hero-table {
+            border-collapse: collapse;
+            margin: 0;
+            table-layout: fixed;
+            width: 100%;
+        }
+
+        .hero-table td {
+            border: 0;
+            padding: 0;
+            vertical-align: top;
+        }
+
+        .hero-meta {
+            color: #dbeafe;
+            font-size: 9px;
+            text-align: {{ $isRtl ? 'left' : 'right' }};
+            width: 34%;
+        }
+
+        h1 {
+            color: #ffffff;
+            font-size: 22px;
+            line-height: 1.1;
+            margin: 0;
+        }
+
+        h2 {
+            background: #f1f5f9;
+            border: 1px solid #d8dee8;
+            border-bottom: 0;
+            color: #0f172a;
+            font-size: 11px;
+            margin: 8px 0 0;
+            padding: 5px 7px;
+        }
+
+        table {
+            border-collapse: collapse;
+            margin-top: 0;
+            width: 100%;
+        }
+
+        th,
+        td {
+            border: 1px solid #d1d5db;
+            padding: 5px 6px;
+            vertical-align: top;
+        }
+
+        th {
+            background: #1e293b;
+            border-color: #1e293b;
+            color: #ffffff;
+            font-size: 9px;
+            text-align: inherit;
+        }
+
+        tbody tr:nth-child(even) td {
+            background: #f8fafc;
+        }
+
+        .summary {
+            border-collapse: separate;
+            border-spacing: 4px;
+            margin: 0 0 6px;
+            table-layout: fixed;
+        }
+
+        .summary td {
+            background: #f8fafc;
+            border: 1px solid #cbd5e1;
+            padding: 5px 7px;
+        }
+
+        .summary-label {
+            color: #64748b;
+            display: block;
+            font-size: 8.5px;
+            margin-bottom: 1px;
+        }
+
+        .summary-value {
+            color: #0f172a;
+            display: block;
+            font-size: 10px;
+            font-weight: 700;
+        }
+
+        .empty {
+            border: 1px solid #d8dee8;
+            color: #475569;
+            margin: 0;
+            padding: 9px;
+        }
+
+        .ltr {
+            direction: ltr;
+            unicode-bidi: isolate;
+            white-space: nowrap;
+        }
+
+        .text-end {
+            text-align: {{ $isRtl ? 'left' : 'right' }};
+        }
+
+        .text-center {
+            text-align: center;
+        }
     </style>
 </head>
 <body>
-    <h1>{{ __('reports.types.'.$type) }}</h1>
-    <p class="muted">{{ __('reports.pdf.generated_at') }} <bdi dir="ltr">{{ now()->format('Y-m-d H:i') }}</bdi></p>
+    <div class="hero">
+        <table class="hero-table">
+            <tr>
+                <td>
+                    <h1>{{ __('reports.types.'.$type) }}</h1>
+                </td>
+                <td class="hero-meta">
+                    {{ __('reports.pdf.generated_at') }}<br>
+                    <bdi class="ltr">{{ now()->format('Y-m-d H:i') }}</bdi>
+                </td>
+            </tr>
+        </table>
+    </div>
 
     <table class="summary">
         <tr>
-            <td>{{ __('reports.summary.income') }}</td>
-            <td><bdi dir="ltr">{{ number_format((float) $income, 2) }}</bdi></td>
+            <td>
+                <span class="summary-label">{{ __('reports.summary.income') }}</span>
+                <span class="summary-value"><bdi class="ltr">{{ number_format((float) $income, 2) }}</bdi></span>
+            </td>
+            <td>
+                <span class="summary-label">{{ __('reports.summary.expenses') }}</span>
+                <span class="summary-value"><bdi class="ltr">{{ number_format((float) $expensesTotal, 2) }}</bdi></span>
+            </td>
+            <td>
+                <span class="summary-label">{{ __('reports.summary.net_profit') }}</span>
+                <span class="summary-value"><bdi class="ltr">{{ number_format((float) $netProfit, 2) }}</bdi></span>
+            </td>
+        </tr>
+    </table>
+
+    <h2>{{ __('reports.pdf.metadata') }}</h2>
+    <table>
+        <tr>
+            <th>{{ __('reports.filters.building') }}</th>
+            <td>{{ $filters['building_label'] }}</td>
+            <th>{{ __('reports.filters.unit') }}</th>
+            <td><bdi class="ltr">{{ $filters['unit_label'] }}</bdi></td>
         </tr>
         <tr>
-            <td>{{ __('reports.summary.expenses') }}</td>
-            <td><bdi dir="ltr">{{ number_format((float) $expensesTotal, 2) }}</bdi></td>
+            <th>{{ __('reports.filters.from') }}</th>
+            <td><bdi class="ltr">{{ $filters['from_date'] }}</bdi></td>
+            <th>{{ __('reports.filters.to') }}</th>
+            <td><bdi class="ltr">{{ $filters['to_date'] }}</bdi></td>
+        </tr>
+    </table>
+
+    <h2>{{ __('reports.pdf.totals') }}</h2>
+    <table>
+        <tr>
+            @foreach($totals as $key => $value)
+                <th class="text-end">{{ __('reports.columns.'.$key) }}</th>
+            @endforeach
         </tr>
         <tr>
-            <td>{{ __('reports.summary.net_profit') }}</td>
-            <td><bdi dir="ltr">{{ number_format((float) $netProfit, 2) }}</bdi></td>
+            @foreach($totals as $value)
+                <td class="text-end"><bdi class="ltr">{{ number_format((float) $value, 2) }}</bdi></td>
+            @endforeach
         </tr>
     </table>
 
     <h2>{{ __('reports.pdf.rows') }}</h2>
     @if($rows->isEmpty())
-        <p>{{ __('reports.pdf.no_data') }}</p>
+        <p class="empty">{{ __('reports.pdf.no_data') }}</p>
     @elseif($type === 'building-income')
         <table>
             <tr>
                 <th>{{ __('reports.columns.building') }}</th>
-                <th>{{ __('reports.columns.income') }}</th>
+                <th class="text-end">{{ __('reports.columns.income') }}</th>
             </tr>
             @foreach($rows as $row)
                 <tr>
                     <td>{{ $row->name }}</td>
-                    <td><bdi dir="ltr">{{ number_format((float) $row->income, 2) }}</bdi></td>
+                    <td class="text-end"><bdi class="ltr">{{ number_format((float) $row->income, 2) }}</bdi></td>
                 </tr>
             @endforeach
         </table>
     @elseif($type === 'unit-statement')
         <table>
             <tr>
-                <th>{{ __('reports.columns.unit') }}</th>
+                <th class="text-center">{{ __('reports.columns.unit') }}</th>
                 <th>{{ __('reports.columns.building') }}</th>
-                <th>{{ __('reports.columns.contracts') }}</th>
-                <th>{{ __('reports.columns.amount_due') }}</th>
-                <th>{{ __('reports.columns.amount_paid') }}</th>
+                <th class="text-center">{{ __('reports.columns.contracts') }}</th>
+                <th class="text-end">{{ __('reports.columns.amount_due') }}</th>
+                <th class="text-end">{{ __('reports.columns.amount_paid') }}</th>
+                <th class="text-end">{{ __('reports.columns.expenses') }}</th>
             </tr>
             @foreach($rows as $row)
                 <tr>
-                    <td><bdi dir="ltr">{{ $row->unit_number }}</bdi></td>
+                    <td class="text-center"><bdi class="ltr">{{ $row->unit_number }}</bdi></td>
                     <td>{{ $row->building->name }}</td>
-                    <td><bdi dir="ltr">{{ $row->contracts->count() }}</bdi></td>
-                    <td><bdi dir="ltr">{{ number_format((float) $row->contracts->sum(fn ($contract) => $contract->payments->sum('amount_due')), 2) }}</bdi></td>
-                    <td><bdi dir="ltr">{{ number_format((float) $row->contracts->sum(fn ($contract) => $contract->payments->sum('amount_paid')), 2) }}</bdi></td>
+                    <td class="text-center"><bdi class="ltr">{{ $row->contracts->count() }}</bdi></td>
+                    <td class="text-end"><bdi class="ltr">{{ number_format((float) $row->contracts->sum(fn ($contract) => $contract->payments->sum('amount_due')), 2) }}</bdi></td>
+                    <td class="text-end"><bdi class="ltr">{{ number_format((float) $row->contracts->sum(fn ($contract) => $contract->payments->sum('amount_paid')), 2) }}</bdi></td>
+                    <td class="text-end"><bdi class="ltr">{{ number_format((float) $row->expenses->sum('amount'), 2) }}</bdi></td>
                 </tr>
             @endforeach
         </table>
     @elseif($type === 'expenses')
         <table>
             <tr>
-                <th>{{ __('reports.columns.date') }}</th>
+                <th class="text-center">{{ __('reports.columns.date') }}</th>
                 <th>{{ __('reports.columns.building') }}</th>
-                <th>{{ __('reports.columns.unit') }}</th>
+                <th class="text-center">{{ __('reports.columns.unit') }}</th>
                 <th>{{ __('reports.columns.category') }}</th>
-                <th>{{ __('reports.columns.amount') }}</th>
-                <th>{{ __('reports.columns.status') }}</th>
+                <th class="text-end">{{ __('reports.columns.amount') }}</th>
+                <th class="text-center">{{ __('reports.columns.status') }}</th>
             </tr>
             @foreach($rows as $row)
                 <tr>
-                    <td><bdi dir="ltr">{{ $row->expense_date->toDateString() }}</bdi></td>
-                    <td>{{ $row->building?->name ?? __('reports.pdf.not_available') }}</td>
-                    <td><bdi dir="ltr">{{ $row->unit?->unit_number ?? __('reports.pdf.not_available') }}</bdi></td>
+                    <td class="text-center"><bdi class="ltr">{{ $row->expense_date->toDateString() }}</bdi></td>
+                    <td>{{ $row->building?->name ?? $na }}</td>
+                    <td class="text-center"><bdi class="ltr">{{ $row->unit?->unit_number ?? $na }}</bdi></td>
                     <td>{{ __('expenses.categories.'.$row->category) }}</td>
-                    <td><bdi dir="ltr">{{ number_format((float) $row->amount, 2) }}</bdi></td>
-                    <td>{{ $row->voided_at ? __('expenses.lifecycle.voided') : __('expenses.lifecycle.active') }}</td>
+                    <td class="text-end"><bdi class="ltr">{{ number_format((float) $row->amount, 2) }}</bdi></td>
+                    <td class="text-center">{{ $row->voided_at ? __('expenses.lifecycle.voided') : __('expenses.lifecycle.active') }}</td>
                 </tr>
             @endforeach
         </table>
     @else
         <table>
             <tr>
-                <th>{{ __('reports.columns.due_date') }}</th>
+                <th class="text-center">{{ __('reports.columns.due_date') }}</th>
                 <th>{{ __('reports.columns.tenant') }}</th>
-                <th>{{ __('reports.columns.unit') }}</th>
-                <th>{{ __('reports.columns.contract') }}</th>
-                <th>{{ __('reports.columns.amount_due') }}</th>
-                <th>{{ __('reports.columns.amount_paid') }}</th>
-                <th>{{ __('reports.columns.remaining_amount') }}</th>
+                <th class="text-center">{{ __('reports.columns.unit') }}</th>
+                <th class="text-center">{{ __('reports.columns.contract') }}</th>
+                <th class="text-end">{{ __('reports.columns.amount_due') }}</th>
+                <th class="text-end">{{ __('reports.columns.amount_paid') }}</th>
+                <th class="text-end">{{ __('reports.columns.remaining_amount') }}</th>
                 <th>{{ __('reports.columns.method') }}</th>
-                <th>{{ __('reports.columns.status') }}</th>
+                <th class="text-center">{{ __('reports.columns.status') }}</th>
             </tr>
             @foreach($rows as $row)
                 <tr>
-                    <td><bdi dir="ltr">{{ $row->due_date->toDateString() }}</bdi></td>
-                    <td>{{ $row->contract?->tenant?->full_name ?? __('reports.pdf.not_available') }}</td>
-                    <td><bdi dir="ltr">{{ $row->contract?->unit?->unit_number ?? __('reports.pdf.not_available') }}</bdi> - {{ $row->contract?->unit?->building?->name ?? __('reports.pdf.not_available') }}</td>
-                    <td><bdi dir="ltr">{{ $row->contract?->contract_number ?? __('reports.pdf.not_available') }}</bdi></td>
-                    <td><bdi dir="ltr">{{ number_format((float) $row->amount_due, 2) }}</bdi></td>
-                    <td><bdi dir="ltr">{{ number_format((float) $row->amount_paid, 2) }}</bdi></td>
-                    <td><bdi dir="ltr">{{ number_format((float) ($row->remaining_amount ?? ($row->amount_due - $row->amount_paid)), 2) }}</bdi></td>
-                    <td>{{ $row->payment_method ? __('payments.methods.'.$row->payment_method) : __('reports.pdf.not_available') }}</td>
-                    <td>{{ __('payments.statuses.'.$row->status) }}</td>
+                    <td class="text-center"><bdi class="ltr">{{ $row->due_date->toDateString() }}</bdi></td>
+                    <td>{{ $row->contract?->tenant?->full_name ?? $na }}</td>
+                    <td class="text-center"><bdi class="ltr">{{ $row->contract?->unit?->unit_number ?? $na }}</bdi><br>{{ $row->contract?->unit?->building?->name ?? $na }}</td>
+                    <td class="text-center"><bdi class="ltr">{{ $row->contract?->contract_number ?? $na }}</bdi></td>
+                    <td class="text-end"><bdi class="ltr">{{ number_format((float) $row->amount_due, 2) }}</bdi></td>
+                    <td class="text-end"><bdi class="ltr">{{ number_format((float) $row->amount_paid, 2) }}</bdi></td>
+                    <td class="text-end"><bdi class="ltr">{{ number_format((float) ($row->remaining_amount ?? ($row->amount_due - $row->amount_paid)), 2) }}</bdi></td>
+                    <td>{{ $row->payment_method ? __('payments.methods.'.$row->payment_method) : $na }}</td>
+                    <td class="text-center">{{ __('payments.statuses.'.($row->display_status_key ?? $row->status)) }}</td>
                 </tr>
             @endforeach
         </table>

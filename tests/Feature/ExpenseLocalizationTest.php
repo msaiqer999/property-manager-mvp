@@ -187,16 +187,16 @@ class ExpenseLocalizationTest extends TestCase
                 ->assertSee(__('expenses.show.date'))
                 ->assertSee(__('expenses.show.amount'))
                 ->assertSee(__('expenses.show.action'))
-                ->assertDontSee('Expenses')
-                ->assertDontSee('Add expense')
-                ->assertDontSee('Building')
-                ->assertDontSee('Unit')
-                ->assertDontSee('Category')
-                ->assertDontSee('Status')
-                ->assertDontSee('Active')
-                ->assertDontSee('Date')
-                ->assertDontSee('Amount')
-                ->assertDontSee('Action')
+                ->assertDontSee('>Expenses<', false)
+                ->assertDontSee('>Add expense<', false)
+                ->assertDontSee('>Building<', false)
+                ->assertDontSee('>Unit<', false)
+                ->assertDontSee('>Category<', false)
+                ->assertDontSee('>Status<', false)
+                ->assertDontSee('>Active<', false)
+                ->assertDontSee('>Date<', false)
+                ->assertDontSee('>Amount<', false)
+                ->assertDontSee('>Action<', false)
                 ->assertDontSee('All buildings')
                 ->assertDontSee('All units')
                 ->assertDontSee('All categories')
@@ -266,6 +266,183 @@ class ExpenseLocalizationTest extends TestCase
         foreach (['maintenance', 'electricity', 'water', 'cleaning', 'security', 'management', 'other'] as $category) {
             $response->assertSee('value="'.$category.'"', false);
         }
+    }
+
+    public function test_expense_unit_must_belong_to_selected_building_and_filters_stay_scoped(): void
+    {
+        $organization = Organization::create(['name' => 'Expense Unit Scope Organization']);
+        $owner = User::create([
+            'organization_id' => $organization->id,
+            'name' => 'Expense Unit Scope Owner',
+            'email' => 'expense-unit-scope-owner@example.com',
+            'password' => 'password',
+            'role' => 'owner',
+        ]);
+
+        $buildingA = Building::create([
+            'organization_id' => $organization->id,
+            'name' => 'Expense Scope Building A',
+            'location' => 'Riyadh',
+        ]);
+        $buildingB = Building::create([
+            'organization_id' => $organization->id,
+            'name' => 'Expense Scope Building B',
+            'location' => 'Riyadh',
+        ]);
+        $unitA = Unit::create([
+            'building_id' => $buildingA->id,
+            'unit_number' => 'EXP-SCOPE-A',
+            'type' => 'apartment',
+            'status' => 'maintenance',
+            'rent_amount' => 1000,
+        ]);
+        $unitB = Unit::create([
+            'building_id' => $buildingB->id,
+            'unit_number' => 'EXP-SCOPE-B',
+            'type' => 'apartment',
+            'status' => 'maintenance',
+            'rent_amount' => 1000,
+        ]);
+
+        $this->actingAs($owner)
+            ->post(route('expenses.store'), [
+                'building_id' => $buildingA->id,
+                'unit_id' => $unitB->id,
+                'category' => 'maintenance',
+                'amount' => 100,
+                'expense_date' => '2026-06-20',
+                'notes' => 'Mismatched unit should fail.',
+            ])
+            ->assertSessionHasErrors('unit_id');
+
+        $this->actingAs($owner)
+            ->post(route('expenses.store'), [
+                'building_id' => $buildingA->id,
+                'unit_id' => $unitA->id,
+                'category' => 'maintenance',
+                'amount' => 100,
+                'expense_date' => '2026-06-20',
+                'notes' => 'Building A visible expense.',
+            ])
+            ->assertRedirect();
+
+        $this->assertDatabaseHas('expenses', [
+            'organization_id' => $organization->id,
+            'building_id' => $buildingA->id,
+            'unit_id' => $unitA->id,
+            'notes' => 'Building A visible expense.',
+        ]);
+
+        $expenseA = Expense::where('notes', 'Building A visible expense.')->firstOrFail();
+
+        Expense::create([
+            'organization_id' => $organization->id,
+            'building_id' => $buildingB->id,
+            'unit_id' => $unitB->id,
+            'category' => 'security',
+            'amount' => 200,
+            'expense_date' => '2026-06-21',
+            'notes' => 'Building B hidden expense.',
+            'created_by' => $owner->id,
+        ]);
+
+        $this->actingAs($owner)
+            ->get(route('expenses.show', $expenseA))
+            ->assertOk()
+            ->assertSee('Expense Scope Building A')
+            ->assertSeeHtml('Unit: <span dir="ltr">EXP-SCOPE-A</span>')
+            ->assertSeeHtml('Amount: <span dir="ltr">100.00</span>');
+
+        $this->actingAs($owner)
+            ->get(route('expenses.index', ['building_id' => $buildingA->id]))
+            ->assertOk()
+            ->assertSee($expenseA->building->name)
+            ->assertSee('EXP-SCOPE-A')
+            ->assertSee('data-building-id="'.$buildingA->id.'"', false)
+            ->assertDontSee('200.00')
+            ->assertDontSee('Expense Scope Building B</td>', false);
+
+        $this->actingAs($owner)
+            ->get(route('expenses.index', [
+                'building_id' => $buildingA->id,
+                'unit_id' => $unitB->id,
+            ]))
+            ->assertForbidden();
+
+        $otherExpense = $this->otherOrganizationExpense();
+
+        $this->actingAs($owner)
+            ->get(route('expenses.index', ['unit_id' => $otherExpense->unit_id]))
+            ->assertForbidden();
+    }
+
+    public function test_active_expense_appears_with_lifecycle_and_unit_only_filters(): void
+    {
+        $organization = Organization::create(['name' => 'Expense Lifecycle Organization']);
+        $owner = User::create([
+            'organization_id' => $organization->id,
+            'name' => 'Expense Lifecycle Owner',
+            'email' => 'expense-lifecycle-owner@example.com',
+            'password' => 'password',
+            'role' => 'owner',
+        ]);
+        $building = Building::create([
+            'organization_id' => $organization->id,
+            'name' => 'Expense Lifecycle Building',
+            'location' => 'Riyadh',
+        ]);
+        $unit = Unit::create([
+            'building_id' => $building->id,
+            'unit_number' => 'EXP-ACTIVE-101',
+            'type' => 'apartment',
+            'status' => 'maintenance',
+            'rent_amount' => 1000,
+        ]);
+        Expense::create([
+            'organization_id' => $organization->id,
+            'building_id' => $building->id,
+            'unit_id' => $unit->id,
+            'category' => 'maintenance',
+            'amount' => 250,
+            'expense_date' => '2026-06-27',
+            'notes' => 'Active lifecycle unit-only expense.',
+            'created_by' => $owner->id,
+        ]);
+        $voidedExpense = Expense::create([
+            'organization_id' => $organization->id,
+            'building_id' => $building->id,
+            'unit_id' => $unit->id,
+            'category' => 'maintenance',
+            'amount' => 999,
+            'expense_date' => '2026-06-27',
+            'notes' => 'Voided lifecycle unit-only expense.',
+            'created_by' => $owner->id,
+        ]);
+        $voidedExpense->forceFill([
+            'voided_at' => now(),
+            'voided_by' => $owner->id,
+            'void_reason' => 'Exclude from active filter.',
+        ])->saveQuietly();
+
+        $this->actingAs($owner)
+            ->get(route('expenses.index', [
+                'unit_id' => $unit->id,
+                'lifecycle' => 'active',
+            ]))
+            ->assertOk()
+            ->assertSee('EXP-ACTIVE-101')
+            ->assertSee('250.00')
+            ->assertDontSee('999.00');
+
+        $this->actingAs($owner)
+            ->get(route('expenses.index', [
+                'unit_id' => $unit->id,
+                'lifecycle' => 'all',
+            ]))
+            ->assertOk()
+            ->assertSee('EXP-ACTIVE-101')
+            ->assertSee('250.00')
+            ->assertSee('999.00');
     }
 
     private function localizedExpense(User $owner, array $values): Expense

@@ -3,6 +3,13 @@
 return [
     'title' => 'Activity log',
 
+    'columns' => [
+        'date' => 'Date',
+        'user' => 'User',
+        'action' => 'Action',
+        'description' => 'Description',
+    ],
+
     'actions' => [
         'building' => [
             'created' => 'Building created',

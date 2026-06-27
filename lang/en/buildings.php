@@ -9,6 +9,7 @@ return [
         'name' => 'Name',
         'location' => 'Location',
         'description' => 'Description',
+        'action' => 'Action',
     ],
 
     'sections' => [

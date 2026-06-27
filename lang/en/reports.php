@@ -9,6 +9,16 @@ return [
         'net_profit' => 'Net profit',
     ],
 
+    'filters' => [
+        'building' => 'Building',
+        'unit' => 'Unit',
+        'from' => 'From date',
+        'to' => 'To date',
+        'apply' => 'Apply',
+        'all_buildings' => 'All buildings',
+        'all_units' => 'All units',
+    ],
+
     'actions' => [
         'building_income' => 'Export building income PDF',
         'unit_statement' => 'Download unit statement PDF',
@@ -37,8 +47,10 @@ return [
         'contracts' => 'Contracts',
         'date' => 'Date',
         'due_date' => 'Due date',
+        'expenses' => 'Expenses',
         'income' => 'Income',
         'method' => 'Method',
+        'net_profit' => 'Net profit',
         'remaining_amount' => 'Remaining',
         'status' => 'Status',
         'tenant' => 'Tenant',
@@ -47,8 +59,10 @@ return [
 
     'pdf' => [
         'generated_at' => 'Generated at',
+        'metadata' => 'Report filters',
         'no_data' => 'No data available for this report.',
         'not_available' => 'N/A',
         'rows' => 'Rows',
+        'totals' => 'Totals',
     ],
 ];
