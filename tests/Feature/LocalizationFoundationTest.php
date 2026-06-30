@@ -19,7 +19,9 @@ class LocalizationFoundationTest extends TestCase
             ->assertSee('Property Manager')
             ->assertSee('Login')
             ->assertSee('data-language-switcher', false)
+            ->assertSee('data-language-dropdown', false)
             ->assertSee($this->unicode('\u0627\u0644\u0639\u0631\u0628\u064a\u0629'))
+            ->assertSee('Filipino (Tagalog)')
             ->assertSee($this->unicode('\u09ac\u09be\u0982\u09b2\u09be'))
             ->assertSee($this->unicode('\u0627\u0631\u062f\u0648'))
             ->assertSee($this->unicode('\u0939\u093f\u0928\u094d\u0926\u0940'));
@@ -60,7 +62,7 @@ class LocalizationFoundationTest extends TestCase
             ->assertSee(__('app.auth.login'))
             ->assertDontSee('app.auth.login');
 
-        foreach (['bn' => 'ltr', 'hi' => 'ltr'] as $locale => $direction) {
+        foreach (['bn' => 'ltr', 'fil' => 'ltr', 'hi' => 'ltr'] as $locale => $direction) {
             $this->withSession(['locale' => $locale])
                 ->get(route('login'))
                 ->assertOk()
@@ -121,6 +123,7 @@ class LocalizationFoundationTest extends TestCase
 
         foreach ([
             'bn' => 'ltr',
+            'fil' => 'ltr',
             'ur' => 'rtl',
             'hi' => 'ltr',
         ] as $locale => $direction) {
@@ -159,6 +162,7 @@ class LocalizationFoundationTest extends TestCase
         $this->assertSame('/payments', route('payments.index', absolute: false));
         $this->assertSame('/locale/ar', route('locale.switch', 'ar', absolute: false));
         $this->assertSame('/locale/bn', route('locale.switch', 'bn', absolute: false));
+        $this->assertSame('/locale/fil', route('locale.switch', 'fil', absolute: false));
         $this->assertSame('/locale/ur', route('locale.switch', 'ur', absolute: false));
         $this->assertSame('/locale/hi', route('locale.switch', 'hi', absolute: false));
 

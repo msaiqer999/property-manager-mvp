@@ -1,0 +1,132 @@
+<?php
+
+return [
+    'name' => 'Property Manager',
+    'switch_language' => 'Palitan ang wika sa :language',
+    'navigation_label' => 'Pangunahing nabigasyon',
+    'mobile_navigation_label' => 'Pangunahing nabigasyon sa mobile',
+    'toggle_navigation' => 'Buksan o isara ang menu',
+    'menu' => 'Menu',
+    'close' => 'Isara',
+    'logout' => 'Mag-log out',
+    'language' => 'Wika',
+
+    'help' => [
+        'button' => 'Tulong',
+        'first_visit' => 'Unang pagbisita',
+        'what_for' => 'Para saan ang pahinang ito',
+        'can_do' => 'Ano ang maaari mong gawin dito',
+        'next_action' => 'Inirerekomendang susunod na hakbang',
+        'got_it' => 'Naintindihan ko',
+        'dont_show_again' => 'Huwag ipakita muli',
+        'pages' => [
+            'default' => [
+                'title' => 'Tulong sa pahina',
+                'for' => 'Gamitin ang pahinang ito para suriin at pamahalaan ang bahaging ito ng iyong property workflow.',
+                'can' => 'Suriin ang mga rekord at gamitin ang mga aksyong pinapayagan sa iyong role.',
+                'next' => 'Unahin ang pinakamahalagang rekord o bumalik sa dashboard para sa mga prayoridad ngayon.',
+            ],
+            'dashboard' => [
+                'title' => 'Tulong sa dashboard',
+                'for' => 'Ipinapakita ng dashboard ang setup progress, payments, vacancies, at mga kailangang pansinin.',
+                'can' => 'Sundan ang guided start, tingnan ang daily actions, at pumunta sa karaniwang gawain.',
+                'next' => 'Tapusin ang susunod na guided step o buksan ang pinakamahalagang daily action.',
+            ],
+            'buildings' => [
+                'title' => 'Tulong sa buildings',
+                'for' => 'Pinagsasama ng buildings ang units sa bawat property location.',
+                'can' => 'Magdagdag ng building, tingnan ang detalye, at simulan ang pagdagdag ng units.',
+                'next' => 'Magdagdag muna ng building, pagkatapos ay idagdag ang units.',
+            ],
+            'units' => [
+                'title' => 'Tulong sa units',
+                'for' => 'Ang units ang mga paupahang espasyo sa loob ng buildings.',
+                'can' => 'Suriin ang status, rent amount, building, at detalye ng unit.',
+                'next' => 'Idagdag ang kulang na units o suriin ang vacant units bago gumawa ng contracts.',
+            ],
+            'tenants' => [
+                'title' => 'Tulong sa tenants',
+                'for' => 'Ang tenants ang mga tao o kumpanyang umuupa sa iyong units.',
+                'can' => 'Magdagdag ng tenant records at suriin ang contact at identity details.',
+                'next' => 'Idagdag ang tenant bago gumawa ng lease contract.',
+            ],
+            'contracts' => [
+                'title' => 'Tulong sa contracts',
+                'for' => 'Kinokonekta ng contracts ang tenants sa units at gumagawa ng payment schedule.',
+                'can' => 'Gumawa, tingnan, baguhin, tapusin, o mag-download ng contract PDF ayon sa iyong permissions.',
+                'next' => 'Gumawa ng contract para sa tenant at unit, pagkatapos ay i-record ang payments.',
+            ],
+            'payments' => [
+                'title' => 'Tulong sa payments',
+                'for' => 'Sinusubaybayan ng payments ang rent dues, natanggap na halaga, balance, at receipts.',
+                'can' => 'Mag-filter ng payments, mag-record ng natanggap, mag-upload ng proof, at buksan ang receipts.',
+                'next' => 'Unahin ang overdue o partial payments.',
+            ],
+            'expenses' => [
+                'title' => 'Tulong sa expenses',
+                'for' => 'Tinatala ng expenses ang maintenance at operating costs para sa buildings o units.',
+                'can' => 'Magdagdag, mag-filter, tingnan ang invoices, at ihiwalay ang voided records.',
+                'can_view_only' => 'Suriin ang expenses, mag-filter, tingnan ang invoices, at sundan ang related records.',
+                'next' => 'I-record ang expense na may tamang building, unit, category, at date.',
+                'next_view_only' => 'Suriin ang expense list at gamitin ang filters para makita ang kailangan mong records.',
+            ],
+            'reports' => [
+                'title' => 'Tulong sa reports',
+                'for' => 'Binubuod ng reports ang income, expenses, overdue payments, net profit, at unit statements.',
+                'can' => 'Mag-filter ayon sa building, unit, at date range, pagkatapos ay mag-export ng PDFs.',
+                'next' => 'Piliin ang date range at i-export ang report na kailangan mo.',
+            ],
+        ],
+    ],
+
+    'navigation' => [
+        'dashboard' => 'Dashboard',
+        'units' => 'Units',
+        'payments' => 'Payments',
+        'contracts' => 'Contracts',
+        'tenants' => 'Tenants',
+        'expenses' => 'Expenses',
+        'reports' => 'Reports',
+        'buildings' => 'Buildings',
+        'users' => 'Users',
+        'activity' => 'Activity',
+    ],
+
+    'auth' => [
+        'login' => 'Mag-log in',
+        'email' => 'Email',
+        'password' => 'Password',
+        'remember_me' => 'Tandaan ako',
+        'forgot_password' => 'Nakalimutan ang password?',
+        'create_account' => 'Gumawa ng account',
+    ],
+
+    'dashboard' => [
+        'title' => 'Dashboard',
+        'collected_this_month' => 'Nakolekta ngayong buwan',
+        'overdue_amount' => 'Overdue amount',
+        'vacant_units' => 'Vacant units',
+        'contracts_expiring_soon' => 'Contracts expiring soon',
+        'needs_attention' => 'Kailangan ng pansin',
+        'quick_actions' => 'Mabilis na aksyon',
+    ],
+
+    'actions' => [
+        'view' => 'Tingnan',
+        'create' => 'Gumawa',
+        'edit' => 'I-edit',
+        'save' => 'I-save',
+        'filter' => 'I-filter',
+    ],
+
+    'statuses' => [
+        'active' => 'Active',
+        'pending' => 'Pending',
+        'partial' => 'Partial',
+        'paid' => 'Paid',
+        'overdue' => 'Overdue',
+        'cancelled' => 'Cancelled',
+        'vacant' => 'Vacant',
+        'rented' => 'Rented',
+    ],
+];

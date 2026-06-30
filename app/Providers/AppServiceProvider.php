@@ -9,11 +9,15 @@ use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Support\Str;
+use Illuminate\Support\Facades\URL;
 
 class AppServiceProvider extends ServiceProvider
 {
     public function boot(): void
     {
+        if (! $this->app->runningInConsole() && request()->headers->get('x-forwarded-proto') === 'https') {
+            URL::forceScheme('https');
+        }
         RateLimiter::for('login', function (Request $request) {
             return Limit::perMinute(5)->by($this->normalizedEmailIpKey($request));
         });

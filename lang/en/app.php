@@ -9,6 +9,75 @@ return [
     'menu' => 'Menu',
     'close' => 'Close',
     'logout' => 'Logout',
+    'language' => 'Language',
+
+    'help' => [
+        'button' => 'Help',
+        'first_visit' => 'First visit',
+        'what_for' => 'What this page is for',
+        'can_do' => 'What you can do here',
+        'next_action' => 'Recommended next action',
+        'got_it' => 'Got it',
+        'dont_show_again' => 'Do not show again',
+        'pages' => [
+            'default' => [
+                'title' => 'Page help',
+                'for' => 'Use this page to review and manage the selected part of your property workflow.',
+                'can' => 'Review the visible records and use the available actions based on your role.',
+                'next' => 'Start with the most important record or return to the dashboard for today’s priorities.',
+            ],
+            'dashboard' => [
+                'title' => 'Dashboard help',
+                'for' => 'The dashboard gives you a quick view of setup progress, payments, vacancies, and items needing attention.',
+                'can' => 'Follow the guided start steps, review daily actions, and jump to the most common tasks.',
+                'next' => 'Complete the next guided start step or open the highest-priority daily action.',
+            ],
+            'buildings' => [
+                'title' => 'Buildings help',
+                'for' => 'Buildings group your units under each property location.',
+                'can' => 'Add buildings, view building details, and start adding units for each building.',
+                'next' => 'Add your first building, then add units under it.',
+            ],
+            'units' => [
+                'title' => 'Units help',
+                'for' => 'Units are the rentable spaces inside your buildings.',
+                'can' => 'Review unit status, rent amount, building, and open each unit for details.',
+                'next' => 'Add missing units or open vacant units before creating contracts.',
+            ],
+            'tenants' => [
+                'title' => 'Tenants help',
+                'for' => 'Tenants are the people or companies renting your units.',
+                'can' => 'Add tenant records and review contact and identity details.',
+                'next' => 'Add the tenant before creating a lease contract.',
+            ],
+            'contracts' => [
+                'title' => 'Contracts help',
+                'for' => 'Contracts connect tenants to units and create the payment schedule.',
+                'can' => 'Create, view, edit, renew, terminate, or download contract PDFs based on your permissions.',
+                'next' => 'Create a contract for a tenant and unit, then record payments as they arrive.',
+            ],
+            'payments' => [
+                'title' => 'Payments help',
+                'for' => 'Payments track rent dues, received amounts, remaining balances, and receipts.',
+                'can' => 'Filter payments, record received amounts, upload proof, and open receipts when available.',
+                'next' => 'Record overdue or partial payments first.',
+            ],
+            'expenses' => [
+                'title' => 'Expenses help',
+                'for' => 'Expenses track maintenance and operating costs for buildings or units.',
+                'can' => 'Add expenses, filter them, view invoices, and keep voided records separate.',
+                'can_view_only' => 'Review expenses, filter them, view invoices, and follow related records.',
+                'next' => 'Record the expense with the correct building, unit, category, and date.',
+                'next_view_only' => 'Review the expense list and use filters to find the records you need.',
+            ],
+            'reports' => [
+                'title' => 'Reports help',
+                'for' => 'Reports summarize income, expenses, overdue payments, net profit, and unit statements.',
+                'can' => 'Filter by building, unit, and date range, then export PDFs.',
+                'next' => 'Choose the date range and export the report you need.',
+            ],
+        ],
+    ],
 
     'navigation' => [
         'dashboard' => 'Dashboard',

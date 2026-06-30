@@ -16,11 +16,17 @@ class OperationalMultiLanguageTest extends TestCase
         $this->get(route('login'))
             ->assertOk()
             ->assertSee('data-language-switcher', false)
+            ->assertSee('data-language-dropdown', false)
+            ->assertSee('data-language-option', false)
             ->assertSee('English')
+            ->assertSee('Filipino (Tagalog)')
             ->assertSee($this->unicode('\u0627\u0644\u0639\u0631\u0628\u064a\u0629'))
             ->assertSee($this->unicode('\u09ac\u09be\u0982\u09b2\u09be'))
             ->assertSee($this->unicode('\u0627\u0631\u062f\u0648'))
-            ->assertSee($this->unicode('\u0939\u093f\u0928\u094d\u0926\u0940'));
+            ->assertSee($this->unicode('\u0939\u093f\u0928\u094d\u0926\u0940'))
+            ->assertDontSee('🇸🇦')
+            ->assertDontSee('🇺🇸')
+            ->assertDontSee('flag');
     }
 
     public function test_bengali_urdu_and_hindi_render_operational_dashboard_and_payments(): void

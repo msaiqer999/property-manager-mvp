@@ -1,6 +1,7 @@
 <?php
 
 return [
+    'language' => 'भाषा',
     'name' => 'Property Manager',
     'switch_language' => 'भाषा :language में बदलें',
     'navigation_label' => 'मुख्य नेविगेशन',

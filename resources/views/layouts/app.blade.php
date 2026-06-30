@@ -46,11 +46,31 @@
                 if ($role->can('manage-users')) {
                     $navigation += ['users' => 'users', 'activity' => 'activity-logs'];
                 }
+
+                $pageHelpKey = match (true) {
+                    request()->routeIs('dashboard') || request()->routeIs('dashboard.show') => 'dashboard',
+                    request()->is('buildings') || request()->is('buildings/*') => 'buildings',
+                    request()->is('units') || request()->is('units/*') => 'units',
+                    request()->is('tenants') || request()->is('tenants/*') => 'tenants',
+                    request()->is('contracts') || request()->is('contracts/*') => 'contracts',
+                    request()->is('payments') || request()->is('payments/*') => 'payments',
+                    request()->is('expenses') || request()->is('expenses/*') => 'expenses',
+                    request()->is('reports') || request()->is('reports/*') => 'reports',
+                    default => 'default',
+                };
+                $pageHelp = trans("app.help.pages.{$pageHelpKey}");
+                $pageHelp = is_array($pageHelp) ? $pageHelp : trans('app.help.pages.default');
+
+                if ($pageHelpKey === 'expenses' && ! auth()->user()->can('create', \App\Models\Expense::class)) {
+                    $pageHelp['can'] = __('app.help.pages.expenses.can_view_only');
+                    $pageHelp['next'] = __('app.help.pages.expenses.next_view_only');
+                }
             @endphp
             <header class="sticky top-0 z-20 border-b bg-white/95 backdrop-blur">
                 <div class="mx-auto flex max-w-6xl items-center justify-between gap-3 px-4 py-3">
                     <a href="{{ route('dashboard') }}" class="min-w-0 break-words text-base font-semibold leading-tight sm:text-lg">{{ __('app.name') }}</a>
                     <div class="hidden items-center gap-2 sm:flex">
+                        <button type="button" data-help-open class="tap-target rounded border border-slate-200 bg-white px-3 text-sm font-medium text-slate-700">{{ __('app.help.button') }}</button>
                         <x-language-switcher />
                         <form method="post" action="{{ route('logout') }}">
                             @csrf
@@ -78,6 +98,7 @@
                                 @endforeach
                             </nav>
                             <div class="grid gap-2 border-t p-3">
+                                <button type="button" data-help-open class="tap-target min-h-11 w-full rounded border px-4 text-sm font-medium text-slate-700">{{ __('app.help.button') }}</button>
                                 <x-language-switcher />
                                 <form method="post" action="{{ route('logout') }}">
                                     @csrf
@@ -98,6 +119,44 @@
                     @endforeach
                 </nav>
             </header>
+            <div
+                data-help-panel
+                data-page-help-key="{{ $pageHelpKey }}"
+                class="fixed inset-0 z-50 hidden bg-slate-950/50 p-3 sm:p-6"
+                role="dialog"
+                aria-modal="true"
+                aria-labelledby="page-help-title"
+            >
+                <div class="ms-auto flex min-h-full max-w-md items-end sm:items-center">
+                    <section class="w-full rounded-2xl bg-white p-5 shadow-2xl sm:p-6">
+                        <div class="flex items-start justify-between gap-4">
+                            <div>
+                                <p data-first-visit-label class="mb-1 hidden text-xs font-semibold uppercase tracking-wide text-blue-700">{{ __('app.help.first_visit') }}</p>
+                                <h2 id="page-help-title" class="text-lg font-semibold">{{ $pageHelp['title'] ?? __('app.help.pages.default.title') }}</h2>
+                            </div>
+                            <button type="button" data-help-close aria-label="{{ __('app.close') }}" class="tap-target inline-flex min-h-11 min-w-11 items-center justify-center rounded border text-slate-700">×</button>
+                        </div>
+                        <div class="mt-4 space-y-4 text-sm text-slate-700">
+                            <div>
+                                <h3 class="font-semibold text-slate-900">{{ __('app.help.what_for') }}</h3>
+                                <p class="mt-1">{{ $pageHelp['for'] ?? __('app.help.pages.default.for') }}</p>
+                            </div>
+                            <div>
+                                <h3 class="font-semibold text-slate-900">{{ __('app.help.can_do') }}</h3>
+                                <p class="mt-1">{{ $pageHelp['can'] ?? __('app.help.pages.default.can') }}</p>
+                            </div>
+                            <div>
+                                <h3 class="font-semibold text-slate-900">{{ __('app.help.next_action') }}</h3>
+                                <p class="mt-1">{{ $pageHelp['next'] ?? __('app.help.pages.default.next') }}</p>
+                            </div>
+                        </div>
+                        <div class="mt-5 grid gap-2 sm:flex sm:justify-end">
+                            <button type="button" data-help-got-it class="tap-target min-h-11 rounded bg-slate-900 px-4 text-sm font-medium text-white">{{ __('app.help.got_it') }}</button>
+                            <button type="button" data-help-dont-show class="tap-target min-h-11 rounded border px-4 text-sm font-medium text-slate-700">{{ __('app.help.dont_show_again') }}</button>
+                        </div>
+                    </section>
+                </div>
+            </div>
         @else
             <header class="border-b bg-white">
                 <div class="mx-auto flex max-w-6xl items-center justify-between gap-3 px-4 py-3">
@@ -117,5 +176,49 @@
             @yield('content')
         </main>
     </div>
+    @auth
+        <script>
+            (() => {
+                const panel = document.querySelector('[data-help-panel]');
+                if (! panel) return;
+
+                const key = `property-manager-help:${panel.dataset.pageHelpKey}`;
+                const firstVisitLabel = panel.querySelector('[data-first-visit-label]');
+                const openPanel = (firstVisit = false) => {
+                    firstVisitLabel?.classList.toggle('hidden', ! firstVisit);
+                    panel.classList.remove('hidden');
+                    document.body.classList.add('overflow-hidden');
+                };
+                const closePanel = (remember = false) => {
+                    if (remember) {
+                        localStorage.setItem(key, 'dismissed');
+                    }
+
+                    panel.classList.add('hidden');
+                    document.body.classList.remove('overflow-hidden');
+                };
+
+                document.querySelectorAll('[data-help-open]').forEach((button) => {
+                    button.addEventListener('click', () => openPanel(false));
+                });
+
+                panel.querySelectorAll('[data-help-close]').forEach((button) => {
+                    button.addEventListener('click', () => closePanel(false));
+                });
+
+                panel.querySelector('[data-help-got-it]')?.addEventListener('click', () => closePanel(true));
+                panel.querySelector('[data-help-dont-show]')?.addEventListener('click', () => closePanel(true));
+                panel.addEventListener('click', (event) => {
+                    if (event.target === panel) {
+                        closePanel(false);
+                    }
+                });
+
+                if (! localStorage.getItem(key)) {
+                    window.setTimeout(() => openPanel(true), 350);
+                }
+            })();
+        </script>
+    @endauth
 </body>
 </html>

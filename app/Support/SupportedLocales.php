@@ -5,11 +5,12 @@ namespace App\Support;
 class SupportedLocales
 {
     private const LOCALES = [
-        'en' => ['label' => 'English', 'dir' => 'ltr'],
         'ar' => ['label' => 'العربية', 'dir' => 'rtl'],
-        'bn' => ['label' => 'বাংলা', 'dir' => 'ltr'],
+        'en' => ['label' => 'English', 'dir' => 'ltr'],
+        'fil' => ['label' => 'Filipino (Tagalog)', 'dir' => 'ltr'],
         'ur' => ['label' => 'اردو', 'dir' => 'rtl'],
         'hi' => ['label' => 'हिन्दी', 'dir' => 'ltr'],
+        'bn' => ['label' => 'বাংলা', 'dir' => 'ltr'],
     ];
 
     public static function all(): array
