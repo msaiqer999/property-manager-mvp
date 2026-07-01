@@ -165,6 +165,15 @@ return [
         'no_payments' => 'No payments yet.',
         'latest_expenses' => 'Latest expenses',
         'no_expenses' => 'No expenses yet.',
+        'roadmap_label' => 'ROADMAP',
+        'roadmap_title' => 'Coming Soon',
+        'roadmap_body' => 'These features are being developed based on early user feedback and will be released when ready.',
+        'roadmap_unit_documents' => 'Unit Document Center',
+        'roadmap_smart_alerts' => 'Smart payment and contract alerts',
+        'roadmap_maintenance_requests' => 'Maintenance requests',
+        'roadmap_tenant_account' => 'Tenant account',
+        'roadmap_vacant_listing' => 'Vacant unit listing',
+        'suggest_feature' => 'Suggest a feature',
     ],
 
     'actions' => [
