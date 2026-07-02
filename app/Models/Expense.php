@@ -52,11 +52,7 @@ class Expense extends Model
             return $query;
         }
 
-        return $query->where(function (Builder $query) {
-            $query->whereNull('voided_at')
-                ->orWhere('voided_at', '')
-                ->orWhere('voided_at', '0000-00-00 00:00:00');
-        });
+        return $query->whereNull('voided_at');
     }
 
     public function scopeOnlyVoided(Builder $query): Builder
@@ -65,9 +61,7 @@ class Expense extends Model
             return $query->whereRaw('1 = 0');
         }
 
-        return $query->whereNotNull('voided_at')
-            ->where('voided_at', '!=', '')
-            ->where('voided_at', '!=', '0000-00-00 00:00:00');
+        return $query->whereNotNull('voided_at');
     }
 
     private static function hasVoidLifecycleColumn(): bool
