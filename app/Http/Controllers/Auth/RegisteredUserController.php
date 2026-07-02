@@ -19,13 +19,20 @@ class RegisteredUserController extends Controller
     public function store(Request $request)
     {
         $data = $request->validate([
-            'organization_name' => ['required', 'string', 'max:255'],
+            'organization_name' => ['nullable', 'string', 'max:255'],
             'name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'email', 'max:255', 'unique:users'],
             'password' => ['required', 'confirmed', 'min:8'],
         ]);
 
-        $organization = Organization::create(['name' => $data['organization_name']]);
+        $organizationName = trim((string) ($data['organization_name'] ?? ''));
+        if ($organizationName === '') {
+            $organizationName = app()->isLocale('ar')
+                ? 'حساب عقارات '.$data['name']
+                : $data['name']."'s Property Account";
+        }
+
+        $organization = Organization::create(['name' => $organizationName]);
 
         $user = User::create([
             'organization_id' => $organization->id,

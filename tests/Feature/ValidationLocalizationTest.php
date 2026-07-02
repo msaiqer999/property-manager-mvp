@@ -117,7 +117,6 @@ class ValidationLocalizationTest extends TestCase
 
         $response->assertRedirect(route('register'))
             ->assertSessionHasErrors([
-                'organization_name',
                 'name',
                 'email',
                 'password',
@@ -128,7 +127,6 @@ class ValidationLocalizationTest extends TestCase
         $messages = $this->validationMessages();
         $messageText = implode(' ', $messages);
 
-        $this->assertContains('The organization field is required.', $messages);
         $this->assertContains('The name field must not be greater than 255 characters.', $messages);
         $this->assertContains('The email address field must be a valid email address.', $messages);
         $this->assertContains('The password field must be at least 8 characters.', $messages);

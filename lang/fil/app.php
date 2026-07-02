@@ -99,6 +99,14 @@ return [
         'remember_me' => 'Tandaan ako',
         'forgot_password' => 'Nakalimutan ang password?',
         'create_account' => 'Gumawa ng account',
+        'create_owner_account' => 'Gumawa ng owner account',
+        'organization' => 'Organization',
+        'organization_optional' => 'Organization or account name (optional)',
+        'name' => 'Name',
+        'confirm_password' => 'Confirm password',
+        'show_password' => 'Show password',
+        'hide_password' => 'Hide password',
+        'register' => 'Register',
     ],
 
     'dashboard' => [
