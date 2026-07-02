@@ -194,6 +194,10 @@ return [
         'print' => 'Print',
     ],
 
+    'validation' => [
+        'check_fields' => 'Please check the highlighted fields.',
+    ],
+
     'statuses' => [
         'active' => 'Active',
         'inactive' => 'Inactive',

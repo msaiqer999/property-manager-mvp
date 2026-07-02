@@ -199,6 +199,10 @@ return [
         'print' => 'طباعة',
     ],
 
+    'validation' => [
+        'check_fields' => 'يرجى مراجعة الحقول المحددة.',
+    ],
+
     'statuses' => [
         'active' => 'نشط',
         'inactive' => 'غير نشط',
