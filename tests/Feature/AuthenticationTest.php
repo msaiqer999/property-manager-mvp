@@ -26,6 +26,19 @@ class AuthenticationTest extends TestCase
             ->assertRedirect('/');
     }
 
+    public function test_login_form_has_icon_only_password_visibility_toggle(): void
+    {
+        $this->get('/login')
+            ->assertOk()
+            ->assertSee('id="login-password"', false)
+            ->assertSee('data-password-toggle', false)
+            ->assertSee('data-target="login-password"', false)
+            ->assertSee('data-eye-open', false)
+            ->assertSee('data-eye-closed', false)
+            ->assertSee('aria-label="Show password"', false)
+            ->assertDontSee('>Show password</button>', false);
+    }
+
     public function test_owner_can_register_without_entering_organization_name(): void
     {
         $this->post('/register', [
@@ -54,6 +67,9 @@ class AuthenticationTest extends TestCase
             ->assertSee('data-password-toggle', false)
             ->assertSee('data-target="register-password"', false)
             ->assertSee('data-target="register-password-confirmation"', false)
-            ->assertSee('aria-label="Show password"', false);
+            ->assertSee('data-eye-open', false)
+            ->assertSee('data-eye-closed', false)
+            ->assertSee('aria-label="Show password"', false)
+            ->assertDontSee('>Show password</button>', false);
     }
 }
