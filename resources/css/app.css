@@ -21,6 +21,10 @@
     min-width: 44px;
 }
 
+.form-select-safe {
+    padding-inline-end: 2.75rem;
+}
+
 .scrollbar-soft {
     scrollbar-width: thin;
 }

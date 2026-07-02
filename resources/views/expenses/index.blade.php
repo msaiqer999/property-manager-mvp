@@ -11,7 +11,7 @@
 <form method="get" action="{{ route('expenses.index') }}" class="mb-4 grid gap-3 rounded border bg-white p-4 sm:grid-cols-2 lg:grid-cols-5">
     <label class="block text-sm font-medium">
         {{ __('expenses.form.building') }}
-        <select name="building_id" data-building-select class="tap-target mt-1 w-full rounded border p-2">
+        <select name="building_id" data-building-select class="form-select-safe tap-target mt-1 w-full rounded border p-2">
             <option value="">{{ __('expenses.filters.all_buildings') }}</option>
             @foreach($buildings as $building)
                 <option value="{{ $building->id }}" @selected(request('building_id') == $building->id)>{{ $building->name }}</option>
@@ -21,7 +21,7 @@
 
     <label class="block text-sm font-medium">
         {{ __('expenses.form.unit') }}
-        <select name="unit_id" data-unit-select class="tap-target mt-1 w-full rounded border p-2">
+        <select name="unit_id" data-unit-select class="form-select-safe tap-target mt-1 w-full rounded border p-2">
             <option value="">{{ __('expenses.filters.all_units') }}</option>
             @foreach($units as $unit)
                 <option value="{{ $unit->id }}" data-building-id="{{ $unit->building_id }}" @selected(request('unit_id') == $unit->id)><bdi dir="ltr">{{ $unit->unit_number }}</bdi></option>
@@ -31,7 +31,7 @@
 
     <label class="block text-sm font-medium">
         {{ __('expenses.form.category') }}
-        <select name="category" class="tap-target mt-1 w-full rounded border p-2">
+        <select name="category" class="form-select-safe tap-target mt-1 w-full rounded border p-2">
             <option value="">{{ __('expenses.filters.all_categories') }}</option>
             @foreach(['maintenance','electricity','water','cleaning','security','management','other'] as $category)
                 <option value="{{ $category }}" @selected(request('category') === $category)>{{ __('expenses.categories.'.$category) }}</option>
@@ -41,7 +41,7 @@
 
     <label class="block text-sm font-medium">
         {{ __('expenses.show.status') }}
-        <select name="lifecycle" class="tap-target mt-1 w-full rounded border p-2">
+        <select name="lifecycle" class="form-select-safe tap-target mt-1 w-full rounded border p-2">
             <option value="active" @selected($lifecycle === 'active')>{{ __('expenses.lifecycle.active') }}</option>
             <option value="voided" @selected($lifecycle === 'voided')>{{ __('expenses.lifecycle.voided_filter') }}</option>
             <option value="all" @selected($lifecycle === 'all')>{{ __('expenses.lifecycle.all') }}</option>

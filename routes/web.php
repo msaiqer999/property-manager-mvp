@@ -4,6 +4,7 @@ use App\Http\Controllers\ActivityLogController;
 use App\Http\Controllers\Auth\AuthenticatedSessionController;
 use App\Http\Controllers\Auth\NewPasswordController;
 use App\Http\Controllers\Auth\PasswordResetLinkController;
+use App\Http\Controllers\BetaFeedbackController;
 use App\Http\Controllers\Auth\RegisteredUserController;
 use App\Http\Controllers\BulkUnitController;
 use App\Http\Controllers\BuildingController;
@@ -54,6 +55,7 @@ Route::get('/', function () {
 
 Route::middleware('auth')->group(function () {
     Route::get('/dashboard', DashboardController::class)->name('dashboard.show');
+    Route::post('beta-feedback', [BetaFeedbackController::class, 'store'])->name('beta-feedback.store');
 
     Route::middleware(EnsureAbility::class.':manage-properties')->group(function () {
         Route::get('buildings/{building}/units/bulk-create', [BulkUnitController::class, 'create'])->name('buildings.units.bulk.create');
@@ -92,6 +94,7 @@ Route::middleware('auth')->group(function () {
     });
 
     Route::middleware(EnsureAbility::class.':manage-users')->group(function () {
+        Route::get('beta-feedback', [BetaFeedbackController::class, 'index'])->name('beta-feedback.index');
         Route::resource('users', UserController::class)->only(['index', 'create', 'store', 'edit', 'update']);
         Route::patch('users/{user}/deactivate', [UserController::class, 'deactivate'])->name('users.deactivate');
         Route::patch('users/{user}/reactivate', [UserController::class, 'reactivate'])->name('users.reactivate');

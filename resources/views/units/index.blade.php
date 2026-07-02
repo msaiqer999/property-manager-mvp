@@ -7,13 +7,13 @@
 </div>
 
 <form class="mb-4 grid gap-3 rounded border bg-white p-3 sm:grid-cols-3">
-    <select name="building_id" class="tap-target min-h-11 rounded border p-2">
+    <select name="building_id" class="form-select-safe tap-target min-h-11 rounded border p-2">
         <option value="">{{ __('units.filters.all_buildings') }}</option>
         @foreach($buildings as $building)
             <option value="{{ $building->id }}" @selected(request('building_id') == $building->id)>{{ $building->name }}</option>
         @endforeach
     </select>
-    <select name="status" class="tap-target min-h-11 rounded border p-2">
+    <select name="status" class="form-select-safe tap-target min-h-11 rounded border p-2">
         <option value="">{{ __('units.filters.all_statuses') }}</option>
         @foreach(['vacant','rented','maintenance'] as $status)
             <option value="{{ $status }}" @selected(request('status') === $status)>{{ __('units.statuses.'.$status) }}</option>

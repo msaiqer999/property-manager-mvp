@@ -10,7 +10,7 @@
 
 <form class="mb-4 grid gap-3 rounded border bg-white p-3 sm:grid-cols-[1fr_12rem_auto]">
     <input name="search" value="{{ request('search') }}" placeholder="{{ __('tenants.search_placeholder') }}" class="tap-target min-h-11 w-full rounded border p-2">
-    <select name="lifecycle" class="tap-target min-h-11 w-full rounded border p-2">
+    <select name="lifecycle" class="form-select-safe tap-target min-h-11 w-full rounded border p-2">
         <option value="active" @selected($lifecycle === 'active')>{{ __('tenants.lifecycle.active') }}</option>
         <option value="archived" @selected($lifecycle === 'archived')>{{ __('tenants.lifecycle.archived') }}</option>
         <option value="all" @selected($lifecycle === 'all')>{{ __('tenants.lifecycle.all') }}</option>

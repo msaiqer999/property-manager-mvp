@@ -70,6 +70,7 @@
                 <div class="mx-auto flex max-w-6xl items-center justify-between gap-3 px-4 py-3">
                     <a href="{{ route('dashboard') }}" class="min-w-0 break-words text-base font-semibold leading-tight sm:text-lg">{{ __('app.name') }}</a>
                     <div class="hidden items-center gap-2 sm:flex">
+                        <button type="button" data-feedback-open class="tap-target rounded border border-slate-200 bg-white px-3 text-sm font-medium text-slate-700">{{ __('feedback.button') }}</button>
                         <button type="button" data-help-open class="tap-target rounded border border-slate-200 bg-white px-3 text-sm font-medium text-slate-700">{{ __('app.help.button') }}</button>
                         <x-language-switcher />
                         <form method="post" action="{{ route('logout') }}">
@@ -98,6 +99,7 @@
                                 @endforeach
                             </nav>
                             <div class="grid gap-2 border-t p-3">
+                                <button type="button" data-feedback-open class="tap-target min-h-11 w-full rounded border px-4 text-sm font-medium text-slate-700">{{ __('feedback.button') }}</button>
                                 <button type="button" data-help-open class="tap-target min-h-11 w-full rounded border px-4 text-sm font-medium text-slate-700">{{ __('app.help.button') }}</button>
                                 <x-language-switcher />
                                 <form method="post" action="{{ route('logout') }}">
@@ -157,6 +159,42 @@
                     </section>
                 </div>
             </div>
+            <div
+                data-feedback-panel
+                class="fixed inset-0 z-50 hidden bg-slate-950/50 p-3 sm:p-6"
+                role="dialog"
+                aria-modal="true"
+                aria-labelledby="feedback-title"
+            >
+                <div class="mx-auto flex min-h-full max-w-md items-end sm:items-center">
+                    <section class="w-full rounded-2xl bg-white p-5 shadow-2xl sm:p-6">
+                        <div class="flex items-start justify-between gap-4">
+                            <div>
+                                <h2 id="feedback-title" class="text-lg font-semibold">{{ __('feedback.title') }}</h2>
+                                <p class="mt-1 text-sm text-slate-600">{{ __('feedback.intro') }}</p>
+                            </div>
+                            <button type="button" data-feedback-close aria-label="{{ __('app.close') }}" class="tap-target inline-flex min-h-11 min-w-11 items-center justify-center rounded border text-slate-700">×</button>
+                        </div>
+                        <form method="post" action="{{ route('beta-feedback.store') }}" class="mt-4 space-y-4">
+                            @csrf
+                            <input type="hidden" name="page_url" data-feedback-page-url value="{{ url()->current() }}">
+                            <label class="block text-sm font-medium">
+                                {{ __('feedback.type') }}
+                                <select name="type" class="form-select-safe tap-target mt-1 w-full rounded border p-2" required>
+                                    @foreach(['bug', 'confusing', 'suggestion', 'other'] as $type)
+                                        <option value="{{ $type }}">{{ __('feedback.types.'.$type) }}</option>
+                                    @endforeach
+                                </select>
+                            </label>
+                            <label class="block text-sm font-medium">
+                                {{ __('feedback.message') }}
+                                <textarea name="message" rows="4" class="tap-target mt-1 w-full rounded border p-2" required></textarea>
+                            </label>
+                            <button class="tap-target min-h-11 w-full rounded bg-slate-900 px-4 text-sm font-medium text-white">{{ __('feedback.submit') }}</button>
+                        </form>
+                    </section>
+                </div>
+            </div>
         @else
             <header class="border-b bg-white">
                 <div class="mx-auto flex max-w-6xl items-center justify-between gap-3 px-4 py-3">
@@ -170,6 +208,11 @@
             @if ($errors->any())
                 <div class="mb-4 rounded border border-red-200 bg-red-50 p-4 text-sm text-red-700">
                     {{ $errors->first() }}
+                </div>
+            @endif
+            @if (session('status'))
+                <div class="mb-4 rounded border border-emerald-200 bg-emerald-50 p-4 text-sm text-emerald-700">
+                    {{ session('status') }}
                 </div>
             @endif
 
@@ -217,6 +260,37 @@
                 if (! localStorage.getItem(key)) {
                     window.setTimeout(() => openPanel(true), 350);
                 }
+            })();
+
+            (() => {
+                const panel = document.querySelector('[data-feedback-panel]');
+                if (! panel) return;
+
+                const openPanel = () => {
+                    const pageUrl = panel.querySelector('[data-feedback-page-url]');
+                    if (pageUrl) {
+                        pageUrl.value = window.location.href;
+                    }
+
+                    panel.classList.remove('hidden');
+                    document.body.classList.add('overflow-hidden');
+                };
+                const closePanel = () => {
+                    panel.classList.add('hidden');
+                    document.body.classList.remove('overflow-hidden');
+                };
+
+                document.querySelectorAll('[data-feedback-open]').forEach((button) => {
+                    button.addEventListener('click', openPanel);
+                });
+                panel.querySelectorAll('[data-feedback-close]').forEach((button) => {
+                    button.addEventListener('click', closePanel);
+                });
+                panel.addEventListener('click', (event) => {
+                    if (event.target === panel) {
+                        closePanel();
+                    }
+                });
             })();
         </script>
     @endauth

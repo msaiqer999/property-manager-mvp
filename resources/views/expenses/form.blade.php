@@ -12,7 +12,7 @@
 
     <label class="block text-sm font-medium">
         {{ __('expenses.form.building') }}
-        <select name="building_id" data-building-select class="tap-target mt-1 w-full rounded border p-2">
+        <select name="building_id" data-building-select class="form-select-safe tap-target mt-1 w-full rounded border p-2">
             @foreach($buildings as $building)
                 <option value="{{ $building->id }}" @selected($selectedBuildingId == $building->id)>{{ $building->name }}</option>
             @endforeach
@@ -21,7 +21,7 @@
 
     <label class="block text-sm font-medium">
         {{ __('expenses.form.unit') }}
-        <select name="unit_id" data-unit-select class="tap-target mt-1 w-full rounded border p-2">
+        <select name="unit_id" data-unit-select class="form-select-safe tap-target mt-1 w-full rounded border p-2">
             <option value=""></option>
             @foreach($units as $unit)
                 <option value="{{ $unit->id }}" data-building-id="{{ $unit->building_id }}" @selected(old('unit_id', $expense->unit_id) == $unit->id)><bdi dir="ltr">{{ $unit->unit_number }}</bdi></option>
@@ -30,7 +30,7 @@
     </label>
 
     <label class="block text-sm font-medium">{{ __('expenses.form.category') }}
-        <select name="category" class="tap-target mt-1 w-full rounded border p-2">
+        <select name="category" class="form-select-safe tap-target mt-1 w-full rounded border p-2">
             @foreach(['maintenance','electricity','water','cleaning','security','management','other'] as $category)
                 <option value="{{ $category }}" @selected(old('category', $expense->category) == $category)>{{ __('expenses.categories.'.$category) }}</option>
             @endforeach

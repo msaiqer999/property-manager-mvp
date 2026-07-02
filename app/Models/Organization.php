@@ -15,4 +15,5 @@ class Organization extends Model
     public function payments() { return $this->hasMany(Payment::class); }
     public function expenses() { return $this->hasMany(Expense::class); }
     public function activityLogs() { return $this->hasMany(ActivityLog::class); }
+    public function betaFeedback() { return $this->hasMany(BetaFeedback::class); }
 }

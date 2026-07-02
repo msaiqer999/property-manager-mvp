@@ -1,0 +1,29 @@
+<?php
+
+namespace App\Models;
+
+use Illuminate\Database\Eloquent\Model;
+
+class BetaFeedback extends Model
+{
+    protected $table = 'beta_feedback';
+
+    protected $fillable = [
+        'organization_id',
+        'user_id',
+        'page_url',
+        'type',
+        'message',
+        'status',
+    ];
+
+    public function organization()
+    {
+        return $this->belongsTo(Organization::class);
+    }
+
+    public function user()
+    {
+        return $this->belongsTo(User::class);
+    }
+}

@@ -5,7 +5,7 @@
 <form method="get" action="{{ route('reports.index') }}" class="mb-4 grid gap-3 rounded border bg-white p-4 shadow-sm sm:grid-cols-2 lg:grid-cols-5">
     <label class="block text-sm font-medium">
         {{ __('reports.filters.building') }}
-        <select name="building_id" data-building-select class="tap-target mt-1 w-full rounded border p-2">
+        <select name="building_id" data-building-select class="form-select-safe tap-target mt-1 w-full rounded border p-2">
             <option value="">{{ __('reports.filters.all_buildings') }}</option>
             @foreach($buildings as $building)
                 <option value="{{ $building->id }}" @selected($filters['building_id'] === $building->id)>{{ $building->name }}</option>
@@ -15,7 +15,7 @@
 
     <label class="block text-sm font-medium">
         {{ __('reports.filters.unit') }}
-        <select name="unit_id" data-unit-select class="tap-target mt-1 w-full rounded border p-2">
+        <select name="unit_id" data-unit-select class="form-select-safe tap-target mt-1 w-full rounded border p-2">
             <option value="">{{ __('reports.filters.all_units') }}</option>
             @foreach($units as $unit)
                 <option value="{{ $unit->id }}" data-building-id="{{ $unit->building_id }}" @selected($filters['unit_id'] === $unit->id)><bdi dir="ltr">{{ $unit->unit_number }}</bdi> - {{ $unit->building->name }}</option>

@@ -10,7 +10,7 @@
 </div>
 
 <form class="mb-4 grid gap-3 rounded border bg-white p-3 sm:grid-cols-[1fr_auto]">
-    <select name="status" class="tap-target min-h-11 rounded border p-2">
+    <select name="status" class="form-select-safe tap-target min-h-11 rounded border p-2">
         <option value="">{{ __('contracts.all_statuses') }}</option>
         @foreach(['active', 'expired', 'terminated'] as $status)
             <option value="{{ $status }}" @selected(request('status') === $status)>{{ __('contracts.statuses.'.$status) }}</option>
