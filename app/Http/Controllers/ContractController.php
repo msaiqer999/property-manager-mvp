@@ -109,7 +109,9 @@ class ContractController extends Controller
             return $contract;
         });
 
-        return redirect()->route('contracts.show', $contract);
+        return redirect()
+            ->route('contracts.show', $contract)
+            ->with('status', __('contracts.form.created_success'));
     }
 
     public function show(Contract $contract)
@@ -263,6 +265,7 @@ class ContractController extends Controller
 
         return [
             'contract' => $contract,
+            'buildings' => $this->buildings(),
             'tenants' => Tenant::query()
                 ->where('organization_id', $this->organizationId())
                 ->when(Schema::hasColumn('tenants', 'archived_at'), fn ($query) => $query->whereNull('archived_at'))
@@ -270,6 +273,13 @@ class ContractController extends Controller
                 ->get(['id', 'full_name']),
             'units' => $units,
         ];
+    }
+
+    private function buildings()
+    {
+        return \App\Models\Building::where('organization_id', $this->organizationId())
+            ->orderBy('name')
+            ->get(['id', 'name']);
     }
 
     private function authorizeTenantInput(int $tenantId): void
