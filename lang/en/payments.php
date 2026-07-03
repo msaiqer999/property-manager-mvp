@@ -12,6 +12,7 @@ return [
     'download_proof' => 'Download proof',
     'download_receipt_pdf' => 'Download receipt PDF',
     'not_available' => 'N/A',
+    'recorded_success' => 'Payment recorded successfully. You can download the receipt.',
 
     'columns' => [
         'due_date' => 'Due date',
@@ -42,6 +43,7 @@ return [
 
     'form' => [
         'summary' => 'Payment summary',
+        'building' => 'Building',
         'due' => 'Due',
         'amount_paid' => 'Amount paid',
         'payment_date' => 'Payment date',

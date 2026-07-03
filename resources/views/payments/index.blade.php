@@ -45,7 +45,9 @@
                 @if($payment->status === 'cancelled')
                     <span class="text-sm text-slate-500">{{ __('payments.lifecycle.cancelled_due_to_contract_termination') }}</span>
                 @elseif($payment->amount_paid_minor < $payment->amount_due_minor)
+                    @can('recordPayment', $payment)
                     <a data-payment-action class="tap-target inline-flex min-h-11 w-full items-center justify-center rounded bg-slate-900 px-4 text-center text-sm font-medium text-white" href="{{ route('payments.edit', $payment) }}">{{ __('payments.record_payment') }}</a>
+                    @endcan
                 @endif
             </div>
         </article>
@@ -76,7 +78,7 @@
                     <td class="p-4 text-end whitespace-nowrap"><bdi dir="ltr">{{ number_format($payment->amount_paid, 2) }} / {{ number_format($payment->amount_due, 2) }}</bdi></td>
                     <td class="p-4 text-center whitespace-nowrap"><span class="rounded bg-slate-100 px-2 py-1 text-xs">{{ __('payments.statuses.'.$payment->display_status_key) }}</span>@if($payment->status === 'cancelled')<span class="mt-1 block text-xs text-slate-500">{{ __('payments.lifecycle.cancelled_due_to_contract_termination') }}</span>@endif</td>
                     <td class="p-4 text-center whitespace-nowrap"><bdi dir="ltr">{{ $payment->payment_date?->toDateString() ?? __('payments.not_available') }}</bdi></td>
-                    <td class="p-4 text-center whitespace-nowrap"><div class="flex justify-center gap-2">@if($payment->amount_paid_minor > 0)<a data-payment-action class="tap-target inline-flex items-center rounded border px-3 text-slate-700" href="{{ route('payments.show', $payment) }}">{{ __('payments.view_receipt') }}</a>@endif @if($payment->status === 'cancelled')<span class="text-sm text-slate-500">{{ __('payments.lifecycle.cancelled_due_to_contract_termination') }}</span>@elseif($payment->amount_paid_minor < $payment->amount_due_minor)<a data-payment-action class="tap-target inline-flex items-center rounded border px-3 text-slate-700" href="{{ route('payments.edit', $payment) }}">{{ __('payments.record_payment') }}</a>@endif</div></td>
+                    <td class="p-4 text-center whitespace-nowrap"><div class="flex justify-center gap-2">@if($payment->amount_paid_minor > 0)<a data-payment-action class="tap-target inline-flex items-center rounded border px-3 text-slate-700" href="{{ route('payments.show', $payment) }}">{{ __('payments.view_receipt') }}</a>@endif @if($payment->status === 'cancelled')<span class="text-sm text-slate-500">{{ __('payments.lifecycle.cancelled_due_to_contract_termination') }}</span>@elseif($payment->amount_paid_minor < $payment->amount_due_minor)@can('recordPayment', $payment)<a data-payment-action class="tap-target inline-flex items-center rounded border px-3 text-slate-700" href="{{ route('payments.edit', $payment) }}">{{ __('payments.record_payment') }}</a>@endcan @endif</div></td>
                 </tr>
             @endforeach
         </tbody>

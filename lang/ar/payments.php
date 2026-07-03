@@ -12,6 +12,7 @@ return [
     'download_proof' => 'تنزيل إثبات الدفع',
     'download_receipt_pdf' => 'تنزيل إيصال PDF',
     'not_available' => 'غير متاح',
+    'recorded_success' => 'تم تسجيل الدفعة بنجاح. يمكنك تنزيل الإيصال.',
 
     'columns' => [
         'due_date' => 'تاريخ الاستحقاق',
@@ -42,6 +43,7 @@ return [
 
     'form' => [
         'summary' => 'ملخص الدفعة',
+        'building' => 'المبنى',
         'due' => 'مستحق في',
         'amount_paid' => 'المبلغ المدفوع',
         'payment_date' => 'تاريخ الدفع',

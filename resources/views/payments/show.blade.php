@@ -11,7 +11,9 @@
             <a data-payment-action class="tap-target inline-flex min-h-11 items-center justify-center rounded bg-slate-900 px-4 text-center text-sm font-medium text-white" href="{{ route('payments.receipt', $payment) }}">{{ __('payments.download_receipt_pdf') }}</a>
         @endif
         @if($payment->status !== 'cancelled' && $payment->amount_paid_minor < $payment->amount_due_minor)
+            @can('recordPayment', $payment)
             <a data-payment-action class="tap-target inline-flex min-h-11 items-center justify-center rounded bg-slate-900 px-4 text-center text-sm font-medium text-white" href="{{ route('payments.edit', $payment) }}">{{ __('payments.record_payment') }}</a>
+            @endcan
         @endif
     </div>
 </div>

@@ -51,7 +51,7 @@ class PaymentController extends Controller
 
         $data = $request->validate([
             'amount_paid' => ['required', 'numeric', 'min:0', 'max:'.$payment->amount_due, 'regex:/^\d{1,10}(?:\.\d{1,2})?$/'],
-            'payment_date' => ['nullable', 'date'],
+            'payment_date' => ['required', 'date'],
             'payment_method' => ['nullable', 'in:cash,bank_transfer,cheque,other'],
             'proof_image' => ['nullable', 'image', 'max:4096'],
             'notes' => ['nullable', 'string'],
@@ -78,7 +78,9 @@ class PaymentController extends Controller
 
         $logger->log('payment.recorded', $payment);
 
-        return redirect()->route('payments.show', $payment);
+        return redirect()
+            ->route('payments.show', $payment)
+            ->with('status', __('payments.recorded_success'));
     }
 
     private function decimalToMinorUnits(string $value): int
