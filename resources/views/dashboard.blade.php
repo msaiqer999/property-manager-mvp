@@ -156,6 +156,8 @@
                     </div>
                 </div>
 
+                @include('dashboard.partials.todays-priorities')
+
                 <section data-daily-actions data-attention-section class="mt-6 rounded border bg-white p-4 shadow-sm sm:p-5">
                     <div class="mb-3">
                         <h2 class="text-lg font-semibold sm:text-base">{{ __('app.dashboard.daily_actions_title') }}</h2>

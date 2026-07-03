@@ -7,11 +7,13 @@ return [
     'all_statuses' => 'All statuses',
     'filter' => 'Filter',
     'overdue' => 'Overdue',
+    'follow_up' => 'Follow up',
     'view_receipt' => 'View receipt',
     'record_payment' => 'Record payment',
     'download_proof' => 'Download proof',
     'download_receipt_pdf' => 'Download receipt PDF',
     'not_available' => 'N/A',
+    'recorded_success' => 'Payment recorded successfully. You can download the receipt.',
 
     'columns' => [
         'due_date' => 'Due date',
@@ -42,6 +44,7 @@ return [
 
     'form' => [
         'summary' => 'Payment summary',
+        'building' => 'Building',
         'due' => 'Due',
         'amount_paid' => 'Amount paid',
         'payment_date' => 'Payment date',
@@ -57,6 +60,20 @@ return [
         'paid' => 'Paid',
         'remaining' => 'Remaining amount',
         'status' => 'Status',
+    ],
+
+    'overdue_summary' => [
+        'title' => 'Overdue payment summary',
+        'description' => 'Use this context to follow up, then record the payment once it is received.',
+        'days_overdue' => '{0} Due today|{1} :count day overdue|[2,*] :count days overdue',
+        'phone' => 'Tenant phone',
+    ],
+
+    'reminder' => [
+        'title' => 'Reminder message',
+        'description' => 'Copy this message and send it manually using your preferred channel.',
+        'copy' => 'Copy reminder',
+        'message' => 'Hello :tenant_name, this is a reminder that rent for unit :unit_number was due on :due_date. The remaining amount is :remaining_amount. Please arrange payment when possible. Thank you.',
     ],
 
     'pdf' => [

@@ -23,10 +23,12 @@ class DashboardController extends Controller
         $orgId = $this->organizationId();
         $start = now()->startOfMonth();
         $end = now()->endOfMonth();
+        $today = now()->toDateString();
+        $dueSoonEnd = now()->addDays(7)->toDateString();
         $expiringSoon = Contract::with(['tenant', 'unit.building'])
             ->where('organization_id', $orgId)
             ->where('status', 'active')
-            ->whereDate('end_date', '>=', now()->toDateString())
+            ->whereDate('end_date', '>=', $today)
             ->whereDate('end_date', '<=', now()->addDays(90)->toDateString())
             ->orderBy('end_date')
             ->get();
@@ -51,6 +53,15 @@ class DashboardController extends Controller
                     ->orWhere('status', 'paid');
             })
             ->count();
+        $overduePaymentsQuery = Payment::where('organization_id', $orgId)
+            ->where('status', '!=', 'cancelled')
+            ->whereDate('due_date', '<=', $today)
+            ->whereColumn('amount_paid', '<', 'amount_due');
+        $paymentsDueSoonQuery = Payment::where('organization_id', $orgId)
+            ->where('status', '!=', 'cancelled')
+            ->whereDate('due_date', '>', $today)
+            ->whereDate('due_date', '<=', $dueSoonEnd)
+            ->whereColumn('amount_paid', '<', 'amount_due');
 
         return view('dashboard', [
             'role' => auth()->user()->role,
@@ -59,12 +70,11 @@ class DashboardController extends Controller
                 ->whereBetween('payment_date', [$start, $end])
                 ->sum('amount_paid'),
             'monthlyExpenses' => Expense::where('organization_id', $orgId)->notVoided()->whereBetween('expense_date', [$start, $end])->sum('amount'),
-            'overdueAmount' => Payment::where('organization_id', $orgId)
-                ->where('status', 'overdue')
-                ->sum(DB::raw('amount_due - amount_paid')),
-            'overduePaymentCount' => Payment::where('organization_id', $orgId)
-                ->where('status', 'overdue')
-                ->count(),
+            'overdueAmount' => (clone $overduePaymentsQuery)->sum(DB::raw('amount_due - amount_paid')),
+            'overduePaymentCount' => (clone $overduePaymentsQuery)->count(),
+            'nearestOverduePaymentDate' => optional((clone $overduePaymentsQuery)->orderBy('due_date')->first())->due_date,
+            'paymentsDueSoonCount' => (clone $paymentsDueSoonQuery)->count(),
+            'nearestPaymentDueDate' => optional((clone $paymentsDueSoonQuery)->orderBy('due_date')->first())->due_date,
             'vacantUnits' => Unit::whereHas('building', fn ($q) => $q->where('organization_id', $orgId))->where('status', 'vacant')->count(),
             'rentedUnits' => Unit::whereHas('building', fn ($q) => $q->where('organization_id', $orgId))->where('status', 'rented')->count(),
             'buildingCount' => $buildings->count(),
@@ -76,6 +86,7 @@ class DashboardController extends Controller
             'expiringSoon' => $expiringSoon->take(5),
             'expiryCounts' => $expiryCounts,
             'expiringSoonCount' => $expiringSoon->count(),
+            'nearestContractExpiryDate' => optional($expiringSoon->first())->end_date,
             'pendingPaymentCount' => $pendingPaymentCount,
             'partialPaymentCount' => $partialPaymentCount,
             'nextPaymentToRecord' => Payment::where('organization_id', $orgId)

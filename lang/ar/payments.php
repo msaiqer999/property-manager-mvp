@@ -7,11 +7,13 @@ return [
     'all_statuses' => 'كل الحالات',
     'filter' => 'تصفية',
     'overdue' => 'متأخر',
+    'follow_up' => 'متابعة',
     'view_receipt' => 'عرض الإيصال',
     'record_payment' => 'تسجيل دفعة',
     'download_proof' => 'تنزيل إثبات الدفع',
     'download_receipt_pdf' => 'تنزيل إيصال PDF',
     'not_available' => 'غير متاح',
+    'recorded_success' => 'تم تسجيل الدفعة بنجاح. يمكنك تنزيل الإيصال.',
 
     'columns' => [
         'due_date' => 'تاريخ الاستحقاق',
@@ -42,6 +44,7 @@ return [
 
     'form' => [
         'summary' => 'ملخص الدفعة',
+        'building' => 'المبنى',
         'due' => 'مستحق في',
         'amount_paid' => 'المبلغ المدفوع',
         'payment_date' => 'تاريخ الدفع',
@@ -57,6 +60,20 @@ return [
         'paid' => 'المدفوع',
         'remaining' => 'المبلغ المتبقي',
         'status' => 'الحالة',
+    ],
+
+    'overdue_summary' => [
+        'title' => 'ملخص الدفعة المتأخرة',
+        'description' => 'استخدم هذه المعلومات للمتابعة، ثم سجّل الدفعة عند استلامها.',
+        'days_overdue' => '{0} مستحقة اليوم|{1} متأخرة يوم واحد|[2,*] متأخرة :count يوم',
+        'phone' => 'هاتف المستأجر',
+    ],
+
+    'reminder' => [
+        'title' => 'رسالة تذكير',
+        'description' => 'انسخ هذه الرسالة وأرسلها يدويًا عبر القناة المناسبة.',
+        'copy' => 'نسخ رسالة التذكير',
+        'message' => 'مرحباً :tenant_name، نذكّركم بأن إيجار الوحدة :unit_number مستحق بتاريخ :due_date. المبلغ المتبقي هو :remaining_amount. نرجو ترتيب السداد عند الإمكان. شكراً لكم.',
     ],
 
     'pdf' => [

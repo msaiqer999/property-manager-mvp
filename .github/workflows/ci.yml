@@ -4,8 +4,12 @@ on:
   push:
     branches:
       - main
+      - develop
       - chore/runtime-verification
   pull_request:
+    branches:
+      - main
+      - develop
 
 jobs:
   test-and-build:

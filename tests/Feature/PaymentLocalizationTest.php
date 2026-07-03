@@ -11,6 +11,7 @@ use App\Models\Unit;
 use App\Models\User;
 use Database\Seeders\DatabaseSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Carbon;
 use Tests\TestCase;
 
 class PaymentLocalizationTest extends TestCase
@@ -58,7 +59,10 @@ class PaymentLocalizationTest extends TestCase
             ->assertSee('data-payment-record-form', false)
             ->assertSee('Payment summary')
             ->assertSee('Payment Localization Tenant')
+            ->assertSee('Payment Localization Tower')
             ->assertSee('PAY-101')
+            ->assertSee('PAY-EN-001')
+            ->assertSee('Paid')
             ->assertSee('Amount paid')
             ->assertSee('Payment date')
             ->assertSee('Method')
@@ -79,7 +83,9 @@ class PaymentLocalizationTest extends TestCase
             ->assertSee('2026-06-01')
             ->assertSee('Amount due')
             ->assertSee('1,234.56')
-            ->assertSee('Paid');
+            ->assertSee('Paid')
+            ->assertDontSee('Follow up')
+            ->assertDontSee('data-payment-reminder', false);
 
         $freshPayment = $payment->fresh()->load('contract.tenant', 'contract.unit');
         $this->assertSame('Payment Localization Tenant', $freshPayment->contract->tenant->full_name);
@@ -128,6 +134,9 @@ class PaymentLocalizationTest extends TestCase
             ->assertSee('data-payment-record-form', false)
             ->assertSee(__('payments.record_payment'))
             ->assertSee(__('payments.form.summary'))
+            ->assertSee(__('payments.form.building'))
+            ->assertSee(__('payments.columns.contract'))
+            ->assertSee(__('payments.show.status'))
             ->assertSee(__('payments.form.amount_paid'))
             ->assertSee(__('payments.form.payment_date'))
             ->assertSee(__('payments.form.method'))
@@ -202,12 +211,194 @@ class PaymentLocalizationTest extends TestCase
             ->assertSee('View receipt');
     }
 
+    public function test_overdue_follow_up_filter_summary_and_reminder_are_rendered_without_affecting_paid_payments(): void
+    {
+        $organization = Organization::create(['name' => 'Payment Follow Up Organization']);
+        $owner = User::create([
+            'organization_id' => $organization->id,
+            'name' => 'Payment Follow Up Owner',
+            'email' => 'payment-follow-up-owner@example.com',
+            'password' => 'password',
+            'role' => 'owner',
+        ]);
+        $overduePayment = $this->localizedPayment($owner, [
+            'building' => 'Follow Up Building',
+            'unit' => 'FU-101',
+            'tenant' => 'Follow Up Tenant',
+            'contract' => 'FU-2026-001',
+            'amount_due' => 1500,
+            'amount_paid' => 250,
+            'due_date' => '2026-06-01',
+            'status' => 'partial',
+            'payment_method' => 'cash',
+            'payment_date' => '2026-06-04',
+        ]);
+        $paidPayment = $this->localizedPayment($owner, [
+            'building' => 'Paid Follow Up Building',
+            'unit' => 'FU-PAID-202',
+            'tenant' => 'Paid Follow Up Tenant',
+            'contract' => 'FU-PAID-002',
+            'amount_due' => 900,
+            'amount_paid' => 900,
+            'due_date' => '2026-06-01',
+            'status' => 'paid',
+            'payment_method' => 'cash',
+            'payment_date' => '2026-06-04',
+        ]);
+
+        $this->actingAs($owner)
+            ->withSession(['locale' => 'en'])
+            ->get(route('payments.index', ['overdue' => 1]))
+            ->assertOk()
+            ->assertSee('Follow up')
+            ->assertSee('Partially paid, balance overdue')
+            ->assertSee('Follow Up Tenant')
+            ->assertSee('Follow Up Building')
+            ->assertSee('FU-101')
+            ->assertSee('1,250.00')
+            ->assertSee('href="'.route('payments.show', $overduePayment).'"', false)
+            ->assertSee('href="'.route('payments.edit', $overduePayment).'"', false)
+            ->assertSee('Record payment')
+            ->assertDontSee('Paid Follow Up Tenant');
+
+        $this->actingAs($owner)
+            ->withSession(['locale' => 'en'])
+            ->get(route('payments.show', $overduePayment))
+            ->assertOk()
+            ->assertSee('data-overdue-payment-summary', false)
+            ->assertSee('Overdue payment summary')
+            ->assertSee('Tenant phone')
+            ->assertSee('0500000000')
+            ->assertSee('Follow Up Tenant')
+            ->assertSee('Follow Up Building')
+            ->assertSee('FU-101')
+            ->assertSee('FU-2026-001')
+            ->assertSee('2026-06-01')
+            ->assertSee('1,500.00')
+            ->assertSee('250.00')
+            ->assertSee('1,250.00')
+            ->assertSee('Reminder message')
+            ->assertSee('Copy reminder')
+            ->assertSee('data-reminder-message', false)
+            ->assertSee('Hello Follow Up Tenant, this is a reminder that rent for unit FU-101 was due on 2026-06-01. The remaining amount is 1,250.00. Please arrange payment when possible. Thank you.');
+
+        $this->actingAs($owner)
+            ->withSession(['locale' => 'en'])
+            ->get(route('payments.show', $paidPayment))
+            ->assertOk()
+            ->assertDontSee('data-overdue-payment-summary', false)
+            ->assertDontSee('data-payment-reminder', false)
+            ->assertDontSee('Copy reminder');
+
+        app()->setLocale('ar');
+
+        $this->actingAs($owner)
+            ->withSession(['locale' => 'ar'])
+            ->get(route('payments.show', $overduePayment))
+            ->assertOk()
+            ->assertSee(__('payments.follow_up'))
+            ->assertSee(__('payments.overdue_summary.title'))
+            ->assertSee(__('payments.reminder.title'))
+            ->assertSee(__('payments.reminder.copy'));
+
+        app()->setLocale('en');
+    }
+
+    public function test_payment_recording_page_defaults_context_success_message_and_receipt_action(): void
+    {
+        Carbon::setTestNow('2026-07-03');
+
+        try {
+            $organization = Organization::create(['name' => 'Payment Recording UX Organization']);
+            $owner = User::create([
+                'organization_id' => $organization->id,
+                'name' => 'Payment Recording UX Owner',
+                'email' => 'payment-recording-ux-owner@example.com',
+                'password' => 'password',
+                'role' => 'owner',
+            ]);
+            $payment = $this->localizedPayment($owner, [
+                'building' => 'Payment Recording UX Building',
+                'unit' => 'REC-101',
+                'tenant' => 'Payment Recording UX Tenant',
+                'contract' => 'REC-2026-001',
+                'amount_due' => 1800,
+                'amount_paid' => 0,
+                'due_date' => '2026-07-15',
+                'status' => 'pending',
+                'payment_method' => null,
+                'payment_date' => null,
+            ]);
+
+            $this->actingAs($owner)
+                ->withSession(['locale' => 'en'])
+                ->get(route('payments.edit', $payment))
+                ->assertOk()
+                ->assertSee('data-payment-summary', false)
+                ->assertSee('Payment Recording UX Tenant')
+                ->assertSee('Payment Recording UX Building')
+                ->assertSee('REC-101')
+                ->assertSee('REC-2026-001')
+                ->assertSee('2026-07-15')
+                ->assertSee('1,800.00')
+                ->assertSee('Pending')
+                ->assertSee('name="amount_paid"', false)
+                ->assertSee('value="1800', false)
+                ->assertSee('name="payment_date"', false)
+                ->assertSee('value="2026-07-03"', false);
+
+            $response = $this->actingAs($owner)
+                ->withSession(['locale' => 'en'])
+                ->put(route('payments.update', $payment), [
+                    'amount_paid' => 1800,
+                    'payment_date' => '2026-07-03',
+                    'payment_method' => 'cash',
+                    'notes' => 'Collected at the office.',
+                ]);
+
+            $response->assertRedirect(route('payments.show', $payment))
+                ->assertSessionHas('status', __('payments.recorded_success'));
+
+            $freshPayment = $payment->fresh();
+
+            $this->assertSame('paid', $freshPayment->status);
+            $this->assertSame('1800.00', number_format((float) $freshPayment->amount_paid, 2, '.', ''));
+            $this->assertSame('2026-07-03', $freshPayment->payment_date->toDateString());
+            $this->assertSame('cash', $freshPayment->payment_method);
+            $this->assertSame($owner->id, $freshPayment->created_by);
+
+            $this->actingAs($owner)
+                ->withSession(['locale' => 'en', 'status' => __('payments.recorded_success')])
+                ->get(route('payments.show', $payment))
+                ->assertOk()
+                ->assertSee(__('payments.recorded_success'))
+                ->assertSee('Download receipt PDF')
+                ->assertSee('href="'.route('payments.receipt', $payment).'"', false);
+        } finally {
+            Carbon::setTestNow();
+        }
+    }
+
     public function test_payment_routes_authorization_organization_isolation_and_receipt_pdf_route_remain_unchanged(): void
     {
         $this->seed(DatabaseSeeder::class);
 
         $owner = User::where('email', 'owner@example.com')->firstOrFail();
         $caretaker = User::where('email', 'caretaker@example.com')->firstOrFail();
+        $manager = User::create([
+            'organization_id' => $owner->organization_id,
+            'name' => 'Payment Manager',
+            'email' => 'payment-manager@example.com',
+            'password' => 'password',
+            'role' => 'manager',
+        ]);
+        $accountant = User::create([
+            'organization_id' => $owner->organization_id,
+            'name' => 'Payment Accountant',
+            'email' => 'payment-accountant@example.com',
+            'password' => 'password',
+            'role' => 'accountant',
+        ]);
         $payment = Payment::with('contract')->where('status', '!=', 'paid')->firstOrFail();
         $otherPayment = $this->otherOrganizationPayment();
 
@@ -222,8 +413,17 @@ class PaymentLocalizationTest extends TestCase
             ->assertRedirect(route('payments.show', $payment));
 
         $this->actingAs($owner)->get(route('payments.show', $otherPayment))->assertForbidden();
+        $this->actingAs($owner)->get(route('payments.edit', $otherPayment))->assertForbidden();
+        $this->actingAs($owner)->put(route('payments.update', $otherPayment), [
+            'amount_paid' => 100,
+            'payment_date' => '2026-06-10',
+            'payment_method' => 'cash',
+        ])->assertForbidden();
         $this->actingAs($owner)->get(route('payments.receipt', $otherPayment))->assertForbidden();
 
+        $this->actingAs($owner)->get(route('payments.edit', $payment))->assertOk();
+        $this->actingAs($manager)->get(route('payments.edit', $payment))->assertOk();
+        $this->actingAs($accountant)->get(route('payments.edit', $payment))->assertOk();
         $this->actingAs($caretaker)->get(route('payments.index'))->assertOk();
         $this->actingAs($caretaker)->get(route('payments.edit', $payment))->assertOk();
         $this->actingAs($caretaker)->get(route('payments.index'))
@@ -324,7 +524,8 @@ class PaymentLocalizationTest extends TestCase
             ->assertSee('href="'.route('payments.show', $partialPayment).'"', false)
             ->assertSee('href="'.route('payments.edit', $partialPayment).'"', false)
             ->assertSee('href="'.route('payments.edit', $unpaidPayment).'"', false)
-            ->assertDontSee('href="'.route('payments.show', $unpaidPayment).'"', false)
+            ->assertSee('Follow up')
+            ->assertSee('href="'.route('payments.show', $unpaidPayment).'"', false)
             ->assertDontSee('payments.statuses.partial_overdue');
 
         app()->setLocale('en');

@@ -60,7 +60,7 @@ class BulkUnitController extends Controller
             ])
             ->all();
 
-        $this->ensureUniqueUnitNumbers($building, $rows);
+        $this->ensureNoDuplicateUnitNumbersInRequest($rows);
 
         return view('units.bulk-preview', [
             'building' => $building,
@@ -107,18 +107,25 @@ class BulkUnitController extends Controller
             ])
             ->all();
 
-        $this->ensureUniqueUnitNumbers($building, $rows);
+        [$creatableRows, $skippedUnitNumbers] = $this->filterCreatableRows($building, $rows);
 
-        DB::transaction(function () use ($rows, $logger): void {
-            foreach ($rows as $row) {
+        DB::transaction(function () use ($creatableRows, $logger): void {
+            foreach ($creatableRows as $row) {
                 $unit = Unit::create($row);
                 $logger->log('unit.created', $unit);
             }
         });
 
+        $messageKey = $skippedUnitNumbers === []
+            ? 'units.bulk.created_success'
+            : 'units.bulk.created_with_skips';
+
         return redirect()
             ->route('buildings.show', $building)
-            ->with('status', __('units.bulk.created_success', ['count' => count($rows)]));
+            ->with('status', __($messageKey, [
+                'count' => count($creatableRows),
+                'skipped' => implode(', ', $skippedUnitNumbers),
+            ]));
     }
 
     private function authorizeBulkCreation(Building $building): void
@@ -127,7 +134,7 @@ class BulkUnitController extends Controller
         Gate::authorize('create', Unit::class);
     }
 
-    private function ensureUniqueUnitNumbers(Building $building, array $rows): void
+    private function ensureNoDuplicateUnitNumbersInRequest(array $rows): void
     {
         $unitNumbers = collect($rows)
             ->pluck('unit_number')
@@ -142,16 +149,33 @@ class BulkUnitController extends Controller
                 'units' => __('units.bulk.validation.duplicate_in_request', ['unit' => $duplicateInRequest]),
             ]);
         }
+    }
 
-        $existingUnitNumber = Unit::withTrashed()
+    private function filterCreatableRows(Building $building, array $rows): array
+    {
+        $this->ensureNoDuplicateUnitNumbersInRequest($rows);
+
+        $existingUnitNumbers = Unit::withTrashed()
             ->where('building_id', $building->id)
-            ->whereIn('unit_number', $unitNumbers->all())
-            ->value('unit_number');
+            ->whereIn('unit_number', collect($rows)->pluck('unit_number')->all())
+            ->pluck('unit_number')
+            ->map(fn ($unitNumber) => (string) $unitNumber)
+            ->all();
 
-        if ($existingUnitNumber !== null) {
-            throw ValidationException::withMessages([
-                'units' => __('units.bulk.validation.duplicate_existing', ['unit' => $existingUnitNumber]),
-            ]);
-        }
+        $skipped = [];
+        $creatableRows = collect($rows)
+            ->reject(function (array $row) use ($existingUnitNumbers, &$skipped): bool {
+                if (in_array((string) $row['unit_number'], $existingUnitNumbers, true)) {
+                    $skipped[] = (string) $row['unit_number'];
+
+                    return true;
+                }
+
+                return false;
+            })
+            ->values()
+            ->all();
+
+        return [$creatableRows, $skipped];
     }
 }

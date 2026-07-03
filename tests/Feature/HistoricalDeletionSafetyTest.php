@@ -484,7 +484,7 @@ class HistoricalDeletionSafetyTest extends TestCase
         $this->actingAs($owner)
             ->put(route('payments.update', $payment), $this->paymentPayload($payment, [
                 'amount_paid' => '0.00',
-                'payment_date' => null,
+                'payment_date' => '2026-06-04',
                 'payment_method' => null,
                 'notes' => 'Rejected zero reduction.',
             ]))

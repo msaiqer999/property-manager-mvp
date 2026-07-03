@@ -3,7 +3,12 @@
 @section('content')
 <div class="mb-4 grid gap-3 sm:flex sm:items-center sm:justify-between">
     <h1 class="text-xl font-semibold">{{ __('units.title') }}</h1>
-    <a class="tap-target flex min-h-11 items-center justify-center rounded bg-slate-900 px-4 text-sm font-medium text-white" href="{{ route('units.create') }}">{{ __('units.add') }}</a>
+    <div class="grid gap-2 sm:flex sm:flex-wrap">
+        @if($buildings->isNotEmpty())
+            <a class="tap-target flex min-h-11 items-center justify-center rounded border px-4 text-center text-sm font-medium" href="{{ route('buildings.units.bulk.create', $buildings->first()) }}">{{ __('units.bulk.add_multiple') }}</a>
+        @endif
+        <a class="tap-target flex min-h-11 items-center justify-center rounded bg-slate-900 px-4 text-sm font-medium text-white" href="{{ route('units.create') }}">{{ __('units.add') }}</a>
+    </div>
 </div>
 
 <form class="mb-4 grid gap-3 rounded border bg-white p-3 sm:grid-cols-3">

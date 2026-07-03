@@ -262,20 +262,89 @@ class DashboardLocalizationTest extends TestCase
             'payment_date' => now()->toDateString(),
             'status' => 'partial',
         ]);
+        Payment::create([
+            'organization_id' => $organization->id,
+            'contract_id' => $contract->id,
+            'due_date' => now()->addDays(3)->toDateString(),
+            'amount_due' => 700,
+            'amount_paid' => 0,
+            'status' => 'pending',
+        ]);
 
         $this->actingAs($owner)
             ->withSession(['locale' => 'en'])
             ->get(route('dashboard'))
             ->assertOk()
+            ->assertSee('data-dashboard-priorities', false)
+            ->assertSee('Today&#039;s priorities', false)
             ->assertSee('What should I do today?')
             ->assertSee('Overdue payments')
-            ->assertSee('Partial payments need follow-up')
+            ->assertSee('Total remaining: AED 1,600.00.')
+            ->assertSee('Payments due soon')
+            ->assertSee('Review due payments')
             ->assertSee('Contracts ending soon')
             ->assertSee('Vacant units')
+            ->assertSee('Follow up overdue')
+            ->assertSee('Review expiring contracts')
+            ->assertSee('Rent vacant units')
             ->assertSee('href="'.route('payments.index', ['overdue' => 1]).'"', false)
-            ->assertSee('href="'.route('payments.index', ['status' => 'partial']).'"', false)
+            ->assertSee('href="'.route('payments.index').'"', false)
             ->assertSee('href="'.route('units.index', ['status' => 'vacant']).'"', false)
+            ->assertDontSee('app.dashboard.today_priorities')
             ->assertDontSee('app.dashboard.daily_actions_title');
+    }
+
+    public function test_today_priorities_show_empty_states_when_there_is_nothing_to_do(): void
+    {
+        $organization = Organization::create(['name' => 'Empty Priorities Organization']);
+        $owner = User::create([
+            'organization_id' => $organization->id,
+            'name' => 'Empty Priorities Owner',
+            'email' => 'empty-priorities-owner@example.com',
+            'password' => 'password',
+            'role' => 'owner',
+        ]);
+        $building = Building::create([
+            'organization_id' => $organization->id,
+            'name' => 'Empty Priorities Building',
+            'location' => 'Riyadh',
+        ]);
+        $unit = Unit::create([
+            'building_id' => $building->id,
+            'unit_number' => 'EP-101',
+            'type' => 'apartment',
+            'status' => 'rented',
+            'rent_amount' => 1000,
+        ]);
+        $tenant = Tenant::create([
+            'organization_id' => $organization->id,
+            'full_name' => 'Empty Priorities Tenant',
+            'phone' => '0500000000',
+        ]);
+        Contract::create([
+            'organization_id' => $organization->id,
+            'unit_id' => $unit->id,
+            'tenant_id' => $tenant->id,
+            'contract_number' => 'EP-2026-001',
+            'start_date' => now()->subMonth()->toDateString(),
+            'end_date' => now()->addDays(120)->toDateString(),
+            'rent_amount' => 1000,
+            'payment_frequency' => 'monthly',
+            'deposit_amount' => 0,
+            'status' => 'active',
+        ]);
+
+        $this->actingAs($owner)
+            ->withSession(['locale' => 'en'])
+            ->get(route('dashboard'))
+            ->assertOk()
+            ->assertSee('data-dashboard-priorities', false)
+            ->assertSee('No overdue payments.')
+            ->assertSee('No payments due soon.')
+            ->assertSee('No contracts expiring soon.')
+            ->assertSee('No vacant units.')
+            ->assertSee('Nothing needs attention right now.')
+            ->assertDontSee('app.dashboard.priority_no_overdue');
     }
 
     public function test_dashboard_displays_english_expense_category_label_without_changing_stored_value(): void

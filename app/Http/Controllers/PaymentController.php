@@ -19,10 +19,13 @@ class PaymentController extends Controller
     {
         Gate::authorize('viewAny', Payment::class);
 
-        $payments = Payment::with(['contract.tenant', 'contract.unit'])
+        $payments = Payment::with(['contract.tenant', 'contract.unit.building'])
             ->where('organization_id', $this->organizationId())
             ->when($request->status, fn ($q, $status) => $q->where('status', $status))
-            ->when($request->overdue, fn ($q) => $q->where('status', 'overdue'))
+            ->when($request->overdue, fn ($q) => $q
+                ->where('status', '!=', 'cancelled')
+                ->whereDate('due_date', '<=', now()->toDateString())
+                ->whereColumn('amount_paid', '<', 'amount_due'))
             ->orderBy('due_date')
             ->paginate(20);
 
@@ -32,6 +35,7 @@ class PaymentController extends Controller
     public function show(Payment $payment)
     {
         Gate::authorize('view', $payment);
+        $payment->loadMissing('contract.tenant', 'contract.unit.building');
 
         return view('payments.show', compact('payment'));
     }
@@ -40,6 +44,7 @@ class PaymentController extends Controller
     {
         Gate::authorize('recordPayment', $payment);
         $this->abortIfCancelled($payment);
+        $payment->loadMissing('contract.tenant', 'contract.unit.building');
 
         return view('payments.form', compact('payment'));
     }
@@ -51,7 +56,7 @@ class PaymentController extends Controller
 
         $data = $request->validate([
             'amount_paid' => ['required', 'numeric', 'min:0', 'max:'.$payment->amount_due, 'regex:/^\d{1,10}(?:\.\d{1,2})?$/'],
-            'payment_date' => ['nullable', 'date'],
+            'payment_date' => ['required', 'date'],
             'payment_method' => ['nullable', 'in:cash,bank_transfer,cheque,other'],
             'proof_image' => ['nullable', 'image', 'max:4096'],
             'notes' => ['nullable', 'string'],
@@ -78,7 +83,9 @@ class PaymentController extends Controller
 
         $logger->log('payment.recorded', $payment);
 
-        return redirect()->route('payments.show', $payment);
+        return redirect()
+            ->route('payments.show', $payment)
+            ->with('status', __('payments.recorded_success'));
     }
 
     private function decimalToMinorUnits(string $value): int

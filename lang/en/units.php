@@ -64,6 +64,7 @@ return [
         'default_status' => 'Default status',
         'default_notes' => 'Default notes',
         'created_success' => ':count units created successfully.',
+        'created_with_skips' => ':count units created successfully. Skipped existing units: :skipped.',
         'preview_expired' => 'The preview has expired. Please generate the preview again.',
         'validation' => [
             'duplicate_in_request' => 'Duplicate unit number in the preview: :unit.',

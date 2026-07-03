@@ -8,6 +8,16 @@
 
 <form method="post" action="{{ route('buildings.units.bulk.preview', $building) }}" class="grid max-w-3xl gap-4 rounded border bg-white p-4 shadow-sm md:grid-cols-2">
     @csrf
+    @if($errors->any())
+        <div class="rounded border border-red-200 bg-red-50 p-3 text-sm text-red-700 md:col-span-2">
+            <p class="font-medium">{{ __('app.validation.check_fields') }}</p>
+            <ul class="mt-2 list-disc space-y-1 ps-5">
+                @foreach($errors->all() as $error)
+                    <li>{{ $error }}</li>
+                @endforeach
+            </ul>
+        </div>
+    @endif
     <label class="block text-sm font-medium">{{ __('units.bulk.prefix') }} <input name="prefix" value="{{ old('prefix') }}" class="tap-target mt-1 w-full rounded border p-2"></label>
     <label class="block text-sm font-medium">{{ __('units.bulk.start_number') }} <input name="start_number" type="number" min="0" value="{{ old('start_number') }}" class="tap-target mt-1 w-full rounded border p-2" required></label>
     <label class="block text-sm font-medium">{{ __('units.bulk.end_number') }} <input name="end_number" type="number" min="0" value="{{ old('end_number') }}" class="tap-target mt-1 w-full rounded border p-2" required></label>
@@ -17,6 +27,6 @@
     <label class="block text-sm font-medium">{{ __('units.bulk.default_size') }} <input name="size" type="number" step="0.01" min="0" value="{{ old('size') }}" class="tap-target mt-1 w-full rounded border p-2"></label>
     <label class="block text-sm font-medium">{{ __('units.bulk.default_status') }} <select name="status" class="form-select-safe tap-target mt-1 w-full rounded border p-2">@foreach($statuses as $status)<option value="{{ $status }}" @selected(old('status', 'vacant') === $status)>{{ __('units.statuses.'.$status) }}</option>@endforeach</select></label>
     <label class="block text-sm font-medium md:col-span-2">{{ __('units.bulk.default_notes') }} <textarea name="notes" rows="4" class="mt-1 w-full rounded border p-2">{{ old('notes') }}</textarea></label>
-    <button class="tap-target w-full rounded bg-slate-900 px-4 text-white md:col-span-2">{{ __('units.bulk.generate_preview') }}</button>
+    <button type="submit" class="tap-target w-full rounded bg-slate-900 px-4 text-white md:col-span-2">{{ __('units.bulk.generate_preview') }}</button>
 </form>
 @endsection

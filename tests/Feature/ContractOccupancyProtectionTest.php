@@ -36,7 +36,7 @@ class ContractOccupancyProtectionTest extends TestCase
                 'end_date' => '2026-07-01',
             ]))
             ->assertSessionHasErrors([
-                'unit_id' => 'This unit already has an active contract during the selected dates.',
+                'unit_id' => __('contracts.validation.overlap'),
             ]);
 
         $this->assertSame($contractCount, Contract::count());
@@ -445,7 +445,7 @@ class ContractOccupancyProtectionTest extends TestCase
         }
     }
 
-    public function test_create_form_unit_label_shows_current_active_occupancy(): void
+    public function test_default_create_mode_hides_occupied_units_and_shows_vacant_units_only(): void
     {
         Carbon::setTestNow('2026-06-17');
         [$owner, $data] = $this->scenario();
@@ -454,15 +454,22 @@ class ContractOccupancyProtectionTest extends TestCase
             'end_date' => '2026-11-30',
         ]);
 
-        $this->actingAs($owner)
-            ->get(route('contracts.create'))
-            ->assertOk()
-            ->assertSee($data['unit']->unit_number.' - Occupied until 2026-11-30');
+        $response = $this->actingAs($owner)
+            ->get(route('contracts.create', ['building_id' => $data['building']->id]));
+
+        $response->assertOk()
+            ->assertDontSee('Occupied until');
+
+        $unitOptions = $this->unitSelectOptions($response->getContent());
+
+        $this->assertSame($data['secondUnit']->unit_number, $unitOptions[(string) $data['secondUnit']->id] ?? null);
+        $this->assertArrayNotHasKey((string) $data['unit']->id, $unitOptions);
+        $this->assertStringNotContainsString('Available after 2026-11-30', implode(' ', $unitOptions));
 
         Carbon::setTestNow();
     }
 
-    public function test_create_form_unit_label_shows_future_contract_only(): void
+    public function test_future_contract_mode_shows_occupied_units_with_available_after_label(): void
     {
         Carbon::setTestNow('2026-06-17');
         [$owner, $data] = $this->scenario();
@@ -471,16 +478,24 @@ class ContractOccupancyProtectionTest extends TestCase
             'end_date' => '2027-07-31',
         ]);
 
-        $this->actingAs($owner)
-            ->get(route('contracts.create'))
-            ->assertOk()
-            ->assertSee($data['unit']->unit_number.' - Available now; future contract 2026-08-01 to 2027-07-31')
+        $response = $this->actingAs($owner)
+            ->get(route('contracts.create', [
+                'building_id' => $data['building']->id,
+                'contract_mode' => 'future',
+            ]));
+
+        $response->assertOk()
+            ->assertDontSee('Occupied until')
             ->assertDontSee('+1 more');
+
+        $unitOptions = $this->unitSelectOptions($response->getContent());
+
+        $this->assertSame($data['unit']->unit_number.' - Available after 2027-07-31', $unitOptions[(string) $data['unit']->id] ?? null);
 
         Carbon::setTestNow();
     }
 
-    public function test_create_form_unit_label_shows_current_and_future_contracts(): void
+    public function test_future_contract_mode_uses_latest_active_contract_end_date(): void
     {
         Carbon::setTestNow('2026-06-17');
         [$owner, $data] = $this->scenario();
@@ -494,15 +509,20 @@ class ContractOccupancyProtectionTest extends TestCase
         ]);
 
         $this->actingAs($owner)
-            ->get(route('contracts.create'))
+            ->get(route('contracts.create', [
+                'building_id' => $data['building']->id,
+                'contract_mode' => 'future',
+            ]))
             ->assertOk()
-            ->assertSee($data['unit']->unit_number.' - Occupied until 2026-11-30; future contract 2026-12-31 to 2027-12-31')
+            ->assertSee('<option value="'.$data['unit']->id.'"', false)
+            ->assertSee($data['unit']->unit_number.' - Available after 2027-12-31')
+            ->assertDontSee('Occupied until')
             ->assertDontSee('+1 more');
 
         Carbon::setTestNow();
     }
 
-    public function test_create_form_unit_label_with_current_and_two_future_contracts_shows_one_more(): void
+    public function test_future_contract_mode_does_not_use_old_more_count_label(): void
     {
         Carbon::setTestNow('2026-06-17');
         [$owner, $data] = $this->scenario();
@@ -520,14 +540,19 @@ class ContractOccupancyProtectionTest extends TestCase
         ]);
 
         $this->actingAs($owner)
-            ->get(route('contracts.create'))
+            ->get(route('contracts.create', [
+                'building_id' => $data['building']->id,
+                'contract_mode' => 'future',
+            ]))
             ->assertOk()
-            ->assertSee($data['unit']->unit_number.' - Occupied until 2026-11-30; future contract 2026-12-31 to 2027-12-31 +1 more');
+            ->assertSee($data['unit']->unit_number.' - Available after 2028-12-31')
+            ->assertDontSee('Occupied until')
+            ->assertDontSee('+1 more');
 
         Carbon::setTestNow();
     }
 
-    public function test_create_form_unit_label_shows_nearest_future_contract_and_more_count(): void
+    public function test_future_contract_mode_ignores_old_nearest_future_contract_summary(): void
     {
         Carbon::setTestNow('2026-06-17');
         [$owner, $data] = $this->scenario();
@@ -545,25 +570,32 @@ class ContractOccupancyProtectionTest extends TestCase
         ]);
 
         $this->actingAs($owner)
-            ->get(route('contracts.create'))
+            ->get(route('contracts.create', [
+                'building_id' => $data['building']->id,
+                'contract_mode' => 'future',
+            ]))
             ->assertOk()
-            ->assertSee($data['unit']->unit_number.' - Available now; future contract 2026-08-01 to 2026-08-31 +2 more')
-            ->assertDontSee($data['unit']->unit_number.' - Available now; future contract 2027-01-01 to 2027-12-31');
+            ->assertSee($data['unit']->unit_number.' - Available after 2028-12-31')
+            ->assertDontSee('Available now; future contract')
+            ->assertDontSee('+2 more');
 
         Carbon::setTestNow();
     }
 
-    public function test_create_form_unit_label_shows_available_now_for_units_without_active_contracts(): void
+    public function test_default_create_mode_shows_vacant_unit_numbers_without_availability_label(): void
     {
         [$owner, $data] = $this->scenario();
 
         $this->actingAs($owner)
-            ->get(route('contracts.create'))
+            ->get(route('contracts.create', ['building_id' => $data['building']->id]))
             ->assertOk()
-            ->assertSee($data['unit']->unit_number.' - Available now');
+            ->assertSee('<option value="'.$data['unit']->id.'"', false)
+            ->assertSee($data['unit']->unit_number)
+            ->assertDontSee('Available now')
+            ->assertDontSee('Occupied until');
     }
 
-    public function test_create_form_unit_label_keeps_maintenance_clear_with_future_contract(): void
+    public function test_future_contract_mode_keeps_maintenance_unit_available_after_label_clear(): void
     {
         Carbon::setTestNow('2026-06-17');
         [$owner, $data] = $this->scenario();
@@ -574,14 +606,18 @@ class ContractOccupancyProtectionTest extends TestCase
         ]);
 
         $this->actingAs($owner)
-            ->get(route('contracts.create'))
+            ->get(route('contracts.create', [
+                'building_id' => $data['building']->id,
+                'contract_mode' => 'future',
+            ]))
             ->assertOk()
-            ->assertSee($data['unit']->unit_number.' - Maintenance; future contract 2026-08-01 to 2027-07-31');
+            ->assertSee($data['unit']->unit_number.' - Available after 2027-07-31')
+            ->assertDontSee('Maintenance; future contract');
 
         Carbon::setTestNow();
     }
 
-    public function test_create_form_unit_label_never_displays_other_organization_contract_dates(): void
+    public function test_create_form_unit_options_never_display_other_organization_contract_dates(): void
     {
         Carbon::setTestNow('2026-06-17');
         [$owner, $data, $otherData] = $this->scenario();
@@ -591,9 +627,10 @@ class ContractOccupancyProtectionTest extends TestCase
         ]);
 
         $this->actingAs($owner)
-            ->get(route('contracts.create'))
+            ->get(route('contracts.create', ['building_id' => $data['building']->id]))
             ->assertOk()
-            ->assertSee($data['unit']->unit_number.' - Available now')
+            ->assertSee('<option value="'.$data['unit']->id.'"', false)
+            ->assertSee($data['unit']->unit_number)
             ->assertDontSee('2030-01-01')
             ->assertDontSee('+1 more')
             ->assertDontSee($otherData['unit']->unit_number);
@@ -601,7 +638,7 @@ class ContractOccupancyProtectionTest extends TestCase
         Carbon::setTestNow();
     }
 
-    public function test_create_form_unit_label_does_not_count_expired_or_terminated_contracts(): void
+    public function test_future_contract_mode_does_not_count_expired_or_terminated_contracts(): void
     {
         Carbon::setTestNow('2026-06-17');
         [$owner, $data] = $this->scenario();
@@ -621,9 +658,12 @@ class ContractOccupancyProtectionTest extends TestCase
         ]);
 
         $this->actingAs($owner)
-            ->get(route('contracts.create'))
+            ->get(route('contracts.create', [
+                'building_id' => $data['building']->id,
+                'contract_mode' => 'future',
+            ]))
             ->assertOk()
-            ->assertSee($data['unit']->unit_number.' - Available now; future contract 2026-08-01 to 2027-07-31')
+            ->assertSee($data['unit']->unit_number.' - Available after 2027-07-31')
             ->assertDontSee('+1 more')
             ->assertDontSee('2027-08-01')
             ->assertDontSee('2028-08-01');
@@ -735,6 +775,30 @@ class ContractOccupancyProtectionTest extends TestCase
             'status' => $contract->status,
             'notes' => $contract->notes,
         ], $overrides);
+    }
+
+    private function unitSelectOptions(string $html): array
+    {
+        $previous = libxml_use_internal_errors(true);
+        $dom = new \DOMDocument;
+        $dom->loadHTML('<?xml encoding="UTF-8">'.$html);
+        libxml_clear_errors();
+        libxml_use_internal_errors($previous);
+
+        $options = [];
+        $xpath = new \DOMXPath($dom);
+
+        foreach ($xpath->query('//select[@name="unit_id"]/option') as $option) {
+            $value = $option->getAttribute('value');
+
+            if ($value === '') {
+                continue;
+            }
+
+            $options[$value] = trim((string) preg_replace('/\s+/', ' ', $option->textContent));
+        }
+
+        return $options;
     }
 
     private function unicode(string $escaped): string
