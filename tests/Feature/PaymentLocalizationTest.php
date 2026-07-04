@@ -47,6 +47,7 @@ class PaymentLocalizationTest extends TestCase
             ->assertSee('data-mobile-payments-list', false)
             ->assertSee('data-payment-mobile-card', false)
             ->assertSee('data-payment-action', false)
+            ->assertDontSee('min-w-[68rem]', false)
             ->assertSee('View receipt')
             ->assertSee('Paid');
 

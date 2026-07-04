@@ -357,6 +357,7 @@ class ReportLocalizationTest extends TestCase
             ->assertSee(route('payments.show', $paidPayment), false)
             ->assertSee(route('payments.show', $partialPayment), false)
             ->assertSee('tenant_id='.$tenant->id, false)
+            ->assertDontSee('min-w-[62rem]', false)
             ->assertDontSee('reports.');
 
         $this->actingAs($owner)
