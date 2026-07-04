@@ -13,6 +13,7 @@ use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\ExpenseController;
 use App\Http\Controllers\LocaleController;
 use App\Http\Controllers\PaymentController;
+use App\Http\Controllers\PaymentFollowUpController;
 use App\Http\Controllers\ReportController;
 use App\Http\Controllers\TenantController;
 use App\Http\Controllers\UnitController;
@@ -78,6 +79,7 @@ Route::middleware('auth')->group(function () {
 
     Route::middleware(EnsureAbility::class.':view-payments')->group(function () {
         Route::resource('payments', PaymentController::class)->only(['index', 'show', 'edit', 'update']);
+        Route::post('payments/{payment}/follow-ups', [PaymentFollowUpController::class, 'store'])->name('payment-follow-ups.store');
         Route::get('payments/{payment}/receipt', [PaymentController::class, 'receipt'])->name('payments.receipt');
         Route::get('payments/{payment}/proof', [PaymentController::class, 'downloadProof'])->name('payments.proof.download');
     });

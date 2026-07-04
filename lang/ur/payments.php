@@ -69,6 +69,26 @@ return [
         'cancelled_due_to_contract_termination' => 'معاہدہ ختم ہونے کی وجہ سے منسوخ',
     ],
 
+    'follow_ups' => [
+        'title' => 'Follow-up history',
+        'description' => 'Track manual reminders, tenant replies, and payment promises for this payment.',
+        'empty' => 'No follow-up entries have been recorded yet.',
+        'type' => 'Follow-up type',
+        'note' => 'Follow-up note',
+        'promised_date' => 'Promised payment date',
+        'promised_amount' => 'Promised amount',
+        'created_by' => 'Created by',
+        'save' => 'Save follow-up',
+        'saved' => 'Follow-up saved.',
+        'log_reminder' => 'Log reminder',
+        'promise_indicator' => 'Promise',
+        'types' => [
+            'note' => 'Note',
+            'reminder_logged' => 'Reminder logged',
+            'promise_to_pay' => 'Promise to pay',
+        ],
+    ],
+
     'receipt' => [
         'partial_note' => 'یہ رسید صرف وصول شدہ رقم کی تصدیق کرتی ہے۔ باقی رقم ابھی واجب الادا ہے۔',
     ],

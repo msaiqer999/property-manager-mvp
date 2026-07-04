@@ -53,6 +53,12 @@
                         <dd class="font-medium text-rose-700"><bdi dir="ltr">{{ number_format($payment->remaining_amount, 2) }}</bdi></dd>
                     </div>
                 @endif
+                @if($payment->latestPromise?->promised_date)
+                    <div class="flex items-center justify-between gap-3">
+                        <dt class="text-slate-500">{{ __('payments.follow_ups.promise_indicator') }}</dt>
+                        <dd class="font-medium text-slate-700"><bdi dir="ltr">{{ $payment->latestPromise->promised_date->toDateString() }}</bdi></dd>
+                    </div>
+                @endif
             </dl>
             <div class="mt-4 grid gap-2">
                 @if($isOverduePayment)
@@ -102,7 +108,7 @@
                     <td class="p-4 font-medium"><span class="block max-w-48 truncate">{{ $payment->contract?->tenant?->full_name ?? __('payments.not_available') }}</span><span class="mt-1 block max-w-48 truncate text-xs font-normal text-slate-500">{{ $payment->contract?->unit?->building?->name ?? __('payments.not_available') }}</span></td>
                     <td class="p-4 text-center whitespace-nowrap"><bdi dir="ltr">{{ $payment->contract?->unit?->unit_number ?? __('payments.not_available') }}</bdi></td>
                     <td class="p-4 whitespace-nowrap"><bdi dir="ltr">{{ $payment->contract?->contract_number ?? __('payments.not_available') }}</bdi></td>
-                    <td class="p-4 text-end whitespace-nowrap"><bdi dir="ltr">{{ number_format($payment->amount_paid, 2) }} / {{ number_format($payment->amount_due, 2) }}</bdi>@if($isOverduePayment)<span class="mt-1 block text-xs text-rose-700">{{ __('payments.show.remaining') }}: <bdi dir="ltr">{{ number_format($payment->remaining_amount, 2) }}</bdi></span>@endif</td>
+                    <td class="p-4 text-end whitespace-nowrap"><bdi dir="ltr">{{ number_format($payment->amount_paid, 2) }} / {{ number_format($payment->amount_due, 2) }}</bdi>@if($isOverduePayment)<span class="mt-1 block text-xs text-rose-700">{{ __('payments.show.remaining') }}: <bdi dir="ltr">{{ number_format($payment->remaining_amount, 2) }}</bdi></span>@endif @if($payment->latestPromise?->promised_date)<span class="mt-1 block text-xs text-slate-500">{{ __('payments.follow_ups.promise_indicator') }}: <bdi dir="ltr">{{ $payment->latestPromise->promised_date->toDateString() }}</bdi></span>@endif</td>
                     <td class="p-4 text-center whitespace-nowrap"><span @class(['rounded px-2 py-1 text-xs', 'bg-rose-100 text-rose-700' => $isOverduePayment, 'bg-slate-100 text-slate-700' => ! $isOverduePayment])>{{ __('payments.statuses.'.$payment->display_status_key) }}</span>@if($payment->status === 'cancelled')<span class="mt-1 block text-xs text-slate-500">{{ __('payments.lifecycle.cancelled_due_to_contract_termination') }}</span>@endif</td>
                     <td class="p-4 text-center whitespace-nowrap"><bdi dir="ltr">{{ $payment->payment_date?->toDateString() ?? __('payments.not_available') }}</bdi></td>
                     <td class="p-4 text-center whitespace-nowrap"><div class="flex justify-center gap-2">@if($isOverduePayment)<a data-payment-action class="tap-target inline-flex items-center rounded border border-rose-200 px-3 text-rose-700" href="{{ route('payments.show', $payment) }}">{{ __('payments.follow_up') }}</a>@endif @if($payment->amount_paid_minor > 0)<a data-payment-action class="tap-target inline-flex items-center rounded border px-3 text-slate-700" href="{{ route('payments.show', $payment) }}">{{ __('payments.view_receipt') }}</a>@endif @if($payment->status === 'cancelled')<span class="text-sm text-slate-500">{{ __('payments.lifecycle.cancelled_due_to_contract_termination') }}</span>@elseif($payment->amount_paid_minor < $payment->amount_due_minor)@can('recordPayment', $payment)<a data-payment-action class="tap-target inline-flex items-center rounded border px-3 text-slate-700" href="{{ route('payments.edit', $payment) }}">{{ __('payments.record_payment') }}</a>@endcan @endif</div></td>
