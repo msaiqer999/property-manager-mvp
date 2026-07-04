@@ -76,6 +76,26 @@ return [
         'message' => 'Hello :tenant_name, this is a reminder that rent for unit :unit_number was due on :due_date. The remaining amount is :remaining_amount. Please arrange payment when possible. Thank you.',
     ],
 
+    'follow_ups' => [
+        'title' => 'Follow-up history',
+        'description' => 'Track manual reminders, tenant replies, and payment promises for this payment.',
+        'empty' => 'No follow-up entries have been recorded yet.',
+        'type' => 'Follow-up type',
+        'note' => 'Follow-up note',
+        'promised_date' => 'Promised payment date',
+        'promised_amount' => 'Promised amount',
+        'created_by' => 'Created by',
+        'save' => 'Save follow-up',
+        'saved' => 'Follow-up saved.',
+        'log_reminder' => 'Log reminder',
+        'promise_indicator' => 'Promise',
+        'types' => [
+            'note' => 'Note',
+            'reminder_logged' => 'Reminder logged',
+            'promise_to_pay' => 'Promise to pay',
+        ],
+    ],
+
     'pdf' => [
         'title' => 'Payment Receipt',
         'generated_at' => 'Generated at',

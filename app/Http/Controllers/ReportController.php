@@ -6,6 +6,7 @@ use App\Http\Controllers\Concerns\ScopesOrganization;
 use App\Models\Building;
 use App\Models\Expense;
 use App\Models\Payment;
+use App\Models\Tenant;
 use App\Models\Unit;
 use App\Support\PdfRenderer;
 use App\Support\ReportAuthorization;
@@ -28,7 +29,9 @@ class ReportController extends Controller
             'filters' => $filters,
             'buildings' => $this->buildings(),
             'units' => $this->units(),
+            'tenants' => $this->tenants(),
             'filterQuery' => $this->filterQuery($filters),
+            'statementRows' => $this->statementRows($filters),
         ]);
     }
 
@@ -80,20 +83,14 @@ class ReportController extends Controller
                     ->where('buildings.organization_id', $this->organizationId())
                     ->when($filters['building_id'], fn ($query, $id) => $query->where('buildings.id', $id))
                     ->when($filters['unit_id'], fn ($query, $id) => $query->where('units.id', $id))
+                    ->when($filters['tenant_id'], fn ($query, $id) => $query->where('contracts.tenant_id', $id))
                     ->select('buildings.name', DB::raw('COALESCE(SUM(payments.amount_paid), 0) as income'))
                     ->groupBy('buildings.id', 'buildings.name')
                     ->get(),
             ],
             'unit-statement' => [
-                'rows' => Unit::with([
-                    'building',
-                    'expenses' => fn ($query) => $query->notVoided()->whereBetween('expense_date', [$filters['from'], $filters['to']]),
-                    'contracts.payments' => fn ($query) => $query->whereBetween('due_date', [$filters['from'], $filters['to']]),
-                ])
-                    ->whereHas('building', fn ($query) => $query->where('organization_id', $this->organizationId()))
-                    ->when($filters['building_id'], fn ($query, $id) => $query->where('building_id', $id))
-                    ->when($filters['unit_id'], fn ($query, $id) => $query->whereKey($id))
-                    ->get(),
+                'rows' => $this->unitStatementUnits($filters),
+                'statementRows' => $this->statementRows($filters),
             ],
             'expenses' => [
                 'rows' => $this->expenseQuery($filters)->with('building', 'unit')->latest('expense_date')->get(),
@@ -134,6 +131,8 @@ class ReportController extends Controller
         $unitId = $request->integer('unit_id') ?: null;
         $building = null;
         $unit = null;
+        $tenantId = $request->integer('tenant_id') ?: null;
+        $tenant = null;
 
         if ($buildingId !== null) {
             $building = Building::findOrFail($buildingId);
@@ -149,15 +148,23 @@ class ReportController extends Controller
             }
         }
 
+        if ($tenantId !== null) {
+            $tenant = Tenant::findOrFail($tenantId);
+            abort_unless((int) $tenant->organization_id === $this->organizationId(), 403);
+        }
+
         return [
             'building_id' => $buildingId,
             'unit_id' => $unitId,
+            'tenant_id' => $tenantId,
             'from' => $from,
             'to' => $to,
             'from_date' => $from->toDateString(),
             'to_date' => $to->toDateString(),
             'building_label' => $building?->name ?? __('reports.filters.all_buildings'),
             'unit_label' => $unit?->unit_number ?? __('reports.filters.all_units'),
+            'tenant_label' => $tenant?->full_name ?? __('reports.filters.all_tenants'),
+            'tenant_phone' => $tenant?->phone,
         ];
     }
 
@@ -166,6 +173,7 @@ class ReportController extends Controller
         return array_filter([
             'building_id' => $filters['building_id'],
             'unit_id' => $filters['unit_id'],
+            'tenant_id' => $filters['tenant_id'],
             'from' => $filters['from_date'],
             'to' => $filters['to_date'],
         ], fn ($value) => $value !== null && $value !== '');
@@ -177,7 +185,8 @@ class ReportController extends Controller
             ->where('payments.organization_id', $this->organizationId())
             ->whereBetween("payments.{$dateColumn}", [$filters['from'], $filters['to']])
             ->when($filters['building_id'], fn ($query, $id) => $query->whereHas('contract.unit', fn ($unit) => $unit->where('building_id', $id)))
-            ->when($filters['unit_id'], fn ($query, $id) => $query->whereHas('contract', fn ($contract) => $contract->where('unit_id', $id)));
+            ->when($filters['unit_id'], fn ($query, $id) => $query->whereHas('contract', fn ($contract) => $contract->where('unit_id', $id)))
+            ->when($filters['tenant_id'], fn ($query, $id) => $query->whereHas('contract', fn ($contract) => $contract->where('tenant_id', $id)));
     }
 
     private function expenseQuery(array $filters)
@@ -203,9 +212,10 @@ class ReportController extends Controller
                 'remaining_amount' => (float) $rows->sum(fn ($row) => $row->remaining_amount ?? ($row->amount_due - $row->amount_paid)),
             ],
             'unit-statement' => [
-                'income' => (float) $rows->sum(fn ($unit) => $unit->contracts->sum(fn ($contract) => $contract->payments->sum('amount_paid'))),
-                'expenses' => (float) $rows->sum(fn ($unit) => $unit->expenses->sum('amount')),
-                'amount_due' => (float) $rows->sum(fn ($unit) => $unit->contracts->sum(fn ($contract) => $contract->payments->sum('amount_due'))),
+                'amount_due' => (float) $data['statementRows']->sum('amount_due'),
+                'amount_paid' => (float) $data['statementRows']->sum('amount_paid'),
+                'remaining_balance' => (float) $data['statementRows']->sum(fn ($payment) => $payment->remaining_amount),
+                'overdue_remaining' => (float) $data['statementRows']->sum(fn ($payment) => in_array($payment->display_status_key, ['overdue', 'partial_overdue'], true) ? $payment->remaining_amount : 0),
             ],
             default => [
                 'income' => (float) $data['income'],
@@ -224,6 +234,32 @@ class ReportController extends Controller
     {
         return Unit::whereHas('building', fn ($query) => $query->where('organization_id', $this->organizationId()))
             ->with('building')
+            ->orderBy('unit_number')
+            ->get();
+    }
+
+    private function tenants()
+    {
+        return Tenant::where('organization_id', $this->organizationId())
+            ->orderBy('full_name')
+            ->get();
+    }
+
+    private function statementRows(array $filters)
+    {
+        return $this->paymentQuery($filters, 'due_date')
+            ->with('contract.tenant', 'contract.unit.building')
+            ->orderBy('due_date')
+            ->get();
+    }
+
+    private function unitStatementUnits(array $filters)
+    {
+        return Unit::with('building')
+            ->whereHas('building', fn ($query) => $query->where('organization_id', $this->organizationId()))
+            ->when($filters['building_id'], fn ($query, $id) => $query->where('building_id', $id))
+            ->when($filters['unit_id'], fn ($query, $id) => $query->whereKey($id))
+            ->when($filters['tenant_id'], fn ($query, $id) => $query->whereHas('contracts', fn ($contract) => $contract->where('tenant_id', $id)))
             ->orderBy('unit_number')
             ->get();
     }

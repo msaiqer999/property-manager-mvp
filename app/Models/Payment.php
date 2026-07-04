@@ -20,6 +20,14 @@ class Payment extends Model
     public function organization() { return $this->belongsTo(Organization::class); }
     public function contract() { return $this->belongsTo(Contract::class); }
     public function creator() { return $this->belongsTo(User::class, 'created_by'); }
+    public function followUps() { return $this->hasMany(PaymentFollowUp::class); }
+
+    public function latestPromise()
+    {
+        return $this->hasOne(PaymentFollowUp::class)
+            ->where('type', PaymentFollowUp::TYPE_PROMISE_TO_PAY)
+            ->latestOfMany();
+    }
 
     public function getAmountDueMinorAttribute(): int
     {

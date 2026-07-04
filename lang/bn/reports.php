@@ -14,9 +14,11 @@ return [
         'unit' => 'ইউনিট',
         'from' => 'শুরুর তারিখ',
         'to' => 'শেষ তারিখ',
+        'tenant' => 'Tenant',
         'apply' => 'প্রয়োগ করুন',
         'all_buildings' => 'সব ভবন',
         'all_units' => 'সব ইউনিট',
+        'all_tenants' => 'All tenants',
     ],
 
     'actions' => [
@@ -52,9 +54,21 @@ return [
         'method' => 'পদ্ধতি',
         'net_profit' => 'নিট লাভ',
         'remaining_amount' => 'বাকি',
+        'remaining_balance' => 'Remaining balance',
+        'overdue_remaining' => 'Overdue remaining',
+        'paid_date' => 'Paid date',
+        'receipt' => 'Receipt',
         'status' => 'অবস্থা',
         'tenant' => 'ভাড়াটিয়া',
         'unit' => 'ইউনিট',
+    ],
+
+    'statement' => [
+        'title' => 'Tenant / unit statement',
+        'subtitle' => 'Review what was due, what was paid, what remains, and which receipts are available.',
+        'empty' => 'No scheduled payments found for the selected statement filters.',
+        'view_statement' => 'View statement',
+        'view_receipt' => 'View receipt',
     ],
 
     'pdf' => [

@@ -14,9 +14,11 @@ return [
         'unit' => 'Unit',
         'from' => 'From date',
         'to' => 'To date',
+        'tenant' => 'Tenant',
         'apply' => 'Apply',
         'all_buildings' => 'All buildings',
         'all_units' => 'All units',
+        'all_tenants' => 'All tenants',
     ],
 
     'actions' => [
@@ -30,7 +32,7 @@ return [
 
     'types' => [
         'building-income' => 'Building income',
-        'unit-statement' => 'Unit statement',
+        'unit-statement' => 'Tenant / Unit Statement',
         'expenses' => 'Expenses',
         'overdue' => 'Overdue payments',
         'net-profit' => 'Net profit',
@@ -52,9 +54,21 @@ return [
         'method' => 'Method',
         'net_profit' => 'Net profit',
         'remaining_amount' => 'Remaining',
+        'remaining_balance' => 'Remaining balance',
+        'overdue_remaining' => 'Overdue remaining',
+        'paid_date' => 'Paid date',
+        'receipt' => 'Receipt',
         'status' => 'Status',
         'tenant' => 'Tenant',
         'unit' => 'Unit',
+    ],
+
+    'statement' => [
+        'title' => 'Tenant / unit statement',
+        'subtitle' => 'Review what was due, what was paid, what remains, and which receipts are available.',
+        'empty' => 'No scheduled payments found for the selected statement filters.',
+        'view_statement' => 'View statement',
+        'view_receipt' => 'View receipt',
     ],
 
     'pdf' => [

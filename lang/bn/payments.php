@@ -69,6 +69,26 @@ return [
         'cancelled_due_to_contract_termination' => 'চুক্তি শেষ হওয়ার কারণে বাতিল',
     ],
 
+    'follow_ups' => [
+        'title' => 'Follow-up history',
+        'description' => 'Track manual reminders, tenant replies, and payment promises for this payment.',
+        'empty' => 'No follow-up entries have been recorded yet.',
+        'type' => 'Follow-up type',
+        'note' => 'Follow-up note',
+        'promised_date' => 'Promised payment date',
+        'promised_amount' => 'Promised amount',
+        'created_by' => 'Created by',
+        'save' => 'Save follow-up',
+        'saved' => 'Follow-up saved.',
+        'log_reminder' => 'Log reminder',
+        'promise_indicator' => 'Promise',
+        'types' => [
+            'note' => 'Note',
+            'reminder_logged' => 'Reminder logged',
+            'promise_to_pay' => 'Promise to pay',
+        ],
+    ],
+
     'receipt' => [
         'partial_note' => 'এই রসিদটি শুধু প্রাপ্ত টাকার প্রমাণ। বাকি টাকা এখনো বকেয়া আছে।',
     ],

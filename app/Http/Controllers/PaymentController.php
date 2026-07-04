@@ -19,7 +19,7 @@ class PaymentController extends Controller
     {
         Gate::authorize('viewAny', Payment::class);
 
-        $payments = Payment::with(['contract.tenant', 'contract.unit.building'])
+        $payments = Payment::with(['contract.tenant', 'contract.unit.building', 'latestPromise'])
             ->where('organization_id', $this->organizationId())
             ->when($request->status, fn ($q, $status) => $q->where('status', $status))
             ->when($request->overdue, fn ($q) => $q
@@ -35,7 +35,7 @@ class PaymentController extends Controller
     public function show(Payment $payment)
     {
         Gate::authorize('view', $payment);
-        $payment->loadMissing('contract.tenant', 'contract.unit.building');
+        $payment->loadMissing('contract.tenant', 'contract.unit.building', 'followUps.user');
 
         return view('payments.show', compact('payment'));
     }

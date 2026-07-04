@@ -12,11 +12,16 @@
             @endif
         </p>
     </div>
-    @can('update', $tenant)
-        @if(! $tenant->archived_at)
-            <a class="tap-target inline-flex min-h-11 items-center justify-center rounded border px-4 text-center text-sm font-medium" href="{{ route('tenants.edit', $tenant) }}">{{ __('app.actions.edit') }}</a>
+    <div class="grid gap-2 sm:flex sm:flex-wrap">
+        @if(auth()->user()?->role?->can('view-reports'))
+            <a class="tap-target inline-flex min-h-11 items-center justify-center rounded border px-4 text-center text-sm font-medium" href="{{ route('reports.index', ['tenant_id' => $tenant->id]) }}">{{ __('reports.statement.view_statement') }}</a>
         @endif
-    @endcan
+        @can('update', $tenant)
+            @if(! $tenant->archived_at)
+                <a class="tap-target inline-flex min-h-11 items-center justify-center rounded border px-4 text-center text-sm font-medium" href="{{ route('tenants.edit', $tenant) }}">{{ __('app.actions.edit') }}</a>
+            @endif
+        @endcan
+    </div>
 </div>
 
 <div class="grid gap-4 lg:grid-cols-[1fr_22rem]">

@@ -3,7 +3,12 @@
 @section('content')
 <div class="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
     <h1 class="text-xl font-semibold">{{ __('units.fields.unit') }} <bdi dir="ltr">{{ $unit->unit_number }}</bdi></h1>
-    <a class="tap-target inline-flex min-h-11 items-center justify-center rounded border px-4 text-center text-sm font-medium" href="{{ route('units.edit', $unit) }}">{{ __('app.actions.edit') }}</a>
+    <div class="grid gap-2 sm:flex sm:flex-wrap">
+        @if(auth()->user()?->role?->can('view-reports'))
+            <a class="tap-target inline-flex min-h-11 items-center justify-center rounded border px-4 text-center text-sm font-medium" href="{{ route('reports.index', ['unit_id' => $unit->id]) }}">{{ __('reports.statement.view_statement') }}</a>
+        @endif
+        <a class="tap-target inline-flex min-h-11 items-center justify-center rounded border px-4 text-center text-sm font-medium" href="{{ route('units.edit', $unit) }}">{{ __('app.actions.edit') }}</a>
+    </div>
 </div>
 
 <div data-unit-show-card class="grid gap-3 rounded border bg-white p-4 shadow-sm sm:grid-cols-2">

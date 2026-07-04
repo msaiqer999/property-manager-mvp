@@ -14,9 +14,11 @@ return [
         'unit' => 'الوحدة',
         'from' => 'من تاريخ',
         'to' => 'إلى تاريخ',
+        'tenant' => 'المستأجر',
         'apply' => 'تطبيق',
         'all_buildings' => 'كل المباني',
         'all_units' => 'كل الوحدات',
+        'all_tenants' => 'كل المستأجرين',
     ],
 
     'actions' => [
@@ -29,7 +31,7 @@ return [
     ],
     'types' => [
         'building-income' => 'دخل المباني',
-        'unit-statement' => 'كشف الوحدة',
+        'unit-statement' => 'كشف حساب المستأجر / الوحدة',
         'expenses' => 'المصروفات',
         'overdue' => 'الدفعات المتأخرة',
         'net-profit' => 'صافي الربح',
@@ -51,9 +53,21 @@ return [
         'method' => 'طريقة الدفع',
         'net_profit' => 'صافي الربح',
         'remaining_amount' => 'المتبقي',
+        'remaining_balance' => 'الرصيد المتبقي',
+        'overdue_remaining' => 'المتأخر المتبقي',
+        'paid_date' => 'تاريخ الدفع',
+        'receipt' => 'الإيصال',
         'status' => 'الحالة',
         'tenant' => 'المستأجر',
         'unit' => 'الوحدة',
+    ],
+
+    'statement' => [
+        'title' => 'كشف حساب المستأجر / الوحدة',
+        'subtitle' => 'راجع المستحق، والمدفوع، والمتبقي، والإيصالات المتاحة.',
+        'empty' => 'لا توجد دفعات مجدولة لفلاتر كشف الحساب المحددة.',
+        'view_statement' => 'عرض كشف الحساب',
+        'view_receipt' => 'عرض الإيصال',
     ],
 
     'pdf' => [

@@ -230,6 +230,169 @@ class ReportLocalizationTest extends TestCase
         $this->actingAs($caretaker)->get(route('reports.index'))->assertForbidden();
     }
 
+    public function test_tenant_unit_statement_filters_totals_receipts_and_security(): void
+    {
+        $organization = Organization::create(['name' => 'Statement Org']);
+        $otherOrganization = Organization::create(['name' => 'Other Statement Org']);
+        $owner = User::create([
+            'organization_id' => $organization->id,
+            'name' => 'Statement Owner',
+            'email' => 'statement-owner@example.com',
+            'password' => 'password',
+            'role' => 'owner',
+        ]);
+        $manager = User::create([
+            'organization_id' => $organization->id,
+            'name' => 'Statement Manager',
+            'email' => 'statement-manager@example.com',
+            'password' => 'password',
+            'role' => 'manager',
+        ]);
+        $accountant = User::create([
+            'organization_id' => $organization->id,
+            'name' => 'Statement Accountant',
+            'email' => 'statement-accountant@example.com',
+            'password' => 'password',
+            'role' => 'accountant',
+        ]);
+        $caretaker = User::create([
+            'organization_id' => $organization->id,
+            'name' => 'Statement Caretaker',
+            'email' => 'statement-caretaker@example.com',
+            'password' => 'password',
+            'role' => 'caretaker',
+        ]);
+        $building = Building::create([
+            'organization_id' => $organization->id,
+            'name' => 'Statement Building',
+            'location' => 'Dubai',
+        ]);
+        $unit = Unit::create([
+            'building_id' => $building->id,
+            'unit_number' => 'ST-101',
+            'type' => 'apartment',
+            'status' => 'rented',
+            'rent_amount' => 1000,
+        ]);
+        $tenant = Tenant::create([
+            'organization_id' => $organization->id,
+            'full_name' => 'Statement Tenant',
+            'phone' => '+971500111222',
+        ]);
+        $contract = Contract::create([
+            'organization_id' => $organization->id,
+            'unit_id' => $unit->id,
+            'tenant_id' => $tenant->id,
+            'contract_number' => 'STMT-001',
+            'start_date' => '2026-06-01',
+            'end_date' => '2027-05-31',
+            'rent_amount' => 1000,
+            'payment_frequency' => 'monthly',
+            'deposit_amount' => 0,
+            'status' => 'active',
+        ]);
+        $paidPayment = Payment::create([
+            'organization_id' => $organization->id,
+            'contract_id' => $contract->id,
+            'due_date' => '2026-06-01',
+            'amount_due' => 1000,
+            'amount_paid' => 1000,
+            'payment_date' => '2026-06-02',
+            'payment_method' => 'cash',
+            'status' => 'paid',
+        ]);
+        $partialPayment = Payment::create([
+            'organization_id' => $organization->id,
+            'contract_id' => $contract->id,
+            'due_date' => '2026-06-15',
+            'amount_due' => 1000,
+            'amount_paid' => 250,
+            'payment_method' => 'cash',
+            'status' => 'partial',
+        ]);
+
+        $otherBuilding = Building::create([
+            'organization_id' => $otherOrganization->id,
+            'name' => 'Other Statement Building',
+            'location' => 'Abu Dhabi',
+        ]);
+        $otherUnit = Unit::create([
+            'building_id' => $otherBuilding->id,
+            'unit_number' => 'OTHER-ST-101',
+            'type' => 'apartment',
+            'status' => 'rented',
+            'rent_amount' => 9999,
+        ]);
+        $otherTenant = Tenant::create([
+            'organization_id' => $otherOrganization->id,
+            'full_name' => 'Other Statement Tenant',
+        ]);
+
+        $filter = [
+            'tenant_id' => $tenant->id,
+            'unit_id' => $unit->id,
+            'from' => '2026-06-01',
+            'to' => '2026-06-30',
+        ];
+
+        foreach ([$owner, $manager, $accountant] as $user) {
+            $this->actingAs($user)->get(route('reports.index', $filter))->assertOk();
+        }
+
+        $response = $this->actingAs($owner)
+            ->withSession(['locale' => 'en'])
+            ->get(route('reports.index', $filter));
+
+        $response->assertOk()
+            ->assertSee('Tenant / unit statement')
+            ->assertSee('Statement Tenant')
+            ->assertSee('+971500111222')
+            ->assertSee('Statement Building')
+            ->assertSee('ST-101')
+            ->assertSee('STMT-001')
+            ->assertSee('2,000.00')
+            ->assertSee('1,250.00')
+            ->assertSee('750.00')
+            ->assertSee('Partially paid, balance overdue')
+            ->assertSee(route('payments.show', $paidPayment), false)
+            ->assertSee(route('payments.show', $partialPayment), false)
+            ->assertSee('tenant_id='.$tenant->id, false)
+            ->assertDontSee('reports.');
+
+        $this->actingAs($owner)
+            ->withSession(['locale' => 'ar'])
+            ->get(route('reports.index', $filter))
+            ->assertOk()
+            ->assertSee('كشف حساب')
+            ->assertSee('Statement Tenant')
+            ->assertDontSee('reports.');
+
+        $this->actingAs($caretaker)->get(route('reports.index', $filter))->assertForbidden();
+        $this->actingAs($owner)->get(route('reports.index', ['tenant_id' => $otherTenant->id]))->assertForbidden();
+        $this->actingAs($owner)->get(route('reports.index', ['unit_id' => $otherUnit->id]))->assertForbidden();
+
+        app()->setLocale('en');
+        $this->actingAs($owner);
+        $controller = app(\App\Http\Controllers\ReportController::class);
+        $filtersMethod = new \ReflectionMethod($controller, 'reportFilters');
+        $filtersMethod->setAccessible(true);
+        $reportFilters = $filtersMethod->invoke($controller, \Illuminate\Http\Request::create('/reports/unit-statement/pdf', 'GET', $filter));
+        $method = new \ReflectionMethod($controller, 'reportData');
+        $method->setAccessible(true);
+        $reportHtml = view('pdf.report', $method->invoke($controller, 'unit-statement', $reportFilters) + ['type' => 'unit-statement'])->render();
+
+        $this->assertStringContainsString('Statement Tenant', $reportHtml);
+        $this->assertStringContainsString('+971500111222', $reportHtml);
+        $this->assertStringContainsString('ST-101', $reportHtml);
+        $this->assertStringContainsString('STMT-001', $reportHtml);
+        $this->assertStringContainsString('2,000.00', $reportHtml);
+        $this->assertStringContainsString('1,250.00', $reportHtml);
+        $this->assertStringContainsString('750.00', $reportHtml);
+        $this->assertStringContainsString('Partially paid, balance overdue', $reportHtml);
+        $this->assertStringNotContainsString('Other Statement Tenant', $reportHtml);
+        $this->assertStringNotContainsString('reports.', $reportHtml);
+    }
+
     public function test_report_totals_remain_organization_scoped(): void
     {
         $this->seed(DatabaseSeeder::class);
