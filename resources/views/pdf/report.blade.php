@@ -2,6 +2,13 @@
     $direction = \App\Support\SupportedLocales::direction(app()->getLocale());
     $isRtl = $direction === 'rtl';
     $na = __('reports.pdf.not_available');
+    $statementRowsForPdf = $type === 'unit-statement' ? ($statementRows ?? collect()) : collect();
+    $statementContractNumbers = ($type === 'unit-statement')
+        ? $statementRowsForPdf->pluck('contract.contract_number')->filter()->unique()->values()
+        : collect();
+    $statementContractLabel = $statementContractNumbers->count() === 1
+        ? $statementContractNumbers->first()
+        : $na;
 @endphp
 <!doctype html>
 <html lang="{{ app()->getLocale() }}" dir="{{ $direction }}">
@@ -152,22 +159,35 @@
         </table>
     </div>
 
-    <table class="summary">
-        <tr>
-            <td>
-                <span class="summary-label">{{ __('reports.summary.income') }}</span>
-                <span class="summary-value"><bdi class="ltr">{{ number_format((float) $income, 2) }}</bdi></span>
-            </td>
-            <td>
-                <span class="summary-label">{{ __('reports.summary.expenses') }}</span>
-                <span class="summary-value"><bdi class="ltr">{{ number_format((float) $expensesTotal, 2) }}</bdi></span>
-            </td>
-            <td>
-                <span class="summary-label">{{ __('reports.summary.net_profit') }}</span>
-                <span class="summary-value"><bdi class="ltr">{{ number_format((float) $netProfit, 2) }}</bdi></span>
-            </td>
-        </tr>
-    </table>
+    @if($type === 'unit-statement')
+        <table class="summary">
+            <tr>
+                @foreach(['amount_due', 'amount_paid', 'remaining_balance', 'overdue_remaining'] as $key)
+                    <td>
+                        <span class="summary-label">{{ __('reports.columns.'.$key) }}</span>
+                        <span class="summary-value"><bdi class="ltr">{{ number_format((float) ($totals[$key] ?? 0), 2) }}</bdi></span>
+                    </td>
+                @endforeach
+            </tr>
+        </table>
+    @else
+        <table class="summary">
+            <tr>
+                <td>
+                    <span class="summary-label">{{ __('reports.summary.income') }}</span>
+                    <span class="summary-value"><bdi class="ltr">{{ number_format((float) $income, 2) }}</bdi></span>
+                </td>
+                <td>
+                    <span class="summary-label">{{ __('reports.summary.expenses') }}</span>
+                    <span class="summary-value"><bdi class="ltr">{{ number_format((float) $expensesTotal, 2) }}</bdi></span>
+                </td>
+                <td>
+                    <span class="summary-label">{{ __('reports.summary.net_profit') }}</span>
+                    <span class="summary-value"><bdi class="ltr">{{ number_format((float) $netProfit, 2) }}</bdi></span>
+                </td>
+            </tr>
+        </table>
+    @endif
 
     <h2>{{ __('reports.pdf.metadata') }}</h2>
     <table>
@@ -177,6 +197,20 @@
             <th>{{ __('reports.filters.unit') }}</th>
             <td><bdi class="ltr">{{ $filters['unit_label'] }}</bdi></td>
         </tr>
+        <tr>
+            <th>{{ __('reports.filters.tenant') }}</th>
+            <td>{{ $filters['tenant_label'] }}</td>
+            <th>{{ __('tenants.fields.phone') }}</th>
+            <td><bdi class="ltr">{{ $filters['tenant_phone'] ?: $na }}</bdi></td>
+        </tr>
+        @if($type === 'unit-statement')
+        <tr>
+            <th>{{ __('reports.columns.contract') }}</th>
+            <td><bdi class="ltr">{{ $statementContractLabel }}</bdi></td>
+            <th>{{ __('reports.filters.unit') }}</th>
+            <td><bdi class="ltr">{{ $filters['unit_label'] }}</bdi></td>
+        </tr>
+        @endif
         <tr>
             <th>{{ __('reports.filters.from') }}</th>
             <td><bdi class="ltr">{{ $filters['from_date'] }}</bdi></td>
@@ -200,7 +234,7 @@
     </table>
 
     <h2>{{ __('reports.pdf.rows') }}</h2>
-    @if($rows->isEmpty())
+    @if(($type === 'unit-statement' ? $statementRowsForPdf : $rows)->isEmpty())
         <p class="empty">{{ __('reports.pdf.no_data') }}</p>
     @elseif($type === 'building-income')
         <table>
@@ -218,21 +252,29 @@
     @elseif($type === 'unit-statement')
         <table>
             <tr>
-                <th class="text-center">{{ __('reports.columns.unit') }}</th>
+                <th class="text-center">{{ __('reports.columns.due_date') }}</th>
+                <th>{{ __('reports.columns.tenant') }}</th>
                 <th>{{ __('reports.columns.building') }}</th>
-                <th class="text-center">{{ __('reports.columns.contracts') }}</th>
+                <th class="text-center">{{ __('reports.columns.unit') }}</th>
+                <th class="text-center">{{ __('reports.columns.contract') }}</th>
                 <th class="text-end">{{ __('reports.columns.amount_due') }}</th>
                 <th class="text-end">{{ __('reports.columns.amount_paid') }}</th>
-                <th class="text-end">{{ __('reports.columns.expenses') }}</th>
+                <th class="text-end">{{ __('reports.columns.remaining_amount') }}</th>
+                <th class="text-center">{{ __('reports.columns.paid_date') }}</th>
+                <th class="text-center">{{ __('reports.columns.status') }}</th>
             </tr>
-            @foreach($rows as $row)
+            @foreach($statementRowsForPdf as $row)
                 <tr>
-                    <td class="text-center"><bdi class="ltr">{{ $row->unit_number }}</bdi></td>
-                    <td>{{ $row->building->name }}</td>
-                    <td class="text-center"><bdi class="ltr">{{ $row->contracts->count() }}</bdi></td>
-                    <td class="text-end"><bdi class="ltr">{{ number_format((float) $row->contracts->sum(fn ($contract) => $contract->payments->sum('amount_due')), 2) }}</bdi></td>
-                    <td class="text-end"><bdi class="ltr">{{ number_format((float) $row->contracts->sum(fn ($contract) => $contract->payments->sum('amount_paid')), 2) }}</bdi></td>
-                    <td class="text-end"><bdi class="ltr">{{ number_format((float) $row->expenses->sum('amount'), 2) }}</bdi></td>
+                    <td class="text-center"><bdi class="ltr">{{ $row->due_date->toDateString() }}</bdi></td>
+                    <td>{{ $row->contract?->tenant?->full_name ?? $na }}</td>
+                    <td>{{ $row->contract?->unit?->building?->name ?? $na }}</td>
+                    <td class="text-center"><bdi class="ltr">{{ $row->contract?->unit?->unit_number ?? $na }}</bdi></td>
+                    <td class="text-center"><bdi class="ltr">{{ $row->contract?->contract_number ?? $na }}</bdi></td>
+                    <td class="text-end"><bdi class="ltr">{{ number_format((float) $row->amount_due, 2) }}</bdi></td>
+                    <td class="text-end"><bdi class="ltr">{{ number_format((float) $row->amount_paid, 2) }}</bdi></td>
+                    <td class="text-end"><bdi class="ltr">{{ number_format((float) $row->remaining_amount, 2) }}</bdi></td>
+                    <td class="text-center"><bdi class="ltr">{{ $row->payment_date?->toDateString() ?? $na }}</bdi></td>
+                    <td class="text-center">{{ __('payments.statuses.'.$row->display_status_key) }}</td>
                 </tr>
             @endforeach
         </table>

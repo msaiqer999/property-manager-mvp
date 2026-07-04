@@ -14,9 +14,11 @@ return [
         'unit' => 'یونٹ',
         'from' => 'شروع تاریخ',
         'to' => 'اختتامی تاریخ',
+        'tenant' => 'Tenant',
         'apply' => 'لاگو کریں',
         'all_buildings' => 'تمام عمارتیں',
         'all_units' => 'تمام یونٹس',
+        'all_tenants' => 'All tenants',
     ],
 
     'actions' => [
@@ -52,9 +54,21 @@ return [
         'method' => 'طریقہ',
         'net_profit' => 'خالص منافع',
         'remaining_amount' => 'باقی',
+        'remaining_balance' => 'Remaining balance',
+        'overdue_remaining' => 'Overdue remaining',
+        'paid_date' => 'Paid date',
+        'receipt' => 'Receipt',
         'status' => 'حالت',
         'tenant' => 'کرایہ دار',
         'unit' => 'یونٹ',
+    ],
+
+    'statement' => [
+        'title' => 'Tenant / unit statement',
+        'subtitle' => 'Review what was due, what was paid, what remains, and which receipts are available.',
+        'empty' => 'No scheduled payments found for the selected statement filters.',
+        'view_statement' => 'View statement',
+        'view_receipt' => 'View receipt',
     ],
 
     'pdf' => [

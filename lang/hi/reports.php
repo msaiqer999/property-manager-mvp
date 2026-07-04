@@ -14,9 +14,11 @@ return [
         'unit' => 'यूनिट',
         'from' => 'आरंभ तिथि',
         'to' => 'अंतिम तिथि',
+        'tenant' => 'Tenant',
         'apply' => 'लागू करें',
         'all_buildings' => 'सभी भवन',
         'all_units' => 'सभी यूनिट',
+        'all_tenants' => 'All tenants',
     ],
 
     'actions' => [
@@ -52,9 +54,21 @@ return [
         'method' => 'तरीका',
         'net_profit' => 'शुद्ध लाभ',
         'remaining_amount' => 'शेष',
+        'remaining_balance' => 'Remaining balance',
+        'overdue_remaining' => 'Overdue remaining',
+        'paid_date' => 'Paid date',
+        'receipt' => 'Receipt',
         'status' => 'स्थिति',
         'tenant' => 'किरायेदार',
         'unit' => 'यूनिट',
+    ],
+
+    'statement' => [
+        'title' => 'Tenant / unit statement',
+        'subtitle' => 'Review what was due, what was paid, what remains, and which receipts are available.',
+        'empty' => 'No scheduled payments found for the selected statement filters.',
+        'view_statement' => 'View statement',
+        'view_receipt' => 'View receipt',
     ],
 
     'pdf' => [
