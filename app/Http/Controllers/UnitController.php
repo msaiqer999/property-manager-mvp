@@ -51,6 +51,7 @@ class UnitController extends Controller
     public function show(Unit $unit)
     {
         Gate::authorize('view', $unit);
+        $unit->loadMissing('building', 'unitDocuments.uploader');
 
         return view('units.show', compact('unit'));
     }

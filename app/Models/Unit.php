@@ -17,4 +17,5 @@ class Unit extends Model
     public function building() { return $this->belongsTo(Building::class); }
     public function contracts() { return $this->hasMany(Contract::class); }
     public function expenses() { return $this->hasMany(Expense::class); }
+    public function unitDocuments() { return $this->hasMany(UnitDocument::class)->latest(); }
 }
