@@ -32,9 +32,28 @@ class UnitDocumentTest extends TestCase
         $this->assertSame($owner->organization_id, $document->organization_id);
         $this->assertSame($unit->id, $document->unit_id);
         $this->assertSame($owner->id, $document->uploaded_by);
+        $this->assertSame('local', $document->disk);
         $this->assertStringStartsWith("unit-documents/{$owner->organization_id}/{$unit->id}/", $document->path);
         $this->assertSame('lease.pdf', $document->original_name);
         Storage::disk('local')->assertExists($document->path);
+    }
+
+    public function test_configured_unit_documents_disk_is_used_on_upload(): void
+    {
+        config(['filesystems.unit_documents_disk' => 'unit-documents-test']);
+        Storage::fake('local');
+        Storage::fake('unit-documents-test');
+        [$owner, , , , $unit] = $this->scenario();
+
+        $this->actingAs($owner)
+            ->post(route('unit-documents.store', $unit), $this->validPayload())
+            ->assertRedirect(route('units.show', $unit));
+
+        $document = UnitDocument::firstOrFail();
+        $this->assertSame('unit-documents-test', $document->disk);
+        $this->assertStringStartsWith("unit-documents/{$owner->organization_id}/{$unit->id}/", $document->path);
+        Storage::disk('unit-documents-test')->assertExists($document->path);
+        Storage::disk('local')->assertMissing($document->path);
     }
 
     public function test_manager_can_upload_when_unit_policy_allows_unit_management(): void
@@ -97,6 +116,32 @@ class UnitDocumentTest extends TestCase
         $this->assertStringContainsString('no-store', (string) $response->headers->get('cache-control'));
         $this->assertSame('nosniff', $response->headers->get('x-content-type-options'));
         $this->assertStringNotContainsString($document->path, (string) $response->headers->get('content-disposition'));
+    }
+
+    public function test_download_uses_the_disk_stored_on_the_document_record(): void
+    {
+        Storage::fake('archive-test');
+        config(['filesystems.unit_documents_disk' => 'local']);
+        [$owner, , , , $unit] = $this->scenario();
+        $path = "unit-documents/{$owner->organization_id}/{$unit->id}/stored-disk-document.pdf";
+        Storage::disk('archive-test')->put($path, 'document-bytes');
+
+        $document = UnitDocument::create([
+            'organization_id' => $owner->organization_id,
+            'unit_id' => $unit->id,
+            'uploaded_by' => $owner->id,
+            'title' => 'Stored Disk Document',
+            'category' => 'other',
+            'disk' => 'archive-test',
+            'path' => $path,
+            'original_name' => 'stored-disk-document.pdf',
+            'mime_type' => 'application/pdf',
+            'size' => 100,
+        ]);
+
+        $this->actingAs($owner)
+            ->get(route('unit-documents.download', $document))
+            ->assertOk();
     }
 
     public function test_cross_organization_upload_and_download_are_forbidden(): void

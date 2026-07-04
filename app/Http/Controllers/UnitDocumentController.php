@@ -32,7 +32,8 @@ class UnitDocumentController extends Controller
 
         $file = $request->file('document');
         $prefix = $this->storagePrefix($organizationId, (int) $unit->id);
-        $path = $file->store($prefix, 'local');
+        $disk = $this->unitDocumentsDisk();
+        $path = $file->store($prefix, $disk);
 
         UnitDocument::create([
             'organization_id' => $organizationId,
@@ -41,7 +42,7 @@ class UnitDocumentController extends Controller
             'title' => $data['title'],
             'category' => $data['category'],
             'notes' => $data['notes'] ?? null,
-            'disk' => 'local',
+            'disk' => $disk,
             'path' => $path,
             'original_name' => $file->getClientOriginalName(),
             'mime_type' => $file->getClientMimeType(),
@@ -68,14 +69,23 @@ class UnitDocumentController extends Controller
             $this->storagePrefix((int) $unitDocument->organization_id, (int) $unitDocument->unit_id)
         );
 
-        if (! Storage::disk('local')->exists($path)) {
+        $disk = $unitDocument->disk ?: $this->unitDocumentsDisk();
+
+        if (! Storage::disk($disk)->exists($path)) {
             abort(404);
         }
 
-        return Storage::disk('local')->download($path, $this->safeDownloadName($unitDocument), [
+        return Storage::disk($disk)->download($path, $this->safeDownloadName($unitDocument), [
             'Cache-Control' => 'private, no-store',
             'X-Content-Type-Options' => 'nosniff',
         ]);
+    }
+
+    private function unitDocumentsDisk(): string
+    {
+        $disk = trim((string) config('filesystems.unit_documents_disk', 'local'));
+
+        return $disk !== '' ? $disk : 'local';
     }
 
     private function storagePrefix(int $organizationId, int $unitId): string
