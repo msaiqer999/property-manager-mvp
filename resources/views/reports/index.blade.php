@@ -113,7 +113,7 @@
         @endforeach
     </div>
 
-    <div class="mt-4 grid gap-3 md:hidden">
+    <div class="mt-4 grid gap-3 lg:hidden">
         @forelse($statementRows as $payment)
             <article class="rounded border p-3">
                 <div class="flex items-start justify-between gap-3">
@@ -142,8 +142,8 @@
         @endforelse
     </div>
 
-    <div class="mt-4 hidden md:block">
-        <x-table min-width="min-w-[62rem]">
+    <div class="mt-4 hidden lg:block">
+        <x-table min-width="min-w-full">
             <thead>
                 <tr>
                     <th class="p-3 text-start">{{ __('reports.columns.due_date') }}</th>
