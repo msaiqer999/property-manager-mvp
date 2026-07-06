@@ -16,6 +16,7 @@ use App\Http\Controllers\PaymentController;
 use App\Http\Controllers\PaymentFollowUpController;
 use App\Http\Controllers\ReportController;
 use App\Http\Controllers\TenantController;
+use App\Http\Controllers\UnitDocumentController;
 use App\Http\Controllers\UnitController;
 use App\Http\Controllers\UserController;
 use App\Http\Middleware\EnsureAbility;
@@ -63,6 +64,8 @@ Route::middleware('auth')->group(function () {
         Route::get('buildings/{building}/units/bulk-preview', [BulkUnitController::class, 'expiredPreview'])->name('buildings.units.bulk.preview.expired');
         Route::post('buildings/{building}/units/bulk-preview', [BulkUnitController::class, 'preview'])->name('buildings.units.bulk.preview');
         Route::post('buildings/{building}/units/bulk-store', [BulkUnitController::class, 'store'])->name('buildings.units.bulk.store');
+        Route::post('units/{unit}/documents', [UnitDocumentController::class, 'store'])->name('unit-documents.store');
+        Route::get('unit-documents/{unitDocument}/download', [UnitDocumentController::class, 'download'])->name('unit-documents.download');
         Route::resource('buildings', BuildingController::class);
         Route::resource('units', UnitController::class);
     });
