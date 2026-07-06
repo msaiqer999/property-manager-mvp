@@ -81,6 +81,35 @@ class UnitDocumentController extends Controller
         ]);
     }
 
+    public function destroy(UnitDocument $unitDocument)
+    {
+        $unitDocument->loadMissing('unit.building');
+
+        Gate::authorize('update', $unitDocument->unit);
+
+        if ((int) $unitDocument->organization_id !== (int) auth()->user()->organization_id) {
+            abort(403);
+        }
+
+        $path = $this->validatedPrivatePath(
+            $unitDocument->path,
+            $this->storagePrefix((int) $unitDocument->organization_id, (int) $unitDocument->unit_id)
+        );
+
+        $disk = $unitDocument->disk ?: $this->unitDocumentsDisk();
+
+        if (Storage::disk($disk)->exists($path)) {
+            Storage::disk($disk)->delete($path);
+        }
+
+        $unit = $unitDocument->unit;
+        $unitDocument->delete();
+
+        return redirect()
+            ->route('units.show', $unit)
+            ->with('success', __('unit_documents.messages.deleted'));
+    }
+
     private function unitDocumentsDisk(): string
     {
         $disk = trim((string) config('filesystems.unit_documents_disk', 'local'));

@@ -6,6 +6,7 @@ return [
     'upload_title' => 'Upload document',
     'empty' => 'No documents uploaded yet.',
     'download' => 'Download',
+    'confirm_delete' => 'Delete this document? This cannot be undone.',
     'fields' => [
         'title' => 'Document title',
         'category' => 'Document type',
@@ -27,9 +28,11 @@ return [
     ],
     'actions' => [
         'upload' => 'Upload document',
+        'delete' => 'Delete',
     ],
     'messages' => [
         'uploaded' => 'Document uploaded successfully.',
+        'deleted' => 'Document deleted successfully.',
     ],
     'help' => [
         'allowed_types' => 'Allowed files: PDF, JPG, PNG, or WEBP up to 5 MB.',

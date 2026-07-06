@@ -144,6 +144,143 @@ class UnitDocumentTest extends TestCase
             ->assertOk();
     }
 
+    public function test_owner_can_delete_own_unit_document_and_storage_object(): void
+    {
+        Storage::fake('local');
+        [$owner, , , , $unit] = $this->scenario();
+        $document = $this->storedDocument($owner, $unit);
+
+        $this->actingAs($owner)
+            ->delete(route('unit-documents.destroy', $document))
+            ->assertRedirect(route('units.show', $unit))
+            ->assertSessionHas('success', __('unit_documents.messages.deleted'));
+
+        $this->assertDatabaseMissing('unit_documents', ['id' => $document->id]);
+        Storage::disk('local')->assertMissing($document->path);
+    }
+
+    public function test_manager_can_delete_unit_document_when_policy_allows_update(): void
+    {
+        Storage::fake('local');
+        [$owner, $manager, , , $unit] = $this->scenario();
+        $document = $this->storedDocument($owner, $unit);
+
+        $this->actingAs($manager)
+            ->delete(route('unit-documents.destroy', $document))
+            ->assertRedirect(route('units.show', $unit));
+
+        $this->assertDatabaseMissing('unit_documents', ['id' => $document->id]);
+        Storage::disk('local')->assertMissing($document->path);
+    }
+
+    public function test_accountant_and_caretaker_cannot_delete_unit_documents(): void
+    {
+        Storage::fake('local');
+        [$owner, , $accountant, $caretaker, $unit] = $this->scenario();
+        $accountantDocument = $this->storedDocument($owner, $unit, ['title' => 'Accountant blocked']);
+        $caretakerDocument = $this->storedDocument($owner, $unit, ['title' => 'Caretaker blocked']);
+
+        $this->actingAs($accountant)
+            ->delete(route('unit-documents.destroy', $accountantDocument))
+            ->assertForbidden();
+
+        $this->actingAs($caretaker)
+            ->delete(route('unit-documents.destroy', $caretakerDocument))
+            ->assertForbidden();
+
+        $this->assertDatabaseHas('unit_documents', ['id' => $accountantDocument->id]);
+        $this->assertDatabaseHas('unit_documents', ['id' => $caretakerDocument->id]);
+        Storage::disk('local')->assertExists($accountantDocument->path);
+        Storage::disk('local')->assertExists($caretakerDocument->path);
+    }
+
+    public function test_unauthenticated_user_cannot_delete_unit_document(): void
+    {
+        Storage::fake('local');
+        [$owner, , , , $unit] = $this->scenario();
+        $document = $this->storedDocument($owner, $unit);
+
+        $this->delete(route('unit-documents.destroy', $document))->assertRedirect(route('login'));
+
+        $this->assertDatabaseHas('unit_documents', ['id' => $document->id]);
+        Storage::disk('local')->assertExists($document->path);
+    }
+
+    public function test_cross_organization_delete_is_forbidden(): void
+    {
+        Storage::fake('local');
+        [$ownerA, , , , , $ownerB, $unitB] = $this->scenarioWithSecondOrganization();
+        $documentB = $this->storedDocument($ownerB, $unitB);
+
+        $this->actingAs($ownerA)
+            ->delete(route('unit-documents.destroy', $documentB))
+            ->assertForbidden();
+
+        $this->assertDatabaseHas('unit_documents', ['id' => $documentB->id]);
+        Storage::disk('local')->assertExists($documentB->path);
+    }
+
+    public function test_delete_uses_stored_document_disk(): void
+    {
+        Storage::fake('local');
+        Storage::fake('archive-test');
+        [$owner, , , , $unit] = $this->scenario();
+        $document = $this->storedDocument($owner, $unit, ['disk' => 'archive-test']);
+
+        $this->actingAs($owner)
+            ->delete(route('unit-documents.destroy', $document))
+            ->assertRedirect(route('units.show', $unit));
+
+        $this->assertDatabaseMissing('unit_documents', ['id' => $document->id]);
+        Storage::disk('archive-test')->assertMissing($document->path);
+    }
+
+    public function test_missing_file_still_allows_authorized_database_cleanup(): void
+    {
+        Storage::fake('local');
+        [$owner, , , , $unit] = $this->scenario();
+        $path = "unit-documents/{$owner->organization_id}/{$unit->id}/missing-document.pdf";
+        $document = UnitDocument::create([
+            'organization_id' => $owner->organization_id,
+            'unit_id' => $unit->id,
+            'uploaded_by' => $owner->id,
+            'title' => 'Missing document',
+            'category' => 'other',
+            'disk' => 'local',
+            'path' => $path,
+        ]);
+
+        $this->actingAs($owner)
+            ->delete(route('unit-documents.destroy', $document))
+            ->assertRedirect(route('units.show', $unit));
+
+        $this->assertDatabaseMissing('unit_documents', ['id' => $document->id]);
+    }
+
+    public function test_delete_with_invalid_path_is_not_removed_and_returns_not_found(): void
+    {
+        Storage::fake('local');
+        [$owner, , , , $unit] = $this->scenario();
+        $path = 'wrong-prefix/secret.pdf';
+        Storage::disk('local')->put($path, 'secret-bytes');
+        $document = UnitDocument::create([
+            'organization_id' => $owner->organization_id,
+            'unit_id' => $unit->id,
+            'uploaded_by' => $owner->id,
+            'title' => 'Invalid path',
+            'category' => 'other',
+            'disk' => 'local',
+            'path' => $path,
+        ]);
+
+        $this->actingAs($owner)
+            ->delete(route('unit-documents.destroy', $document))
+            ->assertNotFound();
+
+        $this->assertDatabaseHas('unit_documents', ['id' => $document->id]);
+        Storage::disk('local')->assertExists($path);
+    }
+
     public function test_cross_organization_upload_and_download_are_forbidden(): void
     {
         Storage::fake('local');
@@ -248,7 +385,9 @@ class UnitDocumentTest extends TestCase
             ->assertSee(__('unit_documents.categories.handover_document'))
             ->assertSee('Signed by tenant.')
             ->assertSee(route('unit-documents.download', $document, absolute: false))
+            ->assertSee(route('unit-documents.destroy', $document, absolute: false))
             ->assertSee(__('unit_documents.actions.upload'))
+            ->assertSee(__('unit_documents.actions.delete'))
             ->assertDontSee($document->path)
             ->assertDontSee('unit_documents.');
     }
@@ -285,21 +424,25 @@ class UnitDocumentTest extends TestCase
 
     public function test_arabic_and_english_labels_render(): void
     {
+        Storage::fake('local');
         [$owner, , , , $unit] = $this->scenario();
+        $this->storedDocument($owner, $unit);
 
         app()->setLocale('en');
         $this->actingAs($owner)
             ->get(route('units.show', $unit))
             ->assertOk()
             ->assertSee('Unit Documents')
-            ->assertSee('Upload document');
+            ->assertSee('Upload document')
+            ->assertSee('Delete');
 
         app()->setLocale('ar');
         $this->actingAs($owner)
             ->get(route('units.show', $unit))
             ->assertOk()
             ->assertSee(__('unit_documents.title'))
-            ->assertSee(__('unit_documents.upload_title'));
+            ->assertSee(__('unit_documents.upload_title'))
+            ->assertSee(__('unit_documents.actions.delete'));
     }
 
     private function validPayload(array $overrides = []): array
@@ -315,7 +458,8 @@ class UnitDocumentTest extends TestCase
     private function storedDocument(User $user, Unit $unit, array $overrides = []): UnitDocument
     {
         $path = $overrides['path'] ?? "unit-documents/{$user->organization_id}/{$unit->id}/private-document.pdf";
-        Storage::disk('local')->put($path, 'document-bytes');
+        $disk = $overrides['disk'] ?? 'local';
+        Storage::disk($disk)->put($path, 'document-bytes');
 
         return UnitDocument::create(array_merge([
             'organization_id' => $user->organization_id,
@@ -324,7 +468,7 @@ class UnitDocumentTest extends TestCase
             'title' => 'Tenant ID Copy',
             'category' => 'tenant_id_copy',
             'notes' => null,
-            'disk' => 'local',
+            'disk' => $disk,
             'path' => $path,
             'original_name' => 'tenant-id.pdf',
             'mime_type' => 'application/pdf',
