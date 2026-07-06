@@ -88,7 +88,9 @@ class ExpenseController extends Controller
         $path = $this->validatedPrivatePath($expense->invoice_image, 'expense-invoices');
 
         if (! Storage::disk('local')->exists($path)) {
-            abort(404);
+            return redirect()
+                ->route('expenses.show', $expense)
+                ->with('status', __('expenses.invoice_missing'));
         }
 
         return Storage::disk('local')->download($path, $this->safeDownloadName('expense-invoice', $expense->id, $path), [

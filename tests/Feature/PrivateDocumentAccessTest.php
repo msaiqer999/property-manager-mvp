@@ -11,6 +11,7 @@ use App\Models\Tenant;
 use App\Models\Unit;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
 use Tests\TestCase;
 
@@ -36,7 +37,7 @@ class PrivateDocumentAccessTest extends TestCase
         $this->assertStringContainsString('no-store', (string) $proofResponse->headers->get('cache-control'));
         $this->assertSame('nosniff', $proofResponse->headers->get('x-content-type-options'));
 
-        $invoiceResponse = $this->actingAs($accountant)->get(route('expenses.invoice.download', $data['expense']));
+        $invoiceResponse = $this->actingAs($accountant)->get(route('expenses.invoice', $data['expense']));
         $invoiceResponse->assertOk();
         $this->assertStringContainsString('attachment;', (string) $invoiceResponse->headers->get('content-disposition'));
         $this->assertStringContainsString("expense-invoice-{$data['expense']->id}.png", (string) $invoiceResponse->headers->get('content-disposition'));
@@ -60,9 +61,22 @@ class PrivateDocumentAccessTest extends TestCase
 
         $this->actingAs($owner)->get(route('expenses.show', $data['expense']))
             ->assertOk()
-            ->assertSee(route('expenses.invoice.download', $data['expense'], absolute: false))
+            ->assertSee(route('expenses.invoice', $data['expense'], absolute: false))
             ->assertSee('Download invoice')
             ->assertDontSee('expense-invoices/private-invoice.png');
+    }
+
+    public function test_expense_without_invoice_does_not_render_a_broken_invoice_link(): void
+    {
+        [$owner, , , , , $data] = $this->createTwoOrganizationScenario();
+
+        $data['expense']->update(['invoice_image' => null]);
+
+        $this->actingAs($owner)
+            ->get(route('expenses.show', $data['expense']))
+            ->assertOk()
+            ->assertDontSee(route('expenses.invoice', $data['expense'], absolute: false))
+            ->assertDontSee('Download invoice');
     }
 
     public function test_cross_organization_downloads_are_denied_before_file_state_disclosure(): void
@@ -73,7 +87,7 @@ class PrivateDocumentAccessTest extends TestCase
         $dataB['expense']->update(['invoice_image' => 'wrong-prefix/private.png']);
 
         $this->actingAs($ownerA)->get(route('payments.proof.download', $dataB['payment']))->assertForbidden();
-        $this->actingAs($ownerA)->get(route('expenses.invoice.download', $dataB['expense']))->assertForbidden();
+        $this->actingAs($ownerA)->get(route('expenses.invoice', $dataB['expense']))->assertForbidden();
     }
 
     public function test_unauthorized_role_behavior_matches_existing_view_policies(): void
@@ -81,10 +95,23 @@ class PrivateDocumentAccessTest extends TestCase
         [, , , $caretaker, , $data] = $this->createTwoOrganizationScenario();
 
         $this->actingAs($caretaker)->get(route('payments.proof.download', $data['payment']))->assertNotFound();
-        $this->actingAs($caretaker)->get(route('expenses.invoice.download', $data['expense']))->assertForbidden();
+        $this->actingAs($caretaker)->get(route('expenses.invoice', $data['expense']))->assertForbidden();
     }
 
-    public function test_missing_and_invalid_private_document_paths_return_not_found_after_authorization(): void
+    public function test_missing_expense_invoice_file_redirects_with_clear_message_after_authorization(): void
+    {
+        [$owner, , , , , $data] = $this->createTwoOrganizationScenario();
+        Storage::fake('local');
+
+        $data['expense']->update(['invoice_image' => 'expense-invoices/missing.png']);
+
+        $this->actingAs($owner)
+            ->get(route('expenses.invoice', $data['expense']))
+            ->assertRedirect(route('expenses.show', $data['expense']))
+            ->assertSessionHas('status', __('expenses.invoice_missing'));
+    }
+
+    public function test_invalid_private_document_paths_return_not_found_after_authorization(): void
     {
         [$owner, , , , , $data] = $this->createTwoOrganizationScenario();
         Storage::fake('local');
@@ -102,7 +129,6 @@ class PrivateDocumentAccessTest extends TestCase
         }
 
         foreach ([
-            'expense-invoices/missing.png',
             '',
             '../secret.png',
             '/absolute/secret.png',
@@ -110,15 +136,44 @@ class PrivateDocumentAccessTest extends TestCase
             'wrong-prefix/secret.png',
         ] as $path) {
             $data['expense']->update(['invoice_image' => $path]);
-            $this->actingAs($owner)->get(route('expenses.invoice.download', $data['expense']))->assertNotFound();
+            $this->actingAs($owner)->get(route('expenses.invoice', $data['expense']))->assertNotFound();
         }
     }
 
     public function test_private_document_routes_do_not_create_public_storage_exposure(): void
     {
         $this->assertSame('/payments/1/proof', route('payments.proof.download', 1, absolute: false));
-        $this->assertSame('/expenses/1/invoice', route('expenses.invoice.download', 1, absolute: false));
+        $this->assertSame('/expenses/1/invoice', route('expenses.invoice', 1, absolute: false));
+        $this->assertSame('/expenses/1/invoice/download', route('expenses.invoice.download', 1, absolute: false));
         $this->assertDirectoryDoesNotExist(public_path('storage'));
+    }
+
+    public function test_owner_can_upload_invoice_when_creating_an_expense_and_open_it(): void
+    {
+        [$owner, , , , , $data] = $this->createTwoOrganizationScenario();
+        Storage::fake('local');
+
+        $this->actingAs($owner)
+            ->post(route('expenses.store'), [
+                'building_id' => $data['building']->id,
+                'unit_id' => $data['unit']->id,
+                'category' => 'maintenance',
+                'amount' => 125,
+                'expense_date' => now()->toDateString(),
+                'invoice_image' => UploadedFile::fake()->image('invoice.png'),
+                'notes' => 'Created with invoice.',
+            ])
+            ->assertRedirect();
+
+        $expense = Expense::where('notes', 'Created with invoice.')->firstOrFail();
+
+        $this->assertNotNull($expense->invoice_image);
+        $this->assertStringStartsWith('expense-invoices/', $expense->invoice_image);
+        Storage::disk('local')->assertExists($expense->invoice_image);
+
+        $this->actingAs($owner)
+            ->get(route('expenses.invoice', $expense))
+            ->assertOk();
     }
 
     private function createTwoOrganizationScenario(): array
