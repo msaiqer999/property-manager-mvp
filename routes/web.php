@@ -90,7 +90,8 @@ Route::middleware('auth')->group(function () {
 
     Route::middleware(EnsureAbility::class.':view-expenses')->group(function () {
         Route::patch('expenses/{expense}/void', [ExpenseController::class, 'voidExpense'])->name('expenses.void');
-        Route::get('expenses/{expense}/invoice', [ExpenseController::class, 'downloadInvoice'])->name('expenses.invoice.download');
+        Route::get('expenses/{expense}/invoice', [ExpenseController::class, 'downloadInvoice'])->name('expenses.invoice');
+        Route::get('expenses/{expense}/invoice/download', [ExpenseController::class, 'downloadInvoice'])->name('expenses.invoice.download');
         Route::resource('expenses', ExpenseController::class);
     });
 

@@ -8,6 +8,7 @@ return [
     'view' => 'View',
     'edit_action' => 'Edit',
     'download_invoice' => 'Download invoice',
+    'invoice_missing' => 'The invoice file is no longer available. The expense record is still saved.',
     'not_available' => 'N/A',
     'empty' => 'No expenses found.',
 

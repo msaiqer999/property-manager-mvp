@@ -86,7 +86,7 @@ class ExpenseLocalizationTest extends TestCase
             ->assertSeeHtml('Date: <span dir="ltr">2026-06-12</span>')
             ->assertSee('Notes: Expense localization note stays unchanged.')
             ->assertSee('Invoice attachment')
-            ->assertSee(route('expenses.invoice.download', $expense, absolute: false))
+            ->assertSee(route('expenses.invoice', $expense, absolute: false))
             ->assertDontSee('expense-invoices/localization-invoice.png');
 
         $freshExpense = $expense->fresh()->load('building', 'unit');

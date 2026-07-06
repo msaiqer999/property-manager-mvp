@@ -8,6 +8,7 @@ return [
     'view' => 'عرض',
     'edit_action' => 'تعديل',
     'download_invoice' => 'تنزيل الفاتورة',
+    'invoice_missing' => 'ملف الفاتورة غير متاح حاليًا. ما زال سجل المصروف محفوظًا.',
     'not_available' => 'غير متاح',
     'empty' => 'لا توجد مصروفات.',
 

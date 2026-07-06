@@ -13,7 +13,7 @@
     </div>
     <div class="flex flex-wrap gap-2">
         @if($expense->invoice_image)
-            <a class="tap-target inline-flex items-center rounded border px-3 text-sm" href="{{ route('expenses.invoice.download', $expense) }}">{{ __('expenses.download_invoice') }}</a>
+            <a class="tap-target inline-flex items-center rounded border px-3 text-sm" href="{{ route('expenses.invoice', $expense) }}">{{ __('expenses.download_invoice') }}</a>
         @endif
         @can('update', $expense)
             @if(! $expense->voided_at)
@@ -45,7 +45,7 @@
                         <h2 class="text-base font-semibold text-slate-900">{{ __('expenses.show.invoice_attachment') }}</h2>
                         <p class="mt-1 text-sm text-slate-600">{{ __('expenses.show.invoice_available') }}</p>
                     </div>
-                    <a class="tap-target inline-flex items-center justify-center rounded border px-3 text-sm font-medium text-slate-700" href="{{ route('expenses.invoice.download', $expense) }}">{{ __('expenses.download_invoice') }}</a>
+                    <a class="tap-target inline-flex items-center justify-center rounded border px-3 text-sm font-medium text-slate-700" href="{{ route('expenses.invoice', $expense) }}">{{ __('expenses.download_invoice') }}</a>
                 </div>
             </section>
         @endif
