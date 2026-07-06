@@ -9,6 +9,7 @@ return [
     'edit_action' => 'संपादित करें',
     'download_invoice' => 'इनवॉइस डाउनलोड',
     'invoice_missing' => 'इनवॉइस फ़ाइल अब उपलब्ध नहीं है। खर्च रिकॉर्ड अभी भी सुरक्षित है।',
+    'invoice_unavailable_hint' => 'इनवॉइस फ़ाइल अभी उपलब्ध नहीं है।',
     'not_available' => 'लागू नहीं',
     'empty' => 'कोई खर्च नहीं मिला।',
 

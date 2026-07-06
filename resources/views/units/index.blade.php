@@ -27,33 +27,40 @@
     <button class="tap-target min-h-11 rounded bg-slate-900 px-4 text-white">{{ __('app.actions.filter') }}</button>
 </form>
 
-<div data-mobile-units-list class="grid gap-3 md:hidden">
-    @foreach($units as $unit)
-        <article data-unit-mobile-card class="rounded border bg-white p-4 shadow-sm">
-            <div class="flex items-start justify-between gap-3">
-                <div class="min-w-0">
-                    <h2 class="text-base font-semibold"><bdi dir="ltr">{{ $unit->unit_number }}</bdi></h2>
-                    <p class="mt-1 break-words text-sm text-slate-600">{{ $unit->building->name }}</p>
+@if($units->isEmpty())
+    <section data-empty-state-units class="rounded border bg-white p-5 text-center shadow-sm sm:p-6">
+        <h2 class="text-lg font-semibold text-slate-950">{{ __('app.empty_states.units.title') }}</h2>
+        <p class="mx-auto mt-2 max-w-xl text-sm leading-6 text-slate-600">{{ __('app.empty_states.units.body') }}</p>
+        <a class="tap-target mt-4 inline-flex min-h-11 items-center justify-center rounded bg-slate-900 px-4 text-center text-sm font-medium text-white" href="{{ route('units.create') }}">{{ __('app.empty_states.units.action') }}</a>
+    </section>
+@else
+    <div data-mobile-units-list class="grid gap-3 md:hidden">
+        @foreach($units as $unit)
+            <article data-unit-mobile-card class="rounded border bg-white p-4 shadow-sm">
+                <div class="flex items-start justify-between gap-3">
+                    <div class="min-w-0">
+                        <h2 class="text-base font-semibold"><bdi dir="ltr">{{ $unit->unit_number }}</bdi></h2>
+                        <p class="mt-1 break-words text-sm text-slate-600">{{ $unit->building->name }}</p>
+                    </div>
+                    <span class="shrink-0 rounded bg-slate-100 px-2 py-1 text-xs text-slate-700">{{ __('units.statuses.'.$unit->status) }}</span>
                 </div>
-                <span class="shrink-0 rounded bg-slate-100 px-2 py-1 text-xs text-slate-700">{{ __('units.statuses.'.$unit->status) }}</span>
-            </div>
-            <dl class="mt-3 grid gap-2 text-sm">
-                <div class="flex items-center justify-between gap-3">
-                    <dt class="text-slate-500">{{ __('units.fields.type') }}</dt>
-                    <dd>{{ __('units.types.'.$unit->type) }}</dd>
-                </div>
-                <div class="flex items-center justify-between gap-3">
-                    <dt class="text-slate-500">{{ __('units.fields.rent') }}</dt>
-                    <dd><bdi dir="ltr">{{ number_format($unit->rent_amount, 2) }}</bdi></dd>
-                </div>
-            </dl>
-            <a class="tap-target mt-4 inline-flex min-h-11 w-full items-center justify-center rounded border px-4 text-center text-sm font-medium" href="{{ route('units.show', $unit) }}">{{ __('app.actions.view') }}</a>
-        </article>
-    @endforeach
-</div>
+                <dl class="mt-3 grid gap-2 text-sm">
+                    <div class="flex items-center justify-between gap-3">
+                        <dt class="text-slate-500">{{ __('units.fields.type') }}</dt>
+                        <dd>{{ __('units.types.'.$unit->type) }}</dd>
+                    </div>
+                    <div class="flex items-center justify-between gap-3">
+                        <dt class="text-slate-500">{{ __('units.fields.rent') }}</dt>
+                        <dd><bdi dir="ltr">{{ number_format($unit->rent_amount, 2) }}</bdi></dd>
+                    </div>
+                </dl>
+                <a class="tap-target mt-4 inline-flex min-h-11 w-full items-center justify-center rounded border px-4 text-center text-sm font-medium" href="{{ route('units.show', $unit) }}">{{ __('app.actions.view') }}</a>
+            </article>
+        @endforeach
+    </div>
 
-<div class="hidden md:block">
-    <x-table min-width="min-w-[44rem]">
+    <div class="hidden md:block">
+        <x-table min-width="min-w-[44rem]">
         <thead>
             <tr>
                 <th class="p-4 text-start">{{ __('units.fields.unit') }}</th>
@@ -74,8 +81,9 @@
                 </tr>
             @endforeach
         </tbody>
-    </x-table>
-</div>
+        </x-table>
+    </div>
 
-{{ $units->links() }}
+    {{ $units->links() }}
+@endif
 @endsection

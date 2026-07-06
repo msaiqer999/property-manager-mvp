@@ -17,6 +17,17 @@
     <a class="tap-target flex min-h-11 items-center justify-center rounded border bg-white px-4" href="{{ route('payments.index', ['overdue' => 1]) }}">{{ __('payments.overdue') }}</a>
 </form>
 
+@if($payments->isEmpty())
+    <section data-empty-state-payments class="rounded border bg-white p-5 text-center shadow-sm sm:p-6">
+        <h2 class="text-lg font-semibold text-slate-950">{{ __('app.empty_states.payments.title') }}</h2>
+        <p class="mx-auto mt-2 max-w-xl text-sm leading-6 text-slate-600">{{ __('app.empty_states.payments.body') }}</p>
+        @if(auth()->user()?->role?->can('manage-contracts'))
+            <a class="tap-target mt-4 inline-flex min-h-11 items-center justify-center rounded bg-slate-900 px-4 text-center text-sm font-medium text-white" href="{{ route('contracts.create') }}">{{ __('app.empty_states.payments.action') }}</a>
+        @else
+            <a class="tap-target mt-4 inline-flex min-h-11 items-center justify-center rounded bg-slate-900 px-4 text-center text-sm font-medium text-white" href="{{ route('dashboard') }}">{{ __('app.dashboard.title') }}</a>
+        @endif
+    </section>
+@else
 <div data-mobile-payments-list class="grid gap-3 md:hidden">
     @foreach($payments as $payment)
         @php
@@ -151,4 +162,5 @@
 </div>
 
 {{ $payments->links() }}
+@endif
 @endsection

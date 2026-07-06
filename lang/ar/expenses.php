@@ -9,6 +9,7 @@ return [
     'edit_action' => 'تعديل',
     'download_invoice' => 'تنزيل الفاتورة',
     'invoice_missing' => 'ملف الفاتورة غير متاح حاليًا. ما زال سجل المصروف محفوظًا.',
+    'invoice_unavailable_hint' => 'ملف الفاتورة غير متاح حالياً.',
     'not_available' => 'غير متاح',
     'empty' => 'لا توجد مصروفات.',
 

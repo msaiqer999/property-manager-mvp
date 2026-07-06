@@ -92,7 +92,13 @@
             </div>
         </article>
     @empty
-        <div class="rounded border bg-white p-4 text-center text-sm text-slate-500">{{ __('expenses.empty') }}</div>
+        <section data-empty-state-expenses class="rounded border bg-white p-5 text-center shadow-sm sm:p-6">
+            <h2 class="text-lg font-semibold text-slate-950">{{ __('app.empty_states.expenses.title') }}</h2>
+            <p class="mx-auto mt-2 max-w-xl text-sm leading-6 text-slate-600">{{ __('app.empty_states.expenses.body') }}</p>
+            @can('create', App\Models\Expense::class)
+                <a class="tap-target mt-4 inline-flex min-h-11 items-center justify-center rounded bg-slate-900 px-4 text-center text-sm font-medium text-white" href="{{ route('expenses.create') }}">{{ __('app.empty_states.expenses.action') }}</a>
+            @endcan
+        </section>
     @endforelse
 </div>
 
@@ -130,7 +136,17 @@
                     </td>
                 </tr>
             @empty
-                <tr><td colspan="6" class="p-4 text-center text-slate-500">{{ __('expenses.empty') }}</td></tr>
+                <tr>
+                    <td colspan="6" class="p-4">
+                        <section data-empty-state-expenses class="rounded border bg-white p-5 text-center shadow-sm">
+                            <h2 class="text-lg font-semibold text-slate-950">{{ __('app.empty_states.expenses.title') }}</h2>
+                            <p class="mx-auto mt-2 max-w-xl text-sm leading-6 text-slate-600">{{ __('app.empty_states.expenses.body') }}</p>
+                            @can('create', App\Models\Expense::class)
+                                <a class="tap-target mt-4 inline-flex min-h-11 items-center justify-center rounded bg-slate-900 px-4 text-center text-sm font-medium text-white" href="{{ route('expenses.create') }}">{{ __('app.empty_states.expenses.action') }}</a>
+                            @endcan
+                        </section>
+                    </td>
+                </tr>
             @endforelse
         </tbody>
     </x-table>

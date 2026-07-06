@@ -49,6 +49,7 @@ return [
         'guided_start_body' => 'সঠিক ক্রমে মূল বিষয়গুলো সেট করতে এই সহজ ধাপগুলো অনুসরণ করুন।',
         'guided_start_complete' => 'আপনার সম্পত্তি ব্যবস্থাপনার মূল প্রস্তুতি সম্পন্ন হয়েছে।',
         'continue_setup' => 'সেটআপ চালিয়ে যান',
+        'quick_start_button' => 'সেটআপ শুরু করুন',
         'guided_step_building' => 'ভবন যোগ করুন',
         'guided_step_units' => 'ইউনিট যোগ করুন',
         'guided_step_tenants' => 'ভাড়াটিয়া যোগ করুন',
@@ -124,6 +125,33 @@ return [
         'roadmap_tenant_account' => 'Tenant account',
         'roadmap_vacant_listing' => 'Vacant unit listing',
         'suggest_feature' => 'Suggest a feature',
+    ],
+
+    'quick_start' => [
+        'eyebrow' => 'First data entry',
+        'title' => 'Quick Start',
+        'subtitle' => 'Use this short checklist to enter your first property records in the right order from your phone or desktop.',
+        'order_title' => 'Recommended setup order',
+        'order_body' => 'Start with the property structure, then add people, contracts, payments, expenses, and reports.',
+        'not_available' => 'Not available for your role',
+        'steps' => [
+            'building' => ['title' => 'Add building', 'body' => 'Create the building or property location that contains your units.', 'action' => 'Add building'],
+            'units' => ['title' => 'Add units', 'body' => 'Add each rentable unit, or use bulk unit creation when you have many units.', 'action' => 'Add units'],
+            'tenant' => ['title' => 'Add tenant', 'body' => 'Save the tenant name and contact details before creating a lease contract.', 'action' => 'Add tenant'],
+            'contract' => ['title' => 'Create contract', 'body' => 'Connect a tenant to a unit and generate the rent payment schedule.', 'action' => 'Create contract'],
+            'payment' => ['title' => 'Record payment', 'body' => 'Open the payments list to record received rent and download receipts.', 'action' => 'Open payments'],
+            'expense' => ['title' => 'Add expense', 'body' => 'Record maintenance or operating costs against the correct building or unit.', 'action' => 'Add expense'],
+            'report' => ['title' => 'View report', 'body' => 'Review income, expenses, overdue payments, and unit statements.', 'action' => 'View reports'],
+        ],
+    ],
+
+    'empty_states' => [
+        'buildings' => ['title' => 'No buildings yet', 'body' => 'Add your first building so you can start adding units, tenants, and contracts.', 'action' => 'Add building'],
+        'units' => ['title' => 'No units yet', 'body' => 'Add the rentable units for your buildings so contracts can be created later.', 'action' => 'Add unit'],
+        'tenants' => ['title' => 'No tenants yet', 'body' => 'Add tenant details before creating the first lease contract.', 'action' => 'Add tenant'],
+        'contracts' => ['title' => 'No contracts yet', 'body' => 'Create a contract to connect a tenant to a unit and generate the payment schedule.', 'action' => 'Create contract'],
+        'payments' => ['title' => 'No payments yet', 'body' => 'Payments appear after you create a contract with a payment schedule.', 'action' => 'Create contract'],
+        'expenses' => ['title' => 'No expenses yet', 'body' => 'Record the first maintenance or operating expense when it happens.', 'action' => 'Add expense'],
     ],
 
     'actions' => [

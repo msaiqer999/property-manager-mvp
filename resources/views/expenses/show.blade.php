@@ -1,5 +1,8 @@
 @extends('layouts.app')
 @section('content')
+@php
+    $invoiceUnavailable = session('status') === __('expenses.invoice_missing');
+@endphp
 <div class="mb-4 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
     <div>
         <h1 class="text-xl font-semibold">{{ __('expenses.expense') }}</h1>
@@ -12,7 +15,7 @@
         </p>
     </div>
     <div class="flex flex-wrap gap-2">
-        @if($expense->invoice_image)
+        @if($expense->invoice_image && ! $invoiceUnavailable)
             <a class="tap-target inline-flex items-center rounded border px-3 text-sm" href="{{ route('expenses.invoice', $expense) }}">{{ __('expenses.download_invoice') }}</a>
         @endif
         @can('update', $expense)
@@ -43,9 +46,13 @@
                 <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                     <div>
                         <h2 class="text-base font-semibold text-slate-900">{{ __('expenses.show.invoice_attachment') }}</h2>
-                        <p class="mt-1 text-sm text-slate-600">{{ __('expenses.show.invoice_available') }}</p>
+                        <p class="mt-1 text-sm text-slate-600">
+                            {{ $invoiceUnavailable ? __('expenses.invoice_unavailable_hint') : __('expenses.show.invoice_available') }}
+                        </p>
                     </div>
-                    <a class="tap-target inline-flex items-center justify-center rounded border px-3 text-sm font-medium text-slate-700" href="{{ route('expenses.invoice', $expense) }}">{{ __('expenses.download_invoice') }}</a>
+                    @if(! $invoiceUnavailable)
+                        <a class="tap-target inline-flex items-center justify-center rounded border px-3 text-sm font-medium text-slate-700" href="{{ route('expenses.invoice', $expense) }}">{{ __('expenses.download_invoice') }}</a>
+                    @endif
                 </div>
             </section>
         @endif

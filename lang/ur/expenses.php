@@ -9,6 +9,7 @@ return [
     'edit_action' => 'ترمیم',
     'download_invoice' => 'انوائس ڈاؤن لوڈ',
     'invoice_missing' => 'انوائس فائل اب دستیاب نہیں ہے۔ خرچ کا ریکارڈ اب بھی محفوظ ہے۔',
+    'invoice_unavailable_hint' => 'انوائس فائل فی الحال دستیاب نہیں ہے۔',
     'not_available' => 'دستیاب نہیں',
     'empty' => 'کوئی خرچ نہیں ملا۔',
 
