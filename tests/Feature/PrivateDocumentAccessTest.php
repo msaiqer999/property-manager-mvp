@@ -111,6 +111,21 @@ class PrivateDocumentAccessTest extends TestCase
             ->assertSessionHas('status', __('expenses.invoice_missing'));
     }
 
+    public function test_expense_show_displays_neutral_hint_after_missing_invoice_redirect(): void
+    {
+        [$owner, , , , , $data] = $this->createTwoOrganizationScenario();
+
+        $data['expense']->update(['invoice_image' => 'expense-invoices/missing.png']);
+
+        $this->actingAs($owner)
+            ->withSession(['status' => __('expenses.invoice_missing'), 'locale' => 'en'])
+            ->get(route('expenses.show', $data['expense']))
+            ->assertOk()
+            ->assertSee('Invoice file is currently unavailable.')
+            ->assertDontSee(route('expenses.invoice', $data['expense'], absolute: false))
+            ->assertDontSee('expense-invoices/missing.png');
+    }
+
     public function test_invalid_private_document_paths_return_not_found_after_authorization(): void
     {
         [$owner, , , , , $data] = $this->createTwoOrganizationScenario();

@@ -47,7 +47,11 @@
             <a class="tap-target mt-4 inline-flex min-h-11 w-full items-center justify-center rounded border px-4 text-center text-sm font-medium" href="{{ route('contracts.show', $contract) }}">{{ __('contracts.view') }}</a>
         </article>
     @empty
-        <p class="rounded border bg-white p-4 text-center text-slate-500">{{ __('contracts.empty') }}</p>
+        <section data-empty-state-contracts class="rounded border bg-white p-5 text-center shadow-sm sm:p-6">
+            <h2 class="text-lg font-semibold text-slate-950">{{ __('app.empty_states.contracts.title') }}</h2>
+            <p class="mx-auto mt-2 max-w-xl text-sm leading-6 text-slate-600">{{ __('app.empty_states.contracts.body') }}</p>
+            <a class="tap-target mt-4 inline-flex min-h-11 items-center justify-center rounded bg-slate-900 px-4 text-center text-sm font-medium text-white" href="{{ route('contracts.create') }}">{{ __('app.empty_states.contracts.action') }}</a>
+        </section>
     @endforelse
 </div>
 
@@ -93,7 +97,15 @@
                     <td class="p-4 whitespace-nowrap"><a class="tap-target inline-flex items-center rounded border px-3 text-slate-700" href="{{ route('contracts.show', $contract) }}">{{ __('contracts.view') }}</a></td>
                 </tr>
             @empty
-                <tr class="border-t"><td colspan="9" class="p-4 text-center text-slate-500">{{ __('contracts.empty') }}</td></tr>
+                <tr class="border-t">
+                    <td colspan="9" class="p-4">
+                        <section data-empty-state-contracts class="rounded border bg-white p-5 text-center shadow-sm">
+                            <h2 class="text-lg font-semibold text-slate-950">{{ __('app.empty_states.contracts.title') }}</h2>
+                            <p class="mx-auto mt-2 max-w-xl text-sm leading-6 text-slate-600">{{ __('app.empty_states.contracts.body') }}</p>
+                            <a class="tap-target mt-4 inline-flex min-h-11 items-center justify-center rounded bg-slate-900 px-4 text-center text-sm font-medium text-white" href="{{ route('contracts.create') }}">{{ __('app.empty_states.contracts.action') }}</a>
+                        </section>
+                    </td>
+                </tr>
             @endforelse
         </tbody>
     </x-table>

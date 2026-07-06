@@ -9,6 +9,7 @@ return [
     'edit_action' => 'Edit',
     'download_invoice' => 'Download invoice',
     'invoice_missing' => 'The invoice file is no longer available. The expense record is still saved.',
+    'invoice_unavailable_hint' => 'Invoice file is currently unavailable.',
     'not_available' => 'N/A',
     'empty' => 'No expenses found.',
 

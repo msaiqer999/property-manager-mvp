@@ -57,11 +57,16 @@
                     {{ $guidedStartComplete ? __('app.dashboard.guided_start_complete') : __('app.dashboard.guided_start_body') }}
                 </p>
             </div>
-            @if(! $guidedStartComplete && $nextGuidedIndex !== false)
-                <a class="tap-target inline-flex min-h-11 items-center justify-center rounded bg-slate-900 px-4 text-center text-sm font-medium text-white" href="{{ $guidedStartSteps[$nextGuidedIndex]['href'] }}">
-                    {{ __('app.dashboard.continue_setup') }}
+            <div class="grid gap-2 sm:flex sm:flex-wrap sm:justify-end">
+                <a data-dashboard-quick-start class="tap-target inline-flex min-h-11 items-center justify-center rounded border bg-white px-4 text-center text-sm font-medium text-slate-800" href="{{ route('quick-start.index') }}">
+                    {{ __('app.dashboard.quick_start_button') }}
                 </a>
-            @endif
+                @if(! $guidedStartComplete && $nextGuidedIndex !== false)
+                    <a class="tap-target inline-flex min-h-11 items-center justify-center rounded bg-slate-900 px-4 text-center text-sm font-medium text-white" href="{{ $guidedStartSteps[$nextGuidedIndex]['href'] }}">
+                        {{ __('app.dashboard.continue_setup') }}
+                    </a>
+                @endif
+            </div>
         </div>
         <div class="mt-4 grid gap-3 lg:grid-cols-5">
             @foreach($guidedStartSteps as $index => $step)
