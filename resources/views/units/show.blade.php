@@ -41,7 +41,18 @@
                                 <h3 class="font-medium text-slate-900">{{ $document->title }}</h3>
                                 <p class="mt-1 text-sm text-slate-600">{{ __('unit_documents.categories.'.$document->category) }}</p>
                             </div>
-                            <a class="tap-target inline-flex min-h-11 items-center justify-center rounded border px-4 text-center text-sm font-medium" href="{{ route('unit-documents.download', $document) }}">{{ __('unit_documents.download') }}</a>
+                            <div class="grid gap-2 sm:flex sm:flex-wrap sm:justify-end">
+                                <a class="tap-target inline-flex min-h-11 items-center justify-center rounded border px-4 text-center text-sm font-medium" href="{{ route('unit-documents.download', $document) }}">{{ __('unit_documents.download') }}</a>
+                                @can('update', $unit)
+                                    <form method="post" action="{{ route('unit-documents.destroy', $document) }}" onsubmit="return confirm('{{ __('unit_documents.confirm_delete') }}')">
+                                        @csrf
+                                        @method('delete')
+                                        <button type="submit" class="tap-target inline-flex min-h-11 w-full items-center justify-center rounded border border-red-200 px-4 text-center text-sm font-medium text-red-700 hover:bg-red-50 sm:w-auto">
+                                            {{ __('unit_documents.actions.delete') }}
+                                        </button>
+                                    </form>
+                                @endcan
+                            </div>
                         </div>
                         <dl class="mt-3 grid gap-2 text-sm text-slate-600 sm:grid-cols-2">
                             <div>
