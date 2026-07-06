@@ -24,19 +24,39 @@
 </div>
 
 <div class="grid gap-4 lg:grid-cols-[1fr_22rem]">
-    <div class="rounded border bg-white p-4">
-        <p>{{ __('expenses.show.building') }}: {{ $expense->building->name }}</p>
-        <p>{{ __('expenses.show.unit') }}: <span dir="ltr">{{ $expense->unit?->unit_number ?? __('expenses.not_available') }}</span></p>
-        <p>{{ __('expenses.show.category') }}: {{ __('expenses.categories.'.$expense->category) }}</p>
-        <p>{{ __('expenses.show.amount') }}: <span dir="ltr">{{ number_format($expense->amount, 2) }}</span></p>
-        <p>{{ __('expenses.show.date') }}: <span dir="ltr">{{ $expense->expense_date->toDateString() }}</span></p>
-        <p>{{ __('expenses.show.notes') }}: {{ $expense->notes }}</p>
+    <div class="space-y-4">
+        <section class="rounded border bg-white p-4 shadow-sm">
+            <h2 class="text-base font-semibold text-slate-900">{{ __('expenses.show.details') }}</h2>
+            <div class="mt-4 grid gap-3 sm:grid-cols-2">
+                <p class="rounded bg-slate-50 p-3 text-sm">{{ __('expenses.show.building') }}: {{ $expense->building->name }}</p>
+                <p class="rounded bg-slate-50 p-3 text-sm">{{ __('expenses.show.unit') }}: <span dir="ltr">{{ $expense->unit?->unit_number ?? __('expenses.not_available') }}</span></p>
+                <p class="rounded bg-slate-50 p-3 text-sm">{{ __('expenses.show.category') }}: {{ __('expenses.categories.'.$expense->category) }}</p>
+                <p class="rounded bg-slate-50 p-3 text-sm">{{ __('expenses.show.amount') }}: <span dir="ltr">{{ number_format($expense->amount, 2) }}</span></p>
+                <p class="rounded bg-slate-50 p-3 text-sm">{{ __('expenses.show.date') }}: <span dir="ltr">{{ $expense->expense_date->toDateString() }}</span></p>
+                <p class="rounded bg-slate-50 p-3 text-sm">{{ __('expenses.show.status') }}: <span class="font-medium text-slate-900">{{ $expense->voided_at ? __('expenses.lifecycle.voided') : __('expenses.lifecycle.active') }}</span></p>
+                <p class="rounded bg-slate-50 p-3 text-sm sm:col-span-2">{{ __('expenses.show.notes') }}: {{ $expense->notes ?: __('expenses.not_available') }}</p>
+            </div>
+        </section>
+
+        @if($expense->invoice_image)
+            <section class="rounded border bg-white p-4 shadow-sm">
+                <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                    <div>
+                        <h2 class="text-base font-semibold text-slate-900">{{ __('expenses.show.invoice_attachment') }}</h2>
+                        <p class="mt-1 text-sm text-slate-600">{{ __('expenses.show.invoice_available') }}</p>
+                    </div>
+                    <a class="tap-target inline-flex items-center justify-center rounded border px-3 text-sm font-medium text-slate-700" href="{{ route('expenses.invoice.download', $expense) }}">{{ __('expenses.download_invoice') }}</a>
+                </div>
+            </section>
+        @endif
+
         @if($expense->voided_at)
-            <div class="mt-4 border-t pt-4">
+            <section class="rounded border bg-white p-4 shadow-sm">
+                <h2 class="text-base font-semibold text-slate-900">{{ __('expenses.lifecycle.voided') }}</h2>
                 <p>{{ __('expenses.lifecycle.voided_at') }}: <span dir="ltr">{{ $expense->voided_at->toDateTimeString() }}</span></p>
                 <p>{{ __('expenses.lifecycle.voided_by') }}: {{ $expense->voidedBy?->name ?? __('expenses.not_available') }}</p>
                 <p>{{ __('expenses.lifecycle.void_reason') }}: {{ $expense->void_reason }}</p>
-            </div>
+            </section>
         @endif
     </div>
 

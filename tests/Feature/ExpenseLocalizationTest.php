@@ -36,6 +36,7 @@ class ExpenseLocalizationTest extends TestCase
             ->assertSee('<html lang="en" dir="ltr">', false)
             ->assertSee('Expenses')
             ->assertSee('Add expense')
+            ->assertSee('data-mobile-expenses-list', false)
             ->assertSee('View');
 
         $this->actingAs($owner)
@@ -50,6 +51,10 @@ class ExpenseLocalizationTest extends TestCase
             ->assertSee('Amount')
             ->assertSee('Date')
             ->assertSee('Invoice')
+            ->assertSee('Choose the building this expense belongs to.')
+            ->assertSee('No specific unit')
+            ->assertSee('Optional. Select a unit only when the expense belongs to a specific unit.')
+            ->assertSee('Optional image attachment. Storage and download behavior stay private.')
             ->assertSee('Notes')
             ->assertSee('Save')
             ->assertSee('enctype="multipart/form-data"', false)
@@ -65,18 +70,24 @@ class ExpenseLocalizationTest extends TestCase
             ->assertSee('value="2345.67"', false)
             ->assertSee('value="2026-06-12"', false);
 
+        $expense->update(['invoice_image' => 'expense-invoices/localization-invoice.png']);
+
         $this->actingAs($owner)
             ->withSession(['locale' => 'en'])
             ->get(route('expenses.show', $expense))
             ->assertOk()
             ->assertSee('Expense')
             ->assertSee('Edit')
+            ->assertSee('Expense details')
             ->assertSee('Building: Expense Localization Tower')
             ->assertSeeHtml('Unit: <span dir="ltr">EXP-101</span>')
             ->assertSee('Category: Maintenance')
             ->assertSeeHtml('Amount: <span dir="ltr">2,345.67</span>')
             ->assertSeeHtml('Date: <span dir="ltr">2026-06-12</span>')
-            ->assertSee('Notes: Expense localization note stays unchanged.');
+            ->assertSee('Notes: Expense localization note stays unchanged.')
+            ->assertSee('Invoice attachment')
+            ->assertSee(route('expenses.invoice.download', $expense, absolute: false))
+            ->assertDontSee('expense-invoices/localization-invoice.png');
 
         $freshExpense = $expense->fresh()->load('building', 'unit');
         $this->assertSame('maintenance', $freshExpense->category);
@@ -175,6 +186,7 @@ class ExpenseLocalizationTest extends TestCase
                 ->get(route('expenses.index'))
                 ->assertOk()
                 ->assertSee('<html lang="'.$locale.'" dir="'.$direction.'">', false)
+                ->assertSee('data-mobile-expenses-list', false)
                 ->assertSee(__('expenses.title'))
                 ->assertSee(__('expenses.add'))
                 ->assertSee(__('expenses.form.building'))
