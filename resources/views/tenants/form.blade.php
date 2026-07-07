@@ -7,6 +7,13 @@
 <label class="block text-sm font-medium">{{ $label }} <input name="{{ $field }}" value="{{ old($field, $tenant->$field) }}" class="tap-target mt-1 min-h-11 w-full rounded border p-3"></label>
 @endforeach
 <label class="block text-sm font-medium md:col-span-2">{{ __('tenants.fields.notes') }} <textarea name="notes" rows="4" class="mt-1 w-full rounded border p-3">{{ old('notes', $tenant->notes) }}</textarea></label>
-<button class="tap-target min-h-11 w-full rounded bg-slate-900 px-4 text-white md:col-span-2">{{ __('app.actions.save') }}</button>
+<div class="grid gap-2 md:col-span-2 sm:grid-cols-2">
+    <button class="tap-target min-h-11 w-full rounded bg-slate-900 px-4 text-white">{{ __('app.actions.save') }}</button>
+    @if(! $tenant->exists)
+        @can('create', \App\Models\Contract::class)
+            <button type="submit" name="after_save" value="create_contract" class="tap-target min-h-11 w-full rounded border border-slate-300 bg-white px-4 text-slate-900">{{ __('tenants.actions.save_and_create_contract') }}</button>
+        @endcan
+    @endif
+</div>
 </form>
 @endsection

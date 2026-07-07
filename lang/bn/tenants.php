@@ -5,6 +5,9 @@ return [
     'add' => 'ভাড়াটিয়া যোগ করুন',
     'edit' => 'ভাড়াটিয়া সম্পাদনা',
     'search_placeholder' => 'ভাড়াটিয়া খুঁজুন',
+    'actions' => [
+        'save_and_create_contract' => 'Save and create contract',
+    ],
     'fields' => [
         'full_name' => 'পূর্ণ নাম',
         'phone' => 'ফোন',

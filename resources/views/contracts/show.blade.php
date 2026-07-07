@@ -19,6 +19,15 @@
     </div>
 </div>
 
+@if(session('status') && auth()->user()?->role?->can('view-payments'))
+    <div data-contract-created-guidance class="mb-4 rounded border border-emerald-200 bg-emerald-50 p-4 text-sm text-emerald-900">
+        <div class="grid gap-3 sm:flex sm:items-center sm:justify-between">
+            <p>{{ __('contracts.show.created_guidance') }}</p>
+            <a class="tap-target inline-flex min-h-11 items-center justify-center rounded bg-emerald-800 px-4 text-center text-sm font-medium text-white" href="{{ route('payments.index') }}">{{ __('contracts.show.view_payments') }}</a>
+        </div>
+    </div>
+@endif
+
 @if($contract->daysUntilExpiry() !== null && $contract->daysUntilExpiry() <= 90)
     <div class="mb-4 rounded border border-amber-200 bg-amber-50 p-3 text-sm text-amber-900">
         <p class="font-medium">{{ __('contracts.show.expiry_warning') }}</p>

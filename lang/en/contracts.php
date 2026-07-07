@@ -12,6 +12,12 @@ return [
     'filter' => 'Filter',
     'empty' => 'No contracts found.',
 
+    'actions' => [
+        'create_for_unit' => 'Create contract for this unit',
+        'create_for_tenant' => 'Create contract for this tenant',
+        'unit_unavailable_hint' => 'This unit is not currently available for a new contract.',
+    ],
+
     'columns' => [
         'contract_number' => 'Contract number',
         'tenant' => 'Tenant',
@@ -89,7 +95,7 @@ return [
         'schedule_uses_frequency' => 'Determines how many payments are generated.',
         'after_save_title' => 'After saving',
         'after_save_body' => 'The contract opens with its generated payment schedule.',
-        'created_success' => 'Contract created and payment schedule generated.',
+        'created_success' => 'Contract created successfully. You can now review the payment schedule.',
         'notes' => 'Notes',
         'save' => 'Save',
     ],
@@ -113,6 +119,8 @@ return [
         'status' => 'Status:',
         'payment_schedule' => 'Payment schedule',
         'record_payment' => 'Record',
+        'created_guidance' => 'Contract created successfully. You can now review the payment schedule.',
+        'view_payments' => 'View payments',
     ],
 
     'pdf' => [

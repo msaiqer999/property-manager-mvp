@@ -6,6 +6,10 @@ return [
     'edit' => 'تعديل المستأجر',
     'search_placeholder' => 'بحث في المستأجرين',
 
+    'actions' => [
+        'save_and_create_contract' => 'حفظ وإنشاء عقد',
+    ],
+
     'fields' => [
         'full_name' => 'اسم المستأجر',
         'phone' => 'رقم الهاتف',

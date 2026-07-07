@@ -4,6 +4,13 @@
 <div class="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
     <h1 class="text-xl font-semibold">{{ __('units.fields.unit') }} <bdi dir="ltr">{{ $unit->unit_number }}</bdi></h1>
     <div class="grid gap-2 sm:flex sm:flex-wrap">
+        @can('create', \App\Models\Contract::class)
+            @if($unit->status === 'vacant')
+                <a class="tap-target inline-flex min-h-11 items-center justify-center rounded bg-slate-900 px-4 text-center text-sm font-medium text-white" href="{{ route('contracts.create', ['unit_id' => $unit->id]) }}">{{ __('contracts.actions.create_for_unit') }}</a>
+            @else
+                <span class="inline-flex min-h-11 items-center justify-center rounded border bg-slate-50 px-4 text-center text-sm font-medium text-slate-600">{{ __('contracts.actions.unit_unavailable_hint') }}</span>
+            @endif
+        @endcan
         @if(auth()->user()?->role?->can('view-reports'))
             <a class="tap-target inline-flex min-h-11 items-center justify-center rounded border px-4 text-center text-sm font-medium" href="{{ route('reports.index', ['unit_id' => $unit->id]) }}">{{ __('reports.statement.view_statement') }}</a>
         @endif

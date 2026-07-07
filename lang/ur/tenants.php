@@ -5,6 +5,9 @@ return [
     'add' => 'کرایہ دار شامل کریں',
     'edit' => 'کرایہ دار میں ترمیم',
     'search_placeholder' => 'کرایہ دار تلاش کریں',
+    'actions' => [
+        'save_and_create_contract' => 'Save and create contract',
+    ],
     'fields' => [
         'full_name' => 'پورا نام',
         'phone' => 'فون',

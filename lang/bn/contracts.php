@@ -11,6 +11,11 @@ return [
     'all_statuses' => 'সব অবস্থা',
     'filter' => 'ফিল্টার',
     'empty' => 'কোনো চুক্তি পাওয়া যায়নি।',
+    'actions' => [
+        'create_for_unit' => 'Create contract for this unit',
+        'create_for_tenant' => 'Create contract for this tenant',
+        'unit_unavailable_hint' => 'This unit is not currently available for a new contract.',
+    ],
     'columns' => [
         'contract_number' => 'চুক্তি নম্বর',
         'tenant' => 'ভাড়াটিয়া',
@@ -23,6 +28,7 @@ return [
         'action' => 'কাজ',
     ],
     'form' => [
+        'created_success' => 'Contract created successfully. You can now review the payment schedule.',
         'add_title' => 'চুক্তি যোগ করুন',
         'edit_title' => 'চুক্তি সম্পাদনা',
         'tenant' => 'ভাড়াটিয়া',
@@ -53,6 +59,8 @@ return [
         'status' => 'অবস্থা:',
         'payment_schedule' => 'পেমেন্ট সময়সূচি',
         'record_payment' => 'রেকর্ড',
+        'created_guidance' => 'Contract created successfully. You can now review the payment schedule.',
+        'view_payments' => 'View payments',
     ],
     'statuses' => [
         'active' => 'সক্রিয়',
