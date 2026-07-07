@@ -18,30 +18,49 @@ class BetaFeedbackTest extends TestCase
 
         $this->actingAs($user)
             ->from(route('dashboard'))
-            ->post(route('beta-feedback.store'), [
-                'type' => 'confusing',
+            ->post(route('feedback.store'), [
+                'type' => 'confusion',
                 'message' => 'The payment filter was hard to understand.',
                 'page_url' => 'https://beta.example.test/payments?status=pending',
+                'screenshot_note' => 'The status selector is near the top of the page.',
             ])
-            ->assertRedirect(route('dashboard'));
+            ->assertRedirect(route('dashboard'))
+            ->assertSessionHas('status', __('feedback.submitted'));
 
         $this->assertDatabaseHas('beta_feedback', [
             'organization_id' => $user->organization_id,
             'user_id' => $user->id,
-            'type' => 'confusing',
+            'type' => 'confusion',
             'message' => 'The payment filter was hard to understand.',
             'page_url' => 'https://beta.example.test/payments?status=pending',
+            'screenshot_note' => 'The status selector is near the top of the page.',
             'status' => 'new',
         ]);
     }
 
     public function test_unauthenticated_users_cannot_submit_feedback(): void
     {
-        $this->post(route('beta-feedback.store'), [
+        $this->post(route('feedback.store'), [
             'type' => 'bug',
             'message' => 'Guest feedback should not be accepted.',
             'page_url' => 'https://beta.example.test/login',
         ])->assertRedirect(route('login'));
+
+        $this->assertDatabaseCount('beta_feedback', 0);
+    }
+
+    public function test_feedback_message_is_required_and_type_is_validated(): void
+    {
+        $user = $this->user('caretaker');
+
+        $this->actingAs($user)
+            ->from(route('dashboard'))
+            ->post(route('feedback.store'), [
+                'type' => 'unsupported',
+                'message' => '',
+            ])
+            ->assertRedirect(route('dashboard'))
+            ->assertSessionHasErrors(['type', 'message']);
 
         $this->assertDatabaseCount('beta_feedback', 0);
     }
@@ -58,7 +77,7 @@ class BetaFeedbackTest extends TestCase
         ]);
 
         $this->actingAs($owner)
-            ->get(route('beta-feedback.index'))
+            ->get(route('feedback.index'))
             ->assertOk()
             ->assertSee(__('feedback.index_title'))
             ->assertSee(__('feedback.types.suggestion'))
@@ -66,11 +85,30 @@ class BetaFeedbackTest extends TestCase
             ->assertSee($feedback->page_url);
     }
 
-    public function test_non_owners_cannot_view_feedback_index(): void
+    public function test_manager_can_view_feedback_for_their_organization(): void
     {
-        foreach (['manager', 'accountant', 'caretaker'] as $role) {
+        $manager = $this->user('manager', 'manager-feedback@example.com');
+        BetaFeedback::create([
+            'organization_id' => $manager->organization_id,
+            'user_id' => $manager->id,
+            'page_url' => 'https://beta.example.test/quick-start',
+            'type' => 'confusion',
+            'message' => 'Manager-visible feedback.',
+            'screenshot_note' => 'The quick start card was open.',
+        ]);
+
+        $this->actingAs($manager)
+            ->get(route('feedback.index'))
+            ->assertOk()
+            ->assertSee('Manager-visible feedback.')
+            ->assertSee('The quick start card was open.');
+    }
+
+    public function test_accountant_and_caretaker_cannot_view_feedback_index(): void
+    {
+        foreach (['accountant', 'caretaker'] as $role) {
             $this->actingAs($this->user($role, "{$role}-feedback@example.com"))
-                ->get(route('beta-feedback.index'))
+                ->get(route('feedback.index'))
                 ->assertForbidden();
         }
     }
@@ -96,10 +134,25 @@ class BetaFeedbackTest extends TestCase
         ]);
 
         $this->actingAs($owner)
-            ->get(route('beta-feedback.index'))
+            ->get(route('feedback.index'))
             ->assertOk()
             ->assertSee('Visible organization feedback.')
             ->assertDontSee('Other organization feedback.');
+    }
+
+    public function test_authenticated_layout_shows_feedback_entry_point_in_arabic(): void
+    {
+        $user = $this->user('owner', 'layout-feedback-owner@example.com');
+
+        app()->setLocale('ar');
+
+        $this->actingAs($user)
+            ->withSession(['locale' => 'ar'])
+            ->get(route('dashboard'))
+            ->assertOk()
+            ->assertSee(__('feedback.button'))
+            ->assertSee(__('feedback.title'))
+            ->assertSee(__('feedback.submit'));
     }
 
     private function user(string $role, string $email = 'feedback-user@example.com', string $organizationName = 'Feedback Organization'): User

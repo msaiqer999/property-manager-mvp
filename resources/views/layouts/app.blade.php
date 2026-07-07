@@ -175,13 +175,13 @@
                             </div>
                             <button type="button" data-feedback-close aria-label="{{ __('app.close') }}" class="tap-target inline-flex min-h-11 min-w-11 items-center justify-center rounded border text-slate-700">×</button>
                         </div>
-                        <form method="post" action="{{ route('beta-feedback.store') }}" class="mt-4 space-y-4">
+                        <form method="post" action="{{ route('feedback.store') }}" class="mt-4 space-y-4">
                             @csrf
                             <input type="hidden" name="page_url" data-feedback-page-url value="{{ url()->current() }}">
                             <label class="block text-sm font-medium">
                                 {{ __('feedback.type') }}
                                 <select name="type" class="form-select-safe tap-target mt-1 w-full rounded border p-2" required>
-                                    @foreach(['bug', 'confusing', 'suggestion', 'other'] as $type)
+                                    @foreach(['bug', 'confusion', 'suggestion', 'other'] as $type)
                                         <option value="{{ $type }}">{{ __('feedback.types.'.$type) }}</option>
                                     @endforeach
                                 </select>
@@ -190,7 +190,14 @@
                                 {{ __('feedback.message') }}
                                 <textarea name="message" rows="4" class="tap-target mt-1 w-full rounded border p-2" required></textarea>
                             </label>
+                            <label class="block text-sm font-medium">
+                                {{ __('feedback.screenshot_note') }}
+                                <textarea name="screenshot_note" rows="2" class="tap-target mt-1 w-full rounded border p-2" placeholder="{{ __('feedback.screenshot_note_placeholder') }}"></textarea>
+                            </label>
                             <button class="tap-target min-h-11 w-full rounded bg-slate-900 px-4 text-sm font-medium text-white">{{ __('feedback.submit') }}</button>
+                            @if(in_array(auth()->user()?->role?->value, ['owner', 'manager'], true))
+                                <a class="tap-target inline-flex min-h-11 w-full items-center justify-center rounded border px-4 text-center text-sm font-medium text-slate-700" href="{{ route('feedback.index') }}">{{ __('feedback.inbox_link') }}</a>
+                            @endif
                         </form>
                     </section>
                 </div>

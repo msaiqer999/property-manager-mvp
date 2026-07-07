@@ -143,6 +143,21 @@ return [
         'available' => 'Available',
         'record_count' => ':count records',
         'reports_available_body' => 'Reports are available when your role can view them.',
+        'pilot' => [
+            'title' => 'Pilot readiness',
+            'body' => 'Use these checks before inviting a real pilot user to try the system.',
+            'ready' => 'Ready for pilot',
+            'needs_setup' => 'Needs setup',
+            'guidance' => 'During the pilot, use the Feedback button whenever something is unclear, broken, or slow.',
+            'checks' => [
+                'building' => 'At least one building exists',
+                'units' => 'At least one unit exists',
+                'tenant' => 'At least one tenant exists',
+                'contract' => 'At least one contract exists',
+                'payment' => 'Payments are generated',
+                'feedback' => 'Feedback channel ready',
+            ],
+        ],
         'steps' => [
             'building' => ['title' => 'Add building', 'body' => 'Create the building or property location that contains your units.', 'action' => 'Add building'],
             'units' => ['title' => 'Add units', 'body' => 'Add one rentable unit or add multiple units in one batch when you have many units.', 'action' => 'Add units', 'secondary_action' => 'Add multiple units'],

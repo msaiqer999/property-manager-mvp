@@ -120,6 +120,42 @@
     </div>
 </section>
 
+@if(in_array($quickStartRole?->value, ['owner', 'manager'], true))
+    @php
+        $pilotChecks = [
+            'building' => $counts['building'] > 0,
+            'units' => $counts['units'] > 0,
+            'tenant' => $counts['tenant'] > 0,
+            'contract' => $counts['contract'] > 0,
+            'payment' => $counts['payment'] > 0,
+            'feedback' => true,
+        ];
+        $pilotReady = ! in_array(false, $pilotChecks, true);
+    @endphp
+    <section data-pilot-readiness class="mb-4 rounded-xl border bg-white p-4 shadow-sm sm:p-5">
+        <div class="grid gap-2 sm:flex sm:items-start sm:justify-between">
+            <div>
+                <h2 class="text-lg font-semibold text-slate-900">{{ __('app.quick_start.pilot.title') }}</h2>
+                <p class="mt-1 text-sm leading-6 text-slate-600">{{ __('app.quick_start.pilot.body') }}</p>
+            </div>
+            <span class="inline-flex min-h-9 items-center justify-center rounded px-3 text-sm font-medium {{ $pilotReady ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800' }}">
+                {{ $pilotReady ? __('app.quick_start.pilot.ready') : __('app.quick_start.pilot.needs_setup') }}
+            </span>
+        </div>
+        <div class="mt-4 grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+            @foreach($pilotChecks as $checkKey => $isReady)
+                <div class="rounded border p-3 {{ $isReady ? 'border-emerald-200 bg-emerald-50' : 'border-slate-200 bg-slate-50' }}">
+                    <p class="text-sm font-medium text-slate-900">{{ __('app.quick_start.pilot.checks.'.$checkKey) }}</p>
+                    <p class="mt-1 text-xs {{ $isReady ? 'text-emerald-700' : 'text-slate-600' }}">
+                        {{ $isReady ? __('app.quick_start.pilot.ready') : __('app.quick_start.pilot.needs_setup') }}
+                    </p>
+                </div>
+            @endforeach
+        </div>
+        <p class="mt-4 rounded border border-blue-100 bg-blue-50 p-3 text-sm leading-6 text-blue-900">{{ __('app.quick_start.pilot.guidance') }}</p>
+    </section>
+@endif
+
 <section class="rounded-xl border bg-white p-4 shadow-sm sm:p-5">
     <div class="mb-4">
         <h2 class="text-lg font-semibold text-slate-900">{{ __('app.quick_start.order_title') }}</h2>
