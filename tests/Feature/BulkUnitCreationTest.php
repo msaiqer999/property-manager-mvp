@@ -260,6 +260,35 @@ class BulkUnitCreationTest extends TestCase
         $this->assertSame(2, Unit::where('building_id', $building->id)->count());
     }
 
+    public function test_general_bulk_entry_preselects_owned_building_from_query_parameter(): void
+    {
+        [$owner, $building] = $this->ownerWithBuilding();
+
+        $this->actingAs($owner)
+            ->get(route('units.bulk-create', ['building_id' => $building->id]))
+            ->assertOk()
+            ->assertSee('value="'.$building->id.'" selected', false)
+            ->assertSee($building->name);
+    }
+
+    public function test_general_bulk_entry_does_not_preselect_cross_organization_building_from_query_parameter(): void
+    {
+        [$owner] = $this->ownerWithBuilding();
+        $otherOrganization = Organization::create(['name' => 'Other Preselect Organization']);
+        $otherOwner = $this->user($otherOrganization, 'owner');
+        $otherBuilding = Building::create([
+            'organization_id' => $otherOrganization->id,
+            'name' => 'Hidden Preselect Building',
+            'location' => 'Dubai',
+        ]);
+
+        $this->actingAs($owner)
+            ->get(route('units.bulk-create', ['building_id' => $otherBuilding->id]))
+            ->assertOk()
+            ->assertDontSee('value="'.$otherBuilding->id.'" selected', false)
+            ->assertDontSee('Hidden Preselect Building');
+    }
+
     public function test_general_bulk_entry_rejects_duplicate_unit_numbers_in_same_request(): void
     {
         [$owner, $building] = $this->ownerWithBuilding();

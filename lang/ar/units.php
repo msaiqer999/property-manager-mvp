@@ -72,7 +72,7 @@ return [
         'default_status' => 'الحالة الافتراضية',
         'default_notes' => 'ملاحظات افتراضية',
         'created_success' => 'تم إنشاء :count وحدة بنجاح.',
-        'manual_created_success' => 'تمت إضافة الوحدات بنجاح.',
+        'manual_created_success' => 'تمت إضافة الوحدات بنجاح. يمكنك الآن إضافة المستأجرين أو إنشاء العقود.',
         'created_with_skips' => 'تم إنشاء :count وحدة بنجاح. تم تخطي الوحدات الموجودة مسبقًا: :skipped.',
         'preview_expired' => 'انتهت صلاحية المعاينة، يرجى توليد المعاينة مرة أخرى.',
         'validation' => [

@@ -46,7 +46,7 @@
             <select name="building_id" class="form-select-safe tap-target mt-1 w-full rounded border p-2" required>
                 <option value="">{{ __('units.bulk.choose_building_placeholder') }}</option>
                 @foreach($buildings as $building)
-                    <option value="{{ $building->id }}" @selected((string) old('building_id') === (string) $building->id)>{{ $building->name }}</option>
+                    <option value="{{ $building->id }}" @selected((string) old('building_id', $selectedBuildingId) === (string) $building->id)>{{ $building->name }}</option>
                 @endforeach
             </select>
         </label>

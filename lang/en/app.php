@@ -134,6 +134,7 @@ return [
         'guided_start_complete' => 'Your property management basics are set up.',
         'continue_setup' => 'Continue setup',
         'quick_start_button' => 'Start setup',
+        'setup_progress_summary' => 'Setup: :completed of :total steps completed',
         'guided_step_building' => 'Add a building',
         'guided_step_units' => 'Add units',
         'guided_step_tenants' => 'Add tenants',
@@ -203,6 +204,14 @@ return [
         'order_title' => 'Recommended setup order',
         'order_body' => 'Start with the property structure, then add people, contracts, payments, expenses, and reports.',
         'not_available' => 'Not available for your role',
+        'progress_title' => 'Setup progress',
+        'progress_summary' => 'Setup: :completed of :total steps completed',
+        'completed' => 'Completed',
+        'not_started' => 'Not started',
+        'next_step' => 'Next step',
+        'available' => 'Available',
+        'record_count' => ':count records',
+        'reports_available_body' => 'Reports are available when your role can view them.',
         'steps' => [
             'building' => [
                 'title' => 'Add building',
@@ -254,6 +263,9 @@ return [
             'body' => 'Add the rentable units for your buildings so contracts can be created later.',
             'action' => 'Add unit',
             'secondary_action' => 'Add multiple units',
+            'no_buildings_title' => 'Add a building first',
+            'no_buildings_body' => 'Units belong to buildings. Add your first building before adding units.',
+            'no_buildings_action' => 'Add building',
         ],
         'tenants' => [
             'title' => 'No tenants yet',

@@ -117,6 +117,7 @@ return [
         'guided_start_complete' => 'تم إعداد أساسيات إدارة العقار.',
         'continue_setup' => 'متابعة الإعداد',
         'quick_start_button' => 'ابدأ إعداد النظام',
+        'setup_progress_summary' => 'الإعداد: :completed من :total خطوات مكتملة',
         'guided_step_building' => 'أضف مبنى',
         'guided_step_units' => 'أضف الوحدات',
         'guided_step_tenants' => 'أضف المستأجرين',
@@ -208,6 +209,14 @@ return [
         'order_title' => 'ترتيب الإعداد المقترح',
         'order_body' => 'ابدأ بهيكل العقار، ثم أضف الأشخاص والعقود والدفعات والمصروفات والتقارير.',
         'not_available' => 'غير متاح لصلاحيتك',
+        'progress_title' => 'تقدم الإعداد',
+        'progress_summary' => 'الإعداد: :completed من :total خطوات مكتملة',
+        'completed' => 'مكتمل',
+        'not_started' => 'لم يبدأ',
+        'next_step' => 'الخطوة التالية',
+        'available' => 'متاح',
+        'record_count' => ':count سجل',
+        'reports_available_body' => 'التقارير متاحة عندما تسمح صلاحيتك بعرضها.',
         'steps' => [
             'building' => [
                 'title' => 'إضافة مبنى',
@@ -259,6 +268,9 @@ return [
             'body' => 'أضف الوحدات القابلة للتأجير داخل مبانيك حتى تتمكن من إنشاء العقود لاحقًا.',
             'action' => 'إضافة وحدة',
             'secondary_action' => 'إضافة وحدات متعددة',
+            'no_buildings_title' => 'أضف مبنى أولًا',
+            'no_buildings_body' => 'الوحدات تتبع المباني. أضف أول مبنى قبل إضافة الوحدات.',
+            'no_buildings_action' => 'إضافة مبنى',
         ],
         'tenants' => [
             'title' => 'لا يوجد مستأجرون بعد',

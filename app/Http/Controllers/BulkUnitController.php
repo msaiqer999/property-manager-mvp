@@ -17,15 +17,21 @@ class BulkUnitController extends Controller
     private const STATUSES = ['vacant', 'rented', 'maintenance'];
     private const MANUAL_ROW_COUNT = 5;
 
-    public function createStandalone()
+    public function createStandalone(Request $request)
     {
         Gate::authorize('create', Unit::class);
+        $organizationId = auth()->user()->organization_id;
+        $requestedBuildingId = $request->integer('building_id') ?: null;
+        $selectedBuildingId = $requestedBuildingId
+            ? Building::where('organization_id', $organizationId)->whereKey($requestedBuildingId)->value('id')
+            : null;
 
         return view('units.bulk-entry', [
-            'buildings' => Building::where('organization_id', auth()->user()->organization_id)->orderBy('name')->get(),
+            'buildings' => Building::where('organization_id', $organizationId)->orderBy('name')->get(),
             'types' => self::TYPES,
             'statuses' => self::STATUSES,
             'rowCount' => self::MANUAL_ROW_COUNT,
+            'selectedBuildingId' => $selectedBuildingId,
         ]);
     }
 

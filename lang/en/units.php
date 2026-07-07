@@ -72,7 +72,7 @@ return [
         'default_status' => 'Default status',
         'default_notes' => 'Default notes',
         'created_success' => ':count units created successfully.',
-        'manual_created_success' => 'Units added successfully.',
+        'manual_created_success' => 'Units added successfully. You can now add tenants or create contracts.',
         'created_with_skips' => ':count units created successfully. Skipped existing units: :skipped.',
         'preview_expired' => 'The preview has expired. Please generate the preview again.',
         'validation' => [

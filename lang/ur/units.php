@@ -60,7 +60,7 @@ return [
         'default_status' => 'ڈیفالٹ حالت',
         'default_notes' => 'ڈیفالٹ نوٹس',
         'created_success' => ':count یونٹس کامیابی سے بن گئے۔',
-        'manual_created_success' => 'Units added successfully.',
+        'manual_created_success' => 'Units added successfully. You can now add tenants or create contracts.',
         'validation' => [
             'duplicate_in_request' => 'Duplicate unit number in the request: :unit.',
             'duplicate_existing' => 'Unit number already exists in this building: :unit.',

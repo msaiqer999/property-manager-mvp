@@ -139,6 +139,7 @@ return [
         'no_attention_items' => 'Nothing needs attention right now.',
         'quick_actions' => 'Mabilis na aksyon',
         'quick_start_button' => 'Start setup',
+        'setup_progress_summary' => 'Setup: :completed of :total steps completed',
         'roadmap_label' => 'ROADMAP',
         'roadmap_title' => 'Coming Soon',
         'roadmap_body' => 'These features are being developed based on early user feedback and will be released when ready.',
@@ -157,6 +158,14 @@ return [
         'order_title' => 'Recommended setup order',
         'order_body' => 'Start with the property structure, then add people, contracts, payments, expenses, and reports.',
         'not_available' => 'Not available for your role',
+        'progress_title' => 'Setup progress',
+        'progress_summary' => 'Setup: :completed of :total steps completed',
+        'completed' => 'Completed',
+        'not_started' => 'Not started',
+        'next_step' => 'Next step',
+        'available' => 'Available',
+        'record_count' => ':count records',
+        'reports_available_body' => 'Reports are available when your role can view them.',
         'steps' => [
             'building' => ['title' => 'Add building', 'body' => 'Create the building or property location that contains your units.', 'action' => 'Add building'],
             'units' => ['title' => 'Add units', 'body' => 'Add one rentable unit or add multiple units in one batch when you have many units.', 'action' => 'Add units', 'secondary_action' => 'Add multiple units'],
@@ -170,7 +179,7 @@ return [
 
     'empty_states' => [
         'buildings' => ['title' => 'No buildings yet', 'body' => 'Add your first building so you can start adding units, tenants, and contracts.', 'action' => 'Add building'],
-        'units' => ['title' => 'No units yet', 'body' => 'Add the rentable units for your buildings so contracts can be created later.', 'action' => 'Add unit', 'secondary_action' => 'Add multiple units'],
+        'units' => ['title' => 'No units yet', 'body' => 'Add the rentable units for your buildings so contracts can be created later.', 'action' => 'Add unit', 'secondary_action' => 'Add multiple units', 'no_buildings_title' => 'Add a building first', 'no_buildings_body' => 'Units belong to buildings. Add your first building before adding units.', 'no_buildings_action' => 'Add building'],
         'tenants' => ['title' => 'No tenants yet', 'body' => 'Add tenant details before creating the first lease contract.', 'action' => 'Add tenant'],
         'contracts' => ['title' => 'No contracts yet', 'body' => 'Create a contract to connect a tenant to a unit and generate the payment schedule.', 'action' => 'Create contract'],
         'payments' => ['title' => 'No payments yet', 'body' => 'Payments appear after you create a contract with a payment schedule.', 'action' => 'Create contract'],

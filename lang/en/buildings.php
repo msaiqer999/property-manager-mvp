@@ -16,6 +16,8 @@ return [
         'units' => 'Units',
     ],
 
+    'empty_units_guidance' => 'This building is ready. Add multiple units at once, or add a single unit if you only need one.',
+
     'lifecycle' => [
         'cannot_archive_with_history' => 'A building containing units or financial history cannot be archived.',
     ],
