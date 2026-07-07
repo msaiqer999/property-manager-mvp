@@ -24,6 +24,7 @@ class QuickStartTest extends TestCase
             ->assertSee('Recommended setup order')
             ->assertSee('Add building')
             ->assertSee('Add units')
+            ->assertSee('Add multiple units')
             ->assertSee('Add tenant')
             ->assertSee('Create contract')
             ->assertSee('Record payment')
@@ -31,6 +32,7 @@ class QuickStartTest extends TestCase
             ->assertSee('View report')
             ->assertSee(route('buildings.create', absolute: false))
             ->assertSee(route('units.create', absolute: false))
+            ->assertSee(route('units.bulk-create', absolute: false))
             ->assertSee(route('tenants.create', absolute: false))
             ->assertSee(route('contracts.create', absolute: false))
             ->assertSee(route('payments.index', absolute: false))
@@ -56,6 +58,21 @@ class QuickStartTest extends TestCase
             ->assertSee('data-dashboard-quick-start', false)
             ->assertSee('Start setup')
             ->assertSee(route('quick-start.index', absolute: false));
+    }
+
+    public function test_units_empty_state_shows_single_and_multiple_unit_actions(): void
+    {
+        $owner = $this->user('owner');
+
+        $this->actingAs($owner)
+            ->withSession(['locale' => 'en'])
+            ->get(route('units.index'))
+            ->assertOk()
+            ->assertSee('data-empty-state-units', false)
+            ->assertSee('Add unit')
+            ->assertSee('Add multiple units')
+            ->assertSee(route('units.create', absolute: false))
+            ->assertSee(route('units.bulk-create', absolute: false));
     }
 
     public function test_quick_start_renders_arabic_labels(): void

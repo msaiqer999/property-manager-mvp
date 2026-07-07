@@ -42,8 +42,16 @@ return [
     'bulk' => [
         'add_multiple' => 'একাধিক ইউনিট যোগ করুন',
         'title' => 'একাধিক ইউনিট যোগ করুন',
+        'manual_title' => 'Add multiple units',
+        'manual_description' => 'Choose a building, fill only the unit rows you need, and leave unused rows empty.',
         'generate_preview' => 'প্রিভিউ তৈরি করুন',
         'create_units' => 'ইউনিট তৈরি করুন',
+        'save_manual_units' => 'Save units',
+        'choose_building' => 'Building',
+        'choose_building_placeholder' => 'Choose building',
+        'choose_building_help' => 'All units in this batch will be created under this building.',
+        'row_title' => 'Unit row :number',
+        'unit_number_required_hint' => 'Unit number starts the row',
         'start_number' => 'শুরুর নম্বর',
         'end_number' => 'শেষ নম্বর',
         'default_rent' => 'ডিফল্ট ভাড়া',
@@ -52,5 +60,11 @@ return [
         'default_status' => 'ডিফল্ট অবস্থা',
         'default_notes' => 'ডিফল্ট নোট',
         'created_success' => ':count ইউনিট সফলভাবে তৈরি হয়েছে।',
+        'manual_created_success' => 'Units added successfully.',
+        'validation' => [
+            'duplicate_in_request' => 'Duplicate unit number in the request: :unit.',
+            'duplicate_existing' => 'Unit number already exists in this building: :unit.',
+            'no_rows' => 'Enter at least one unit number.',
+        ],
     ],
 ];

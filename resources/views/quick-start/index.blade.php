@@ -15,6 +15,7 @@
             'key' => 'units',
             'number' => 2,
             'href' => route('units.create'),
+            'secondary_href' => route('units.bulk-create'),
             'allowed' => $quickStartRole?->can('manage-properties') ?? false,
         ],
         [
@@ -78,9 +79,16 @@
                     <p class="mt-1 text-sm leading-6 text-slate-600">{{ __('app.quick_start.steps.'.$step['key'].'.body') }}</p>
                 </div>
                 @if($step['allowed'])
-                    <a class="tap-target inline-flex min-h-11 items-center justify-center rounded bg-slate-900 px-4 text-center text-sm font-medium text-white" href="{{ $step['href'] }}">
-                        {{ __('app.quick_start.steps.'.$step['key'].'.action') }}
-                    </a>
+                    <div class="grid gap-2 sm:min-w-44">
+                        <a class="tap-target inline-flex min-h-11 items-center justify-center rounded bg-slate-900 px-4 text-center text-sm font-medium text-white" href="{{ $step['href'] }}">
+                            {{ __('app.quick_start.steps.'.$step['key'].'.action') }}
+                        </a>
+                        @if(isset($step['secondary_href']))
+                            <a class="tap-target inline-flex min-h-11 items-center justify-center rounded border bg-white px-4 text-center text-sm font-medium text-slate-800" href="{{ $step['secondary_href'] }}">
+                                {{ __('app.quick_start.steps.'.$step['key'].'.secondary_action') }}
+                            </a>
+                        @endif
+                    </div>
                 @else
                     <span class="inline-flex min-h-11 items-center justify-center rounded border bg-white px-4 text-center text-sm font-medium text-slate-500">
                         {{ __('app.quick_start.not_available') }}

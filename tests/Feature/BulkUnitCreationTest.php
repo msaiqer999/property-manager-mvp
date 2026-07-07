@@ -25,6 +25,21 @@ class BulkUnitCreationTest extends TestCase
             ->assertSee('End number');
     }
 
+    public function test_owner_can_open_general_bulk_unit_entry_page(): void
+    {
+        [$owner, $building] = $this->ownerWithBuilding();
+
+        $this->actingAs($owner)
+            ->get(route('units.bulk-create'))
+            ->assertOk()
+            ->assertSee('Add multiple units')
+            ->assertSee('Choose building')
+            ->assertSee($building->name)
+            ->assertSee('data-bulk-unit-entry-row', false)
+            ->assertSee('name="units[4][unit_number]"', false)
+            ->assertSee('action="'.route('units.bulk-store').'"', false);
+    }
+
     public function test_manager_can_open_bulk_unit_creation_for_their_building(): void
     {
         [$owner, $building] = $this->ownerWithBuilding();
@@ -34,6 +49,23 @@ class BulkUnitCreationTest extends TestCase
             ->get(route('buildings.units.bulk.create', $building))
             ->assertOk()
             ->assertSee('Add multiple units');
+    }
+
+    public function test_manager_can_open_general_bulk_unit_entry_page(): void
+    {
+        [$owner] = $this->ownerWithBuilding();
+        $manager = $this->user($owner->organization, 'manager');
+
+        $this->actingAs($manager)
+            ->get(route('units.bulk-create'))
+            ->assertOk()
+            ->assertSee('Add multiple units');
+    }
+
+    public function test_guest_cannot_open_general_bulk_unit_entry_page(): void
+    {
+        $this->get(route('units.bulk-create'))
+            ->assertRedirect(route('login'));
     }
 
     public function test_preview_generates_units_from_101_to_105(): void
@@ -195,14 +227,92 @@ class BulkUnitCreationTest extends TestCase
             ->assertSessionHasErrors('units');
     }
 
+    public function test_general_bulk_entry_creates_valid_rows_and_ignores_empty_rows(): void
+    {
+        [$owner, $building] = $this->ownerWithBuilding();
+        $rows = $this->unitRows(['201', '202']);
+        $rows[] = [
+            'unit_number' => '',
+            'type' => 'apartment',
+            'rent_amount' => '',
+            'rooms' => '',
+            'size' => '',
+            'status' => 'vacant',
+            'notes' => '',
+        ];
+
+        $this->actingAs($owner)
+            ->post(route('units.bulk-store'), [
+                'building_id' => $building->id,
+                'units' => $rows,
+            ])
+            ->assertRedirect(route('units.index', ['building_id' => $building->id]))
+            ->assertSessionHas('status', __('units.bulk.manual_created_success'));
+
+        $this->assertDatabaseHas('units', [
+            'building_id' => $building->id,
+            'unit_number' => '201',
+        ]);
+        $this->assertDatabaseHas('units', [
+            'building_id' => $building->id,
+            'unit_number' => '202',
+        ]);
+        $this->assertSame(2, Unit::where('building_id', $building->id)->count());
+    }
+
+    public function test_general_bulk_entry_rejects_duplicate_unit_numbers_in_same_request(): void
+    {
+        [$owner, $building] = $this->ownerWithBuilding();
+
+        $this->actingAs($owner)
+            ->from(route('units.bulk-create'))
+            ->post(route('units.bulk-store'), [
+                'building_id' => $building->id,
+                'units' => $this->unitRows(['301', '301']),
+            ])
+            ->assertRedirect(route('units.bulk-create'))
+            ->assertSessionHasErrors('units');
+    }
+
+    public function test_general_bulk_entry_rejects_existing_unit_number_in_selected_building(): void
+    {
+        [$owner, $building] = $this->ownerWithBuilding();
+        Unit::create([
+            'building_id' => $building->id,
+            'unit_number' => '401',
+            'type' => 'apartment',
+            'status' => 'vacant',
+            'rent_amount' => 1000,
+        ]);
+
+        $this->actingAs($owner)
+            ->from(route('units.bulk-create'))
+            ->post(route('units.bulk-store'), [
+                'building_id' => $building->id,
+                'units' => $this->unitRows(['401', '402']),
+            ])
+            ->assertRedirect(route('units.bulk-create'))
+            ->assertSessionHasErrors('units');
+
+        $this->assertDatabaseMissing('units', [
+            'building_id' => $building->id,
+            'unit_number' => '402',
+        ]);
+    }
+
     public function test_caretaker_cannot_open_preview_or_save_bulk_units(): void
     {
         [$owner, $building] = $this->ownerWithBuilding();
         $caretaker = $this->user($owner->organization, 'caretaker');
 
         $this->actingAs($caretaker)->get(route('buildings.units.bulk.create', $building))->assertForbidden();
+        $this->actingAs($caretaker)->get(route('units.bulk-create'))->assertForbidden();
         $this->actingAs($caretaker)->post(route('buildings.units.bulk.preview', $building), $this->templatePayload())->assertForbidden();
         $this->actingAs($caretaker)->post(route('buildings.units.bulk.store', $building), [
+            'units' => $this->unitRows(['101']),
+        ])->assertForbidden();
+        $this->actingAs($caretaker)->post(route('units.bulk-store'), [
+            'building_id' => $building->id,
             'units' => $this->unitRows(['101']),
         ])->assertForbidden();
     }
@@ -213,8 +323,13 @@ class BulkUnitCreationTest extends TestCase
         $accountant = $this->user($owner->organization, 'accountant');
 
         $this->actingAs($accountant)->get(route('buildings.units.bulk.create', $building))->assertForbidden();
+        $this->actingAs($accountant)->get(route('units.bulk-create'))->assertForbidden();
         $this->actingAs($accountant)->post(route('buildings.units.bulk.preview', $building), $this->templatePayload())->assertForbidden();
         $this->actingAs($accountant)->post(route('buildings.units.bulk.store', $building), [
+            'units' => $this->unitRows(['101']),
+        ])->assertForbidden();
+        $this->actingAs($accountant)->post(route('units.bulk-store'), [
+            'building_id' => $building->id,
             'units' => $this->unitRows(['101']),
         ])->assertForbidden();
     }
@@ -226,8 +341,13 @@ class BulkUnitCreationTest extends TestCase
         $otherOwner = $this->user($otherOrganization, 'owner');
 
         $this->actingAs($otherOwner)->get(route('buildings.units.bulk.create', $building))->assertForbidden();
+        $this->actingAs($otherOwner)->get(route('units.bulk-create'))->assertOk();
         $this->actingAs($otherOwner)->post(route('buildings.units.bulk.preview', $building), $this->templatePayload())->assertForbidden();
         $this->actingAs($otherOwner)->post(route('buildings.units.bulk.store', $building), [
+            'units' => $this->unitRows(['101']),
+        ])->assertForbidden();
+        $this->actingAs($otherOwner)->post(route('units.bulk-store'), [
+            'building_id' => $building->id,
             'units' => $this->unitRows(['101']),
         ])->assertForbidden();
     }
@@ -249,6 +369,23 @@ class BulkUnitCreationTest extends TestCase
             ->assertSee($title)
             ->assertSee($startNumber)
             ->assertSee($generatePreview);
+    }
+
+    public function test_general_bulk_unit_entry_text_appears_in_arabic_locale(): void
+    {
+        [$owner, $building] = $this->ownerWithBuilding();
+
+        app()->setLocale('ar');
+
+        $this->actingAs($owner)
+            ->withSession(['locale' => 'ar'])
+            ->get(route('units.bulk-create'))
+            ->assertOk()
+            ->assertSee('<html lang="ar" dir="rtl">', false)
+            ->assertSee(__('units.bulk.manual_title'))
+            ->assertSee(__('units.bulk.choose_building'))
+            ->assertSee($building->name)
+            ->assertSee(__('units.bulk.save_manual_units'));
     }
 
     private function ownerWithBuilding(): array

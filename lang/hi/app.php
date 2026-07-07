@@ -136,7 +136,7 @@ return [
         'not_available' => 'Not available for your role',
         'steps' => [
             'building' => ['title' => 'Add building', 'body' => 'Create the building or property location that contains your units.', 'action' => 'Add building'],
-            'units' => ['title' => 'Add units', 'body' => 'Add each rentable unit, or use bulk unit creation when you have many units.', 'action' => 'Add units'],
+            'units' => ['title' => 'Add units', 'body' => 'Add one rentable unit or add multiple units in one batch when you have many units.', 'action' => 'Add units', 'secondary_action' => 'Add multiple units'],
             'tenant' => ['title' => 'Add tenant', 'body' => 'Save the tenant name and contact details before creating a lease contract.', 'action' => 'Add tenant'],
             'contract' => ['title' => 'Create contract', 'body' => 'Connect a tenant to a unit and generate the rent payment schedule.', 'action' => 'Create contract'],
             'payment' => ['title' => 'Record payment', 'body' => 'Open the payments list to record received rent and download receipts.', 'action' => 'Open payments'],
@@ -147,7 +147,7 @@ return [
 
     'empty_states' => [
         'buildings' => ['title' => 'No buildings yet', 'body' => 'Add your first building so you can start adding units, tenants, and contracts.', 'action' => 'Add building'],
-        'units' => ['title' => 'No units yet', 'body' => 'Add the rentable units for your buildings so contracts can be created later.', 'action' => 'Add unit'],
+        'units' => ['title' => 'No units yet', 'body' => 'Add the rentable units for your buildings so contracts can be created later.', 'action' => 'Add unit', 'secondary_action' => 'Add multiple units'],
         'tenants' => ['title' => 'No tenants yet', 'body' => 'Add tenant details before creating the first lease contract.', 'action' => 'Add tenant'],
         'contracts' => ['title' => 'No contracts yet', 'body' => 'Create a contract to connect a tenant to a unit and generate the payment schedule.', 'action' => 'Create contract'],
         'payments' => ['title' => 'No payments yet', 'body' => 'Payments appear after you create a contract with a payment schedule.', 'action' => 'Create contract'],
