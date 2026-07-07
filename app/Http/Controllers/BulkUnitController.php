@@ -8,12 +8,26 @@ use App\Services\ActivityLogger;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
 
 class BulkUnitController extends Controller
 {
     private const TYPES = ['apartment', 'shop', 'office', 'warehouse', 'villa', 'chalet', 'other'];
     private const STATUSES = ['vacant', 'rented', 'maintenance'];
+    private const MANUAL_ROW_COUNT = 5;
+
+    public function createStandalone()
+    {
+        Gate::authorize('create', Unit::class);
+
+        return view('units.bulk-entry', [
+            'buildings' => Building::where('organization_id', auth()->user()->organization_id)->orderBy('name')->get(),
+            'types' => self::TYPES,
+            'statuses' => self::STATUSES,
+            'rowCount' => self::MANUAL_ROW_COUNT,
+        ]);
+    }
 
     public function create(Building $building)
     {
@@ -128,6 +142,77 @@ class BulkUnitController extends Controller
             ]));
     }
 
+    public function storeStandalone(Request $request, ActivityLogger $logger)
+    {
+        Gate::authorize('create', Unit::class);
+
+        $organizationId = auth()->user()->organization_id;
+        $submittedRows = collect($request->input('units', []))
+            ->filter(fn ($row) => trim((string) data_get($row, 'unit_number', '')) !== '')
+            ->values()
+            ->all();
+
+        if ($submittedRows === []) {
+            throw ValidationException::withMessages([
+                'units' => __('units.bulk.validation.no_rows'),
+            ]);
+        }
+
+        $requestedBuildingId = $request->integer('building_id');
+        if ($requestedBuildingId
+            && Building::whereKey($requestedBuildingId)->exists()
+            && ! Building::where('organization_id', $organizationId)->whereKey($requestedBuildingId)->exists()) {
+            abort(403);
+        }
+
+        $validated = validator([
+            'building_id' => $request->input('building_id'),
+            'units' => $submittedRows,
+        ], [
+            'building_id' => ['required', Rule::exists('buildings', 'id')->where('organization_id', $organizationId)],
+            'units' => ['required', 'array', 'min:1', 'max:200'],
+            'units.*.unit_number' => ['required', 'string', 'max:50'],
+            'units.*.type' => ['required', 'in:'.implode(',', self::TYPES)],
+            'units.*.rent_amount' => ['required', 'numeric', 'min:0'],
+            'units.*.rooms' => ['nullable', 'integer', 'min:0'],
+            'units.*.size' => ['nullable', 'numeric', 'min:0'],
+            'units.*.status' => ['required', 'in:'.implode(',', self::STATUSES)],
+            'units.*.notes' => ['nullable', 'string'],
+        ], [], __('units.bulk.attributes'))->validate();
+
+        $building = Building::where('organization_id', $organizationId)
+            ->whereKey($validated['building_id'])
+            ->firstOrFail();
+
+        $rows = collect($validated['units'])
+            ->map(fn (array $row) => [
+                'building_id' => $building->id,
+                'unit_number' => trim($row['unit_number']),
+                'type' => $row['type'],
+                'rent_amount' => $row['rent_amount'],
+                'rooms' => $row['rooms'] ?? null,
+                'size' => $row['size'] ?? null,
+                'status' => $row['status'],
+                'notes' => isset($row['notes']) ? trim($row['notes']) : null,
+            ])
+            ->values()
+            ->all();
+
+        $this->ensureNoDuplicateUnitNumbersInRequest($rows);
+        $this->ensureNoExistingUnitNumbers($building, $rows);
+
+        DB::transaction(function () use ($rows, $logger): void {
+            foreach ($rows as $row) {
+                $unit = Unit::create($row);
+                $logger->log('unit.created', $unit);
+            }
+        });
+
+        return redirect()
+            ->route('units.index', ['building_id' => $building->id])
+            ->with('status', __('units.bulk.manual_created_success'));
+    }
+
     private function authorizeBulkCreation(Building $building): void
     {
         Gate::authorize('view', $building);
@@ -177,5 +262,19 @@ class BulkUnitController extends Controller
             ->all();
 
         return [$creatableRows, $skipped];
+    }
+
+    private function ensureNoExistingUnitNumbers(Building $building, array $rows): void
+    {
+        $existingUnitNumber = Unit::withTrashed()
+            ->where('building_id', $building->id)
+            ->whereIn('unit_number', collect($rows)->pluck('unit_number')->all())
+            ->value('unit_number');
+
+        if ($existingUnitNumber !== null) {
+            throw ValidationException::withMessages([
+                'units' => __('units.bulk.validation.duplicate_existing', ['unit' => $existingUnitNumber]),
+            ]);
+        }
     }
 }

@@ -42,8 +42,16 @@ return [
     'bulk' => [
         'add_multiple' => 'متعدد یونٹس شامل کریں',
         'title' => 'متعدد یونٹس شامل کریں',
+        'manual_title' => 'Add multiple units',
+        'manual_description' => 'Choose a building, fill only the unit rows you need, and leave unused rows empty.',
         'generate_preview' => 'پری ویو بنائیں',
         'create_units' => 'یونٹس بنائیں',
+        'save_manual_units' => 'Save units',
+        'choose_building' => 'Building',
+        'choose_building_placeholder' => 'Choose building',
+        'choose_building_help' => 'All units in this batch will be created under this building.',
+        'row_title' => 'Unit row :number',
+        'unit_number_required_hint' => 'Unit number starts the row',
         'start_number' => 'ابتدائی نمبر',
         'end_number' => 'آخری نمبر',
         'default_rent' => 'ڈیفالٹ کرایہ',
@@ -52,5 +60,11 @@ return [
         'default_status' => 'ڈیفالٹ حالت',
         'default_notes' => 'ڈیفالٹ نوٹس',
         'created_success' => ':count یونٹس کامیابی سے بن گئے۔',
+        'manual_created_success' => 'Units added successfully.',
+        'validation' => [
+            'duplicate_in_request' => 'Duplicate unit number in the request: :unit.',
+            'duplicate_existing' => 'Unit number already exists in this building: :unit.',
+            'no_rows' => 'Enter at least one unit number.',
+        ],
     ],
 ];

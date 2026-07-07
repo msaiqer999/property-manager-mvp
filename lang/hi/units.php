@@ -42,8 +42,16 @@ return [
     'bulk' => [
         'add_multiple' => 'कई यूनिट जोड़ें',
         'title' => 'कई यूनिट जोड़ें',
+        'manual_title' => 'Add multiple units',
+        'manual_description' => 'Choose a building, fill only the unit rows you need, and leave unused rows empty.',
         'generate_preview' => 'पूर्वावलोकन बनाएं',
         'create_units' => 'यूनिट बनाएं',
+        'save_manual_units' => 'Save units',
+        'choose_building' => 'Building',
+        'choose_building_placeholder' => 'Choose building',
+        'choose_building_help' => 'All units in this batch will be created under this building.',
+        'row_title' => 'Unit row :number',
+        'unit_number_required_hint' => 'Unit number starts the row',
         'start_number' => 'शुरुआती नंबर',
         'end_number' => 'अंतिम नंबर',
         'default_rent' => 'डिफ़ॉल्ट किराया',
@@ -52,5 +60,11 @@ return [
         'default_status' => 'डिफ़ॉल्ट स्थिति',
         'default_notes' => 'डिफ़ॉल्ट नोट्स',
         'created_success' => ':count यूनिट सफलतापूर्वक बनाई गईं।',
+        'manual_created_success' => 'Units added successfully.',
+        'validation' => [
+            'duplicate_in_request' => 'Duplicate unit number in the request: :unit.',
+            'duplicate_existing' => 'Unit number already exists in this building: :unit.',
+            'no_rows' => 'Enter at least one unit number.',
+        ],
     ],
 ];

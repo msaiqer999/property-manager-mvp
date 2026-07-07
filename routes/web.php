@@ -69,6 +69,8 @@ Route::middleware('auth')->group(function () {
         Route::get('unit-documents/{unitDocument}/download', [UnitDocumentController::class, 'download'])->name('unit-documents.download');
         Route::delete('unit-documents/{unitDocument}', [UnitDocumentController::class, 'destroy'])->name('unit-documents.destroy');
         Route::resource('buildings', BuildingController::class);
+        Route::get('units/bulk-create', [BulkUnitController::class, 'createStandalone'])->name('units.bulk-create');
+        Route::post('units/bulk-create', [BulkUnitController::class, 'storeStandalone'])->name('units.bulk-store');
         Route::resource('units', UnitController::class);
     });
 

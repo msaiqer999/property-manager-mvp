@@ -211,8 +211,9 @@ return [
             ],
             'units' => [
                 'title' => 'Add units',
-                'body' => 'Add each rentable unit, or use bulk unit creation when you have many units.',
+                'body' => 'Add one rentable unit or add multiple units in one batch when you have many units.',
                 'action' => 'Add units',
+                'secondary_action' => 'Add multiple units',
             ],
             'tenant' => [
                 'title' => 'Add tenant',
@@ -252,6 +253,7 @@ return [
             'title' => 'No units yet',
             'body' => 'Add the rentable units for your buildings so contracts can be created later.',
             'action' => 'Add unit',
+            'secondary_action' => 'Add multiple units',
         ],
         'tenants' => [
             'title' => 'No tenants yet',
