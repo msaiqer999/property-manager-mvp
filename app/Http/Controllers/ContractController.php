@@ -41,7 +41,7 @@ class ContractController extends Controller
         $renewalSource = $this->renewalSource($request->query('renew_from'));
 
         if ($renewalSource === null) {
-            return view('contracts.form', $this->formData(new Contract));
+            return view('contracts.form', $this->formData(new Contract, $request));
         }
 
         $durationDays = $renewalSource->start_date->diffInDays($renewalSource->end_date);
@@ -57,7 +57,7 @@ class ContractController extends Controller
             'status' => 'active',
         ]);
 
-        return view('contracts.form', $this->formData($contract) + compact('renewalSource'));
+        return view('contracts.form', $this->formData($contract, $request) + compact('renewalSource'));
     }
 
     public function store(Request $request, ActivityLogger $logger)
@@ -254,7 +254,7 @@ class ContractController extends Controller
         return $pdf->download('pdf.contract', compact('contract'), "contract-{$contract->contract_number}.pdf");
     }
 
-    private function formData(Contract $contract): array
+    private function formData(Contract $contract, ?Request $request = null): array
     {
         $units = Unit::with(['building', 'contracts' => fn ($q) => $q->where('status', 'active')->orderBy('start_date')])
             ->whereHas('building', fn ($q) => $q->where('organization_id', $this->organizationId()))
@@ -262,16 +262,54 @@ class ContractController extends Controller
             ->get();
 
         $units->each(fn (Unit $unit) => $unit->availability_label = $this->availabilityLabel($unit));
+        $buildings = $this->buildings();
+        $tenants = Tenant::query()
+            ->where('organization_id', $this->organizationId())
+            ->when(Schema::hasColumn('tenants', 'archived_at'), fn ($query) => $query->whereNull('archived_at'))
+            ->orderBy('full_name')
+            ->get(['id', 'full_name']);
+
+        $selectedUnit = null;
+        $selectedBuildingId = null;
+        $selectedUnitId = null;
+        $selectedTenantId = null;
+        $contractMode = 'vacant';
+
+        if ($request !== null && ! $contract->exists) {
+            if ($request->filled('unit_id')) {
+                $selectedUnit = $units->firstWhere('id', (int) $request->query('unit_id'));
+
+                if ($selectedUnit !== null) {
+                    $selectedUnitId = $selectedUnit->id;
+                    $selectedBuildingId = $selectedUnit->building_id;
+
+                    $activeContracts = $selectedUnit->relationLoaded('contracts')
+                        ? $selectedUnit->contracts->where('status', 'active')
+                        : collect();
+                    $contractMode = ($selectedUnit->status === 'vacant' && $activeContracts->isEmpty()) ? 'vacant' : 'future';
+                }
+            }
+
+            if ($selectedBuildingId === null && $request->filled('building_id')) {
+                $selectedBuilding = $buildings->firstWhere('id', (int) $request->query('building_id'));
+                $selectedBuildingId = $selectedBuilding?->id;
+            }
+
+            if ($request->filled('tenant_id')) {
+                $selectedTenant = $tenants->firstWhere('id', (int) $request->query('tenant_id'));
+                $selectedTenantId = $selectedTenant?->id;
+            }
+        }
 
         return [
             'contract' => $contract,
-            'buildings' => $this->buildings(),
-            'tenants' => Tenant::query()
-                ->where('organization_id', $this->organizationId())
-                ->when(Schema::hasColumn('tenants', 'archived_at'), fn ($query) => $query->whereNull('archived_at'))
-                ->orderBy('full_name')
-                ->get(['id', 'full_name']),
+            'buildings' => $buildings,
+            'tenants' => $tenants,
             'units' => $units,
+            'contractMode' => $contractMode,
+            'selectedBuildingId' => $selectedBuildingId,
+            'selectedUnitId' => $selectedUnitId,
+            'selectedTenantId' => $selectedTenantId,
         ];
     }
 

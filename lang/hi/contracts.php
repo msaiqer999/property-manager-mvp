@@ -11,6 +11,11 @@ return [
     'all_statuses' => 'सभी स्थितियां',
     'filter' => 'फ़िल्टर',
     'empty' => 'कोई अनुबंध नहीं मिला।',
+    'actions' => [
+        'create_for_unit' => 'Create contract for this unit',
+        'create_for_tenant' => 'Create contract for this tenant',
+        'unit_unavailable_hint' => 'This unit is not currently available for a new contract.',
+    ],
     'columns' => [
         'contract_number' => 'अनुबंध नंबर',
         'tenant' => 'किरायेदार',
@@ -23,6 +28,7 @@ return [
         'action' => 'कार्य',
     ],
     'form' => [
+        'created_success' => 'Contract created successfully. You can now review the payment schedule.',
         'add_title' => 'अनुबंध जोड़ें',
         'edit_title' => 'अनुबंध संपादित करें',
         'tenant' => 'किरायेदार',
@@ -53,6 +59,8 @@ return [
         'status' => 'स्थिति:',
         'payment_schedule' => 'भुगतान शेड्यूल',
         'record_payment' => 'रिकॉर्ड',
+        'created_guidance' => 'Contract created successfully. You can now review the payment schedule.',
+        'view_payments' => 'View payments',
     ],
     'statuses' => [
         'active' => 'सक्रिय',

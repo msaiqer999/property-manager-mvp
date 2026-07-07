@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Http\Controllers\Concerns\ScopesOrganization;
+use App\Models\Contract;
 use App\Models\Tenant;
 use App\Services\ActivityLogger;
 use Illuminate\Http\Request;
@@ -52,6 +53,10 @@ class TenantController extends Controller
         Gate::authorize('create', Tenant::class);
         $tenant = Tenant::create($this->validated($request) + ['organization_id' => $this->organizationId()]);
         $logger->log('tenant.created', $tenant);
+
+        if ($request->input('after_save') === 'create_contract' && Gate::allows('create', Contract::class)) {
+            return redirect()->route('contracts.create', ['tenant_id' => $tenant->id]);
+        }
 
         return redirect()->route('tenants.show', $tenant);
     }

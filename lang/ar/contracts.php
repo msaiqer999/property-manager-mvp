@@ -12,6 +12,12 @@ return [
     'filter' => 'تصفية',
     'empty' => 'لا توجد عقود.',
 
+    'actions' => [
+        'create_for_unit' => 'إنشاء عقد لهذه الوحدة',
+        'create_for_tenant' => 'إنشاء عقد لهذا المستأجر',
+        'unit_unavailable_hint' => 'هذه الوحدة غير متاحة حالياً لإنشاء عقد جديد.',
+    ],
+
     'columns' => [
         'contract_number' => 'رقم العقد',
         'tenant' => 'المستأجر',
@@ -89,7 +95,7 @@ return [
         'schedule_uses_frequency' => 'يحدد عدد الدفعات التي سيتم إنشاؤها.',
         'after_save_title' => 'بعد الحفظ',
         'after_save_body' => 'يفتح العقد مع جدول الدفعات الذي تم إنشاؤه.',
-        'created_success' => 'تم إنشاء العقد وجدول الدفعات بنجاح.',
+        'created_success' => 'تم إنشاء العقد بنجاح. يمكنك الآن مراجعة جدول الدفعات.',
         'notes' => 'ملاحظات',
         'save' => 'حفظ',
     ],
@@ -113,6 +119,8 @@ return [
         'status' => 'الحالة:',
         'payment_schedule' => 'جدول الدفعات',
         'record_payment' => 'تسجيل',
+        'created_guidance' => 'تم إنشاء العقد بنجاح. يمكنك الآن مراجعة جدول الدفعات.',
+        'view_payments' => 'عرض الدفعات',
     ],
 
     'pdf' => [

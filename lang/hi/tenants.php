@@ -5,6 +5,9 @@ return [
     'add' => 'किरायेदार जोड़ें',
     'edit' => 'किरायेदार संपादित करें',
     'search_placeholder' => 'किरायेदार खोजें',
+    'actions' => [
+        'save_and_create_contract' => 'Save and create contract',
+    ],
     'fields' => [
         'full_name' => 'पूरा नाम',
         'phone' => 'फोन',

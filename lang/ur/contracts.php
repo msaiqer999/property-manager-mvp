@@ -11,6 +11,11 @@ return [
     'all_statuses' => 'تمام حالتیں',
     'filter' => 'فلٹر',
     'empty' => 'کوئی معاہدہ نہیں ملا۔',
+    'actions' => [
+        'create_for_unit' => 'Create contract for this unit',
+        'create_for_tenant' => 'Create contract for this tenant',
+        'unit_unavailable_hint' => 'This unit is not currently available for a new contract.',
+    ],
     'columns' => [
         'contract_number' => 'معاہدہ نمبر',
         'tenant' => 'کرایہ دار',
@@ -23,6 +28,7 @@ return [
         'action' => 'کارروائی',
     ],
     'form' => [
+        'created_success' => 'Contract created successfully. You can now review the payment schedule.',
         'add_title' => 'معاہدہ شامل کریں',
         'edit_title' => 'معاہدہ میں ترمیم',
         'tenant' => 'کرایہ دار',
@@ -53,6 +59,8 @@ return [
         'status' => 'حالت:',
         'payment_schedule' => 'ادائیگی شیڈول',
         'record_payment' => 'ریکارڈ',
+        'created_guidance' => 'Contract created successfully. You can now review the payment schedule.',
+        'view_payments' => 'View payments',
     ],
     'statuses' => [
         'active' => 'فعال',

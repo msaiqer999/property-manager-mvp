@@ -229,6 +229,36 @@ class QuickStartTest extends TestCase
             ->assertSee('Add tenant');
     }
 
+    public function test_quick_start_recommends_create_contract_when_units_and_tenants_exist(): void
+    {
+        $owner = $this->user('owner');
+        $building = Building::create([
+            'organization_id' => $owner->organization_id,
+            'name' => 'Contract Recommendation Building',
+            'location' => 'Riyadh',
+        ]);
+        Unit::create([
+            'building_id' => $building->id,
+            'unit_number' => 'CR-101',
+            'type' => 'apartment',
+            'status' => 'vacant',
+            'rent_amount' => 1000,
+        ]);
+        Tenant::create([
+            'organization_id' => $owner->organization_id,
+            'full_name' => 'Contract Recommendation Tenant',
+            'phone' => '0500000000',
+        ]);
+
+        $this->actingAs($owner)
+            ->withSession(['locale' => 'en'])
+            ->get(route('quick-start.index'))
+            ->assertOk()
+            ->assertSee('Setup: 3 of 6 steps completed')
+            ->assertSee('href="'.route('contracts.create').'"', false)
+            ->assertSee('Create contract');
+    }
+
     public function test_building_show_includes_add_multiple_units_link_and_stays_scoped(): void
     {
         $owner = $this->user('owner');

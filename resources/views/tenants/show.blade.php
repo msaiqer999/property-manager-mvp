@@ -13,6 +13,11 @@
         </p>
     </div>
     <div class="grid gap-2 sm:flex sm:flex-wrap">
+        @can('create', \App\Models\Contract::class)
+            @if(! $tenant->archived_at)
+                <a class="tap-target inline-flex min-h-11 items-center justify-center rounded bg-slate-900 px-4 text-center text-sm font-medium text-white" href="{{ route('contracts.create', ['tenant_id' => $tenant->id]) }}">{{ __('contracts.actions.create_for_tenant') }}</a>
+            @endif
+        @endcan
         @if(auth()->user()?->role?->can('view-reports'))
             <a class="tap-target inline-flex min-h-11 items-center justify-center rounded border px-4 text-center text-sm font-medium" href="{{ route('reports.index', ['tenant_id' => $tenant->id]) }}">{{ __('reports.statement.view_statement') }}</a>
         @endif

@@ -16,7 +16,7 @@
     $selectedUnitId = (string) old('unit_id', $selectedUnitId ?? $contract->unit_id ?? $renewalSource?->unit_id ?? '');
     $selectedTenantId = (string) old('tenant_id', $selectedTenantId ?? $contract->tenant_id ?? $renewalSource?->tenant_id ?? '');
     $selectedUnit = $selectedUnitId !== '' ? $units->firstWhere('id', (int) $selectedUnitId) : null;
-    $selectedBuildingId = (string) old('building_id', request('building_id', $selectedBuildingId ?? $selectedUnit?->building_id ?? ''));
+    $selectedBuildingId = (string) old('building_id', $selectedBuildingId ?? $selectedUnit?->building_id ?? '');
     $contractUnitOptions = $units->map(function ($unit) {
         $activeContracts = method_exists($unit, 'relationLoaded') && $unit->relationLoaded('contracts')
             ? $unit->contracts->where('status', 'active')

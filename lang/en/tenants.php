@@ -6,6 +6,10 @@ return [
     'edit' => 'Edit tenant',
     'search_placeholder' => 'Search tenants',
 
+    'actions' => [
+        'save_and_create_contract' => 'Save and create contract',
+    ],
+
     'fields' => [
         'full_name' => 'Full name',
         'phone' => 'Phone',
