@@ -41,6 +41,15 @@
     ] : [];
     $guidedStartComplete = $guidedStartSteps !== [] && collect($guidedStartSteps)->every(fn ($step) => $step['complete']);
     $nextGuidedIndex = collect($guidedStartSteps)->search(fn ($step) => ! $step['complete']);
+    $setupProgressCompleted = collect([
+        $buildingCount > 0,
+        $unitCount > 0,
+        $tenantCount > 0,
+        $contractCount > 0,
+        $recordedPaymentCount > 0,
+        $canViewExpenses ? ($expenseCount ?? 0) > 0 : false,
+    ])->filter()->count();
+    $setupProgressTotal = 6;
 @endphp
 
 <div class="mb-4">
@@ -59,7 +68,10 @@
             </div>
             <div class="grid gap-2 sm:flex sm:flex-wrap sm:justify-end">
                 <a data-dashboard-quick-start class="tap-target inline-flex min-h-11 items-center justify-center rounded border bg-white px-4 text-center text-sm font-medium text-slate-800" href="{{ route('quick-start.index') }}">
-                    {{ __('app.dashboard.quick_start_button') }}
+                    <span class="grid gap-0.5">
+                        <span>{{ __('app.dashboard.quick_start_button') }}</span>
+                        <span class="text-xs font-normal text-slate-500">{{ __('app.dashboard.setup_progress_summary', ['completed' => $setupProgressCompleted, 'total' => $setupProgressTotal]) }}</span>
+                    </span>
                 </a>
                 @if(! $guidedStartComplete && $nextGuidedIndex !== false)
                     <a class="tap-target inline-flex min-h-11 items-center justify-center rounded bg-slate-900 px-4 text-center text-sm font-medium text-white" href="{{ $guidedStartSteps[$nextGuidedIndex]['href'] }}">

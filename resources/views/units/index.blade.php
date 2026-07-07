@@ -4,8 +4,12 @@
 <div class="mb-4 grid gap-3 sm:flex sm:items-center sm:justify-between">
     <h1 class="text-xl font-semibold">{{ __('units.title') }}</h1>
     <div class="grid gap-2 sm:flex sm:flex-wrap">
-        <a class="tap-target flex min-h-11 items-center justify-center rounded border px-4 text-center text-sm font-medium" href="{{ route('units.bulk-create') }}">{{ __('units.bulk.add_multiple') }}</a>
-        <a class="tap-target flex min-h-11 items-center justify-center rounded bg-slate-900 px-4 text-sm font-medium text-white" href="{{ route('units.create') }}">{{ __('units.add') }}</a>
+        @if($buildings->isEmpty())
+            <a class="tap-target flex min-h-11 items-center justify-center rounded bg-slate-900 px-4 text-sm font-medium text-white" href="{{ route('buildings.create') }}">{{ __('buildings.add') }}</a>
+        @else
+            <a class="tap-target flex min-h-11 items-center justify-center rounded border px-4 text-center text-sm font-medium" href="{{ route('units.bulk-create') }}">{{ __('units.bulk.add_multiple') }}</a>
+            <a class="tap-target flex min-h-11 items-center justify-center rounded bg-slate-900 px-4 text-sm font-medium text-white" href="{{ route('units.create') }}">{{ __('units.add') }}</a>
+        @endif
     </div>
 </div>
 
@@ -27,11 +31,15 @@
 
 @if($units->isEmpty())
     <section data-empty-state-units class="rounded border bg-white p-5 text-center shadow-sm sm:p-6">
-        <h2 class="text-lg font-semibold text-slate-950">{{ __('app.empty_states.units.title') }}</h2>
-        <p class="mx-auto mt-2 max-w-xl text-sm leading-6 text-slate-600">{{ __('app.empty_states.units.body') }}</p>
+        <h2 class="text-lg font-semibold text-slate-950">{{ $buildings->isEmpty() ? __('app.empty_states.units.no_buildings_title') : __('app.empty_states.units.title') }}</h2>
+        <p class="mx-auto mt-2 max-w-xl text-sm leading-6 text-slate-600">{{ $buildings->isEmpty() ? __('app.empty_states.units.no_buildings_body') : __('app.empty_states.units.body') }}</p>
         <div class="mt-4 grid gap-2 sm:flex sm:justify-center">
-            <a class="tap-target inline-flex min-h-11 items-center justify-center rounded bg-slate-900 px-4 text-center text-sm font-medium text-white" href="{{ route('units.create') }}">{{ __('app.empty_states.units.action') }}</a>
-            <a class="tap-target inline-flex min-h-11 items-center justify-center rounded border bg-white px-4 text-center text-sm font-medium text-slate-800" href="{{ route('units.bulk-create') }}">{{ __('app.empty_states.units.secondary_action') }}</a>
+            @if($buildings->isEmpty())
+                <a class="tap-target inline-flex min-h-11 items-center justify-center rounded bg-slate-900 px-4 text-center text-sm font-medium text-white" href="{{ route('buildings.create') }}">{{ __('app.empty_states.units.no_buildings_action') }}</a>
+            @else
+                <a class="tap-target inline-flex min-h-11 items-center justify-center rounded bg-slate-900 px-4 text-center text-sm font-medium text-white" href="{{ route('units.bulk-create') }}">{{ __('app.empty_states.units.secondary_action') }}</a>
+                <a class="tap-target inline-flex min-h-11 items-center justify-center rounded border bg-white px-4 text-center text-sm font-medium text-slate-800" href="{{ route('units.create') }}">{{ __('app.empty_states.units.action') }}</a>
+            @endif
         </div>
     </section>
 @else

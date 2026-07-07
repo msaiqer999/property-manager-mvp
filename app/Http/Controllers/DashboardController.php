@@ -41,6 +41,7 @@ class DashboardController extends Controller
         $unitCount = Unit::whereHas('building', fn ($q) => $q->where('organization_id', $orgId))->count();
         $tenantCount = Tenant::where('organization_id', $orgId)->count();
         $contractCount = Contract::where('organization_id', $orgId)->count();
+        $expenseCount = Expense::where('organization_id', $orgId)->notVoided()->count();
         $pendingPaymentCount = Payment::where('organization_id', $orgId)
             ->whereIn('status', ['pending', 'partial'])
             ->count();
@@ -81,6 +82,7 @@ class DashboardController extends Controller
             'unitCount' => $unitCount,
             'tenantCount' => $tenantCount,
             'contractCount' => $contractCount,
+            'expenseCount' => $expenseCount,
             'recordedPaymentCount' => $recordedPaymentCount,
             'firstBuilding' => $buildings->first(),
             'expiringSoon' => $expiringSoon->take(5),

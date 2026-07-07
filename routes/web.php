@@ -14,6 +14,7 @@ use App\Http\Controllers\ExpenseController;
 use App\Http\Controllers\LocaleController;
 use App\Http\Controllers\PaymentController;
 use App\Http\Controllers\PaymentFollowUpController;
+use App\Http\Controllers\QuickStartController;
 use App\Http\Controllers\ReportController;
 use App\Http\Controllers\TenantController;
 use App\Http\Controllers\UnitDocumentController;
@@ -57,7 +58,7 @@ Route::get('/', function () {
 
 Route::middleware('auth')->group(function () {
     Route::get('/dashboard', DashboardController::class)->name('dashboard.show');
-    Route::view('/quick-start', 'quick-start.index')->name('quick-start.index');
+    Route::get('/quick-start', QuickStartController::class)->name('quick-start.index');
     Route::post('beta-feedback', [BetaFeedbackController::class, 'store'])->name('beta-feedback.store');
 
     Route::middleware(EnsureAbility::class.':manage-properties')->group(function () {

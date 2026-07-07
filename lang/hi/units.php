@@ -60,7 +60,7 @@ return [
         'default_status' => 'डिफ़ॉल्ट स्थिति',
         'default_notes' => 'डिफ़ॉल्ट नोट्स',
         'created_success' => ':count यूनिट सफलतापूर्वक बनाई गईं।',
-        'manual_created_success' => 'Units added successfully.',
+        'manual_created_success' => 'Units added successfully. You can now add tenants or create contracts.',
         'validation' => [
             'duplicate_in_request' => 'Duplicate unit number in the request: :unit.',
             'duplicate_existing' => 'Unit number already exists in this building: :unit.',
