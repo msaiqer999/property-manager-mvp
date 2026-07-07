@@ -59,6 +59,8 @@ Route::get('/', function () {
 Route::middleware('auth')->group(function () {
     Route::get('/dashboard', DashboardController::class)->name('dashboard.show');
     Route::get('/quick-start', QuickStartController::class)->name('quick-start.index');
+    Route::get('feedback', [BetaFeedbackController::class, 'index'])->name('feedback.index');
+    Route::post('feedback', [BetaFeedbackController::class, 'store'])->name('feedback.store');
     Route::post('beta-feedback', [BetaFeedbackController::class, 'store'])->name('beta-feedback.store');
 
     Route::middleware(EnsureAbility::class.':manage-properties')->group(function () {

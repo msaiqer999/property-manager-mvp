@@ -19,6 +19,7 @@
                     <th class="p-3 text-start">{{ __('feedback.status') }}</th>
                     <th class="p-3 text-start">{{ __('feedback.page_url') }}</th>
                     <th class="p-3 text-start">{{ __('feedback.message') }}</th>
+                    <th class="p-3 text-start">{{ __('feedback.screenshot_note_short') }}</th>
                 </tr>
             </thead>
             <tbody>
@@ -30,10 +31,11 @@
                         <td class="p-3">{{ __('feedback.statuses.'.$item->status) }}</td>
                         <td class="max-w-xs break-words p-3"><bdi>{{ $item->page_url }}</bdi></td>
                         <td class="p-3">{{ $item->message }}</td>
+                        <td class="p-3">{{ $item->screenshot_note ?: __('payments.not_available') }}</td>
                     </tr>
                 @empty
                     <tr>
-                        <td class="p-4 text-center text-slate-500" colspan="6">{{ __('feedback.empty') }}</td>
+                        <td class="p-4 text-center text-slate-500" colspan="7">{{ __('feedback.empty') }}</td>
                     </tr>
                 @endforelse
             </tbody>
@@ -51,6 +53,9 @@
                     <span class="rounded bg-slate-100 px-2 py-1 text-xs text-slate-700">{{ __('feedback.statuses.'.$item->status) }}</span>
                 </div>
                 <p class="mt-3">{{ $item->message }}</p>
+                @if($item->screenshot_note)
+                    <p class="mt-2 rounded bg-slate-50 p-2 text-xs text-slate-600">{{ $item->screenshot_note }}</p>
+                @endif
                 <p class="mt-2 break-words text-xs text-slate-500"><bdi>{{ $item->page_url }}</bdi></p>
             </article>
         @empty

@@ -14,6 +14,7 @@ class BetaFeedback extends Model
         'page_url',
         'type',
         'message',
+        'screenshot_note',
         'status',
     ];
 

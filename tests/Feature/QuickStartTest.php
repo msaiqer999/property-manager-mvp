@@ -259,6 +259,40 @@ class QuickStartTest extends TestCase
             ->assertSee('Create contract');
     }
 
+    public function test_quick_start_shows_pilot_readiness_for_owner_and_updates_checks(): void
+    {
+        $owner = $this->user('owner');
+
+        $this->actingAs($owner)
+            ->withSession(['locale' => 'en'])
+            ->get(route('quick-start.index'))
+            ->assertOk()
+            ->assertSee('data-pilot-readiness', false)
+            ->assertSee('Pilot readiness')
+            ->assertSee('Needs setup')
+            ->assertSee('Feedback channel ready')
+            ->assertSee('During the pilot, use the Feedback button whenever something is unclear, broken, or slow.');
+
+        [$building, $unit, $tenant, $contract] = $this->setupThroughContract($owner);
+        Payment::create([
+            'organization_id' => $owner->organization_id,
+            'contract_id' => $contract->id,
+            'due_date' => now()->toDateString(),
+            'amount_due' => 1000,
+            'amount_paid' => 0,
+            'status' => 'pending',
+            'created_by' => $owner->id,
+        ]);
+
+        $this->actingAs($owner)
+            ->withSession(['locale' => 'en'])
+            ->get(route('quick-start.index'))
+            ->assertOk()
+            ->assertSee('Ready for pilot')
+            ->assertSee('At least one building exists')
+            ->assertSee('Payments are generated');
+    }
+
     public function test_building_show_includes_add_multiple_units_link_and_stays_scoped(): void
     {
         $owner = $this->user('owner');
