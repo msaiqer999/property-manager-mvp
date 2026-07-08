@@ -9,6 +9,12 @@
 </div>
 
 <div class="overflow-hidden rounded border bg-white shadow-sm">
+    @if($feedback->isEmpty())
+        <section data-feedback-empty-state class="p-6 text-center sm:p-8">
+            <h2 class="text-lg font-semibold text-slate-900">{{ __('feedback.empty_title') }}</h2>
+            <p class="mx-auto mt-2 max-w-xl text-sm leading-6 text-slate-600">{{ __('feedback.empty_body') }}</p>
+        </section>
+    @else
     <div class="hidden overflow-x-auto md:block">
         <table class="w-full text-sm">
             <thead class="bg-slate-50 text-slate-600">
@@ -62,6 +68,7 @@
             <p class="text-sm text-slate-500">{{ __('feedback.empty') }}</p>
         @endforelse
     </div>
+    @endif
 </div>
 
 <div class="mt-4">

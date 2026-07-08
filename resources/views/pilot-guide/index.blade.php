@@ -69,9 +69,14 @@
         <h1 class="mt-1 text-2xl font-semibold text-slate-950">{{ __('app.pilot_guide.title') }}</h1>
         <p class="mt-2 max-w-3xl text-sm leading-6 text-slate-600">{{ __('app.pilot_guide.subtitle') }}</p>
     </div>
-    <a class="tap-target inline-flex min-h-11 items-center justify-center rounded border bg-white px-4 text-center text-sm font-medium text-slate-800" href="{{ route('quick-start.index') }}">
-        {{ __('app.pilot_guide.back_to_quick_start') }}
-    </a>
+    <div class="grid gap-2 sm:flex sm:flex-wrap sm:justify-end">
+        <a class="tap-target inline-flex min-h-11 items-center justify-center rounded bg-slate-900 px-4 text-center text-sm font-medium text-white" href="{{ route('quick-start.index') }}">
+            {{ __('app.pilot_guide.back_to_quick_start') }}
+        </a>
+        <button type="button" data-feedback-open class="tap-target inline-flex min-h-11 items-center justify-center rounded border bg-white px-4 text-center text-sm font-medium text-slate-800">
+            {{ __('app.pilot_guide.feedback_button') }}
+        </button>
+    </div>
 </div>
 
 <div class="grid gap-4 lg:grid-cols-[minmax(0,1fr)_20rem]">
