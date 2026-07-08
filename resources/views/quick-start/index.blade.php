@@ -70,6 +70,15 @@
     </a>
 </div>
 
+<section data-quick-start-pilot-guide class="mb-4 rounded-xl border border-blue-100 bg-blue-50 p-4">
+    <div class="grid gap-3 sm:flex sm:items-center sm:justify-between">
+        <p class="text-sm font-medium leading-6 text-blue-950">{{ __('app.pilot_guide.quick_start_link') }}</p>
+        <a class="tap-target inline-flex min-h-11 items-center justify-center rounded bg-slate-900 px-4 text-center text-sm font-medium text-white" href="{{ route('pilot-guide.index') }}">
+            {{ __('app.pilot_guide.open') }}
+        </a>
+    </div>
+</section>
+
 <section data-quick-start-progress class="mb-4 rounded-xl border bg-white p-4 shadow-sm sm:p-5">
     <div class="grid gap-3 sm:flex sm:items-start sm:justify-between">
         <div>

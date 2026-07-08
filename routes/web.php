@@ -14,6 +14,7 @@ use App\Http\Controllers\ExpenseController;
 use App\Http\Controllers\LocaleController;
 use App\Http\Controllers\PaymentController;
 use App\Http\Controllers\PaymentFollowUpController;
+use App\Http\Controllers\PilotGuideController;
 use App\Http\Controllers\QuickStartController;
 use App\Http\Controllers\ReportController;
 use App\Http\Controllers\TenantController;
@@ -59,6 +60,7 @@ Route::get('/', function () {
 Route::middleware('auth')->group(function () {
     Route::get('/dashboard', DashboardController::class)->name('dashboard.show');
     Route::get('/quick-start', QuickStartController::class)->name('quick-start.index');
+    Route::get('/pilot-guide', PilotGuideController::class)->name('pilot-guide.index');
     Route::get('feedback', [BetaFeedbackController::class, 'index'])->name('feedback.index');
     Route::post('feedback', [BetaFeedbackController::class, 'store'])->name('feedback.store');
     Route::post('beta-feedback', [BetaFeedbackController::class, 'store'])->name('beta-feedback.store');

@@ -57,6 +57,18 @@
     <h1 class="mt-1 text-2xl font-semibold">{{ __('app.dashboard.title') }}</h1>
 </div>
 
+<section data-dashboard-pilot-guide class="mb-4 rounded border bg-white p-4 shadow-sm">
+    <div class="grid gap-3 sm:flex sm:items-center sm:justify-between">
+        <div>
+            <h2 class="text-base font-semibold text-slate-950">{{ __('app.pilot_guide.title') }}</h2>
+            <p class="mt-1 text-sm leading-6 text-slate-600">{{ __('app.pilot_guide.dashboard_body') }}</p>
+        </div>
+        <a class="tap-target inline-flex min-h-11 items-center justify-center rounded border bg-white px-4 text-center text-sm font-medium text-slate-800" href="{{ route('pilot-guide.index') }}">
+            {{ __('app.pilot_guide.open') }}
+        </a>
+    </div>
+</section>
+
 @if($canManageProperties)
     <section data-dashboard-guided-start class="mb-6 rounded border bg-white p-4 shadow-sm sm:p-5">
         <div class="grid gap-3 sm:flex sm:items-start sm:justify-between">
