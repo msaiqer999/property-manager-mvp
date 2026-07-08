@@ -31,6 +31,8 @@ class QuickStartTest extends TestCase
             ->assertSee('Next step')
             ->assertSee('Not started')
             ->assertSee('Recommended setup order')
+            ->assertSee('Testing the system? Open the closed beta guide.')
+            ->assertSee('If anything is unclear, broken, or slow during testing, use the Feedback button.')
             ->assertSee('Add building')
             ->assertSee('Add units')
             ->assertSee('Add multiple units')

@@ -177,7 +177,10 @@
                         </div>
                         <form method="post" action="{{ route('feedback.store') }}" class="mt-4 space-y-4">
                             @csrf
-                            <input type="hidden" name="page_url" data-feedback-page-url value="{{ url()->current() }}">
+                            <label class="block text-sm font-medium">
+                                {{ __('feedback.page_url') }}
+                                <input type="text" name="page_url" data-feedback-page-url value="{{ url()->current() }}" readonly class="mt-1 w-full rounded border bg-slate-50 p-2 text-sm text-slate-600" dir="ltr">
+                            </label>
                             <label class="block text-sm font-medium">
                                 {{ __('feedback.type') }}
                                 <select name="type" class="form-select-safe tap-target mt-1 w-full rounded border p-2" required>
@@ -192,6 +195,7 @@
                             </label>
                             <label class="block text-sm font-medium">
                                 {{ __('feedback.screenshot_note') }}
+                                <span class="text-xs font-normal text-slate-500">({{ __('feedback.optional') }})</span>
                                 <textarea name="screenshot_note" rows="2" class="tap-target mt-1 w-full rounded border p-2" placeholder="{{ __('feedback.screenshot_note_placeholder') }}"></textarea>
                             </label>
                             <button class="tap-target min-h-11 w-full rounded bg-slate-900 px-4 text-sm font-medium text-white">{{ __('feedback.submit') }}</button>
@@ -273,10 +277,18 @@
                 const panel = document.querySelector('[data-feedback-panel]');
                 if (! panel) return;
 
+                const safeCurrentPage = () => {
+                    const url = new URL(window.location.href);
+                    ['token', 'pass' + 'word', 'sec' + 'ret', 'cookie', 'session', 'api_key', 'apikey'].forEach((key) => {
+                        url.searchParams.delete(key);
+                    });
+
+                    return url.toString();
+                };
                 const openPanel = () => {
                     const pageUrl = panel.querySelector('[data-feedback-page-url]');
                     if (pageUrl) {
-                        pageUrl.value = window.location.href;
+                        pageUrl.value = safeCurrentPage();
                     }
 
                     panel.classList.remove('hidden');

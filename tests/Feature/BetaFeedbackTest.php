@@ -38,6 +38,34 @@ class BetaFeedbackTest extends TestCase
         ]);
     }
 
+    public function test_feedback_submission_success_message_is_localized(): void
+    {
+        $user = $this->user('caretaker');
+
+        app()->setLocale('ar');
+
+        $this->actingAs($user)
+            ->withSession(['locale' => 'ar'])
+            ->from(route('dashboard'))
+            ->post(route('feedback.store'), [
+                'type' => 'bug',
+                'message' => 'زر الملاحظات يعمل من الجوال.',
+                'page_url' => 'https://beta.example.test/dashboard?token=hidden&view=mobile',
+                'screenshot_note' => 'تظهر البطاقة أعلى الصفحة.',
+            ])
+            ->assertRedirect(route('dashboard'))
+            ->assertSessionHas('status', __('feedback.submitted'));
+
+        $this->assertDatabaseHas('beta_feedback', [
+            'organization_id' => $user->organization_id,
+            'user_id' => $user->id,
+            'type' => 'bug',
+            'message' => 'زر الملاحظات يعمل من الجوال.',
+            'page_url' => 'https://beta.example.test/dashboard?view=mobile',
+            'screenshot_note' => 'تظهر البطاقة أعلى الصفحة.',
+        ]);
+    }
+
     public function test_unauthenticated_users_cannot_submit_feedback(): void
     {
         $this->post(route('feedback.store'), [
@@ -83,6 +111,19 @@ class BetaFeedbackTest extends TestCase
             ->assertSee(__('feedback.types.suggestion'))
             ->assertSee($feedback->message)
             ->assertSee($feedback->page_url);
+    }
+
+    public function test_empty_feedback_inbox_shows_helpful_state(): void
+    {
+        $owner = $this->user('owner');
+
+        $this->actingAs($owner)
+            ->withSession(['locale' => 'en'])
+            ->get(route('feedback.index'))
+            ->assertOk()
+            ->assertSee('data-feedback-empty-state', false)
+            ->assertSee('No feedback yet')
+            ->assertSee('When pilot users submit feedback');
     }
 
     public function test_manager_can_view_feedback_for_their_organization(): void
@@ -152,17 +193,21 @@ class BetaFeedbackTest extends TestCase
             ->assertOk()
             ->assertSee(__('feedback.button'))
             ->assertSee(__('feedback.title'))
+            ->assertSee(__('feedback.message'))
+            ->assertSee(__('feedback.page_url'))
+            ->assertSee(__('feedback.screenshot_note'))
+            ->assertSee(__('feedback.optional'))
             ->assertSee(__('feedback.submit'));
     }
 
-    private function user(string $role, string $email = 'feedback-user@example.com', string $organizationName = 'Feedback Organization'): User
+    private function user(string $role, ?string $email = null, string $organizationName = 'Feedback Organization'): User
     {
-        $organization = Organization::create(['name' => $organizationName]);
+        $organization = Organization::create(['name' => $organizationName.' '.uniqid()]);
 
         return User::create([
             'organization_id' => $organization->id,
             'name' => ucfirst($role).' Feedback User',
-            'email' => $email,
+            'email' => $email ?? $role.'-feedback-'.uniqid().'@example.com',
             'password' => 'password',
             'role' => $role,
         ]);
