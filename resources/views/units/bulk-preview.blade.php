@@ -3,13 +3,13 @@
 @section('content')
 <div class="mb-4">
     <h1 class="text-xl font-semibold">{{ __('units.bulk.preview_title') }}</h1>
-    <p class="mt-1 text-sm text-slate-600">{{ __('units.bulk.preview_description', ['building' => $building->name]) }}</p>
+    <p class="mt-1 text-sm text-brand-muted">{{ __('units.bulk.preview_description', ['building' => $building->name]) }}</p>
 </div>
 
 <form method="post" action="{{ route('buildings.units.bulk.store', $building) }}" class="space-y-4">
     @csrf
     <x-table min-width="min-w-[72rem]">
-        <thead class="bg-slate-50">
+        <thead class="bg-brand-background">
             <tr>
                 <th class="p-3 text-start font-medium">{{ __('units.fields.unit_number') }}</th>
                 <th class="p-3 text-start font-medium">{{ __('units.fields.type') }}</th>
@@ -35,6 +35,6 @@
         </tbody>
     </x-table>
 
-    <button class="tap-target rounded bg-slate-900 px-4 text-white">{{ __('units.bulk.create_units') }}</button>
+    <button class="tap-target rounded bg-brand-primary px-4 text-white">{{ __('units.bulk.create_units') }}</button>
 </form>
 @endsection

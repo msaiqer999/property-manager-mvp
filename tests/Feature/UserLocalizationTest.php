@@ -25,7 +25,7 @@ class UserLocalizationTest extends TestCase
             'is_active' => false,
         ]);
 
-        $this->actingAs($owner)
+        $response = $this->actingAs($owner)
             ->withSession(['locale' => 'en'])
             ->get(route('users.index'))
             ->assertOk()
@@ -36,13 +36,16 @@ class UserLocalizationTest extends TestCase
             ->assertSeeHtml('>Manager</span>')
             ->assertSeeHtml('>Accountant</span>')
             ->assertSeeHtml('>Caretaker</span>')
-            ->assertSeeHtml('>Active</span>')
-            ->assertSeeHtml('>Inactive</span>')
+            ->assertSee('Active')
+            ->assertSee('Inactive')
             ->assertSee('Edit')
             ->assertSee('Deactivate')
             ->assertSee('Reactivate')
             ->assertSee('English Inactive User')
             ->assertSeeHtml('<bdi dir="ltr">english-inactive-user@example.com</bdi>');
+
+        $this->assertMatchesRegularExpression('/<span\b[^>]*>\s*Active\s*<\/span>/s', $response->getContent());
+        $this->assertMatchesRegularExpression('/<span\b[^>]*>\s*Inactive\s*<\/span>/s', $response->getContent());
 
         $this->assertSame('caretaker', $inactiveUser->fresh()->role->value);
         $this->assertFalse($inactiveUser->fresh()->is_active);
@@ -60,7 +63,7 @@ class UserLocalizationTest extends TestCase
             'is_active' => false,
         ]);
 
-        $this->actingAs($owner)
+        $response = $this->actingAs($owner)
             ->withSession(['locale' => 'ar'])
             ->get(route('users.index'))
             ->assertOk()
@@ -71,8 +74,8 @@ class UserLocalizationTest extends TestCase
             ->assertSeeHtml('>مدير</span>')
             ->assertSeeHtml('>محاسب</span>')
             ->assertSeeHtml('>حارس</span>')
-            ->assertSeeHtml('>نشط</span>')
-            ->assertSeeHtml('>غير نشط</span>')
+            ->assertSee('نشط')
+            ->assertSee('غير نشط')
             ->assertSee('تعديل')
             ->assertSee('تعطيل')
             ->assertSee('إعادة تفعيل')
@@ -82,6 +85,9 @@ class UserLocalizationTest extends TestCase
             ->assertDontSee('>manager</span>', false)
             ->assertDontSee('>accountant</span>', false)
             ->assertDontSee('>caretaker</span>', false);
+
+        $this->assertMatchesRegularExpression('/<span\b[^>]*>\s*نشط\s*<\/span>/s', $response->getContent());
+        $this->assertMatchesRegularExpression('/<span\b[^>]*>\s*غير نشط\s*<\/span>/s', $response->getContent());
 
         $this->assertSame('caretaker', $inactiveUser->fresh()->role->value);
         $this->assertFalse($inactiveUser->fresh()->is_active);

@@ -2,7 +2,7 @@
 @section('content')
 <h1 class="mb-4 text-xl font-semibold">{{ __('reports.title') }}</h1>
 
-<form method="get" action="{{ route('reports.index') }}" class="mb-4 grid gap-3 rounded border bg-white p-4 shadow-sm sm:grid-cols-2 lg:grid-cols-6">
+<form method="get" action="{{ route('reports.index') }}" class="mb-4 grid gap-3 rounded border bg-brand-surface p-4 shadow-sm sm:grid-cols-2 lg:grid-cols-6">
     <label class="block text-sm font-medium">
         {{ __('reports.filters.building') }}
         <select name="building_id" data-building-select class="form-select-safe tap-target mt-1 w-full rounded border p-2">
@@ -44,13 +44,13 @@
     </label>
 
     <div class="flex items-end">
-        <button class="tap-target w-full rounded bg-slate-900 px-4 text-sm font-medium text-white">{{ __('reports.filters.apply') }}</button>
+        <button class="tap-target w-full rounded bg-brand-primary px-4 text-sm font-medium text-white">{{ __('reports.filters.apply') }}</button>
     </div>
 </form>
 
 <div class="grid gap-3 sm:grid-cols-3">
 @foreach(['income' => $income, 'expenses' => $expensesTotal, 'net_profit' => $netProfit] as $label => $value)
-<div class="rounded border bg-white p-4 shadow-sm"><p class="text-sm font-medium text-slate-500">{{ __('reports.summary.'.$label) }}</p><p class="mt-1 break-words text-2xl font-semibold" dir="ltr">{{ number_format($value, 2) }}</p></div>
+<div class="rounded border bg-brand-surface p-4 shadow-sm"><p class="text-sm font-medium text-brand-muted">{{ __('reports.summary.'.$label) }}</p><p class="mt-1 break-words text-2xl font-semibold" dir="ltr">{{ number_format($value, 2) }}</p></div>
 @endforeach
 </div>
 
@@ -65,14 +65,14 @@
         : __('reports.pdf.not_available');
 @endphp
 
-<section class="mt-6 rounded border bg-white p-4 shadow-sm">
+<section class="mt-6 rounded border bg-brand-surface p-4 shadow-sm">
     <div class="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div>
             <h2 class="text-lg font-semibold">{{ __('reports.statement.title') }}</h2>
-            <p class="mt-1 text-sm text-slate-600">
+            <p class="mt-1 text-sm text-brand-muted">
                 {{ __('reports.statement.subtitle') }}
             </p>
-            <p class="mt-2 text-sm text-slate-500">
+            <p class="mt-2 text-sm text-brand-muted">
                 {{ __('reports.filters.tenant') }}: {{ $filters['tenant_label'] }}
                 @if($filters['tenant_phone'])
                     &middot;
@@ -90,7 +90,7 @@
                 {{ __('reports.filters.to') }}: <bdi dir="ltr">{{ $filters['to_date'] }}</bdi>
             </p>
         </div>
-        <a class="tap-target inline-flex min-h-11 items-center justify-center rounded border px-4 text-center text-sm font-medium text-slate-800" href="{{ route('reports.pdf', ['type' => 'unit-statement'] + $filterQuery) }}">
+        <a class="tap-target inline-flex min-h-11 items-center justify-center rounded border px-4 text-center text-sm font-medium text-brand-text" href="{{ route('reports.pdf', ['type' => 'unit-statement'] + $filterQuery) }}">
             {{ __('reports.actions.unit_statement') }}
         </a>
     </div>
@@ -106,8 +106,8 @@
 
     <div class="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
         @foreach($statementTotals as $key => $value)
-            <div class="rounded border bg-slate-50 p-3">
-                <p class="text-sm font-medium text-slate-500">{{ __('reports.columns.'.$key) }}</p>
+            <div class="rounded border bg-brand-background p-3">
+                <p class="text-sm font-medium text-brand-muted">{{ __('reports.columns.'.$key) }}</p>
                 <p class="mt-1 text-xl font-semibold" dir="ltr"><bdi>{{ number_format($value, 2) }}</bdi></p>
             </div>
         @endforeach
@@ -119,26 +119,26 @@
                 <div class="flex items-start justify-between gap-3">
                     <div>
                         <p class="font-semibold">{{ $payment->contract?->tenant?->full_name ?? __('reports.pdf.not_available') }}</p>
-                        <p class="text-sm text-slate-600">{{ $payment->contract?->unit?->building?->name ?? __('reports.pdf.not_available') }} / <bdi dir="ltr">{{ $payment->contract?->unit?->unit_number ?? __('reports.pdf.not_available') }}</bdi></p>
+                        <p class="text-sm text-brand-muted">{{ $payment->contract?->unit?->building?->name ?? __('reports.pdf.not_available') }} / <bdi dir="ltr">{{ $payment->contract?->unit?->unit_number ?? __('reports.pdf.not_available') }}</bdi></p>
                     </div>
-                    <span class="rounded bg-slate-100 px-2 py-1 text-xs">{{ __('payments.statuses.'.$payment->display_status_key) }}</span>
+                    <x-status-badge :status="$payment->display_status_key" :label="__('payments.statuses.'.$payment->display_status_key)" />
                 </div>
                 <dl class="mt-3 grid gap-2 text-sm sm:grid-cols-2">
-                    <div><dt class="text-slate-500">{{ __('reports.columns.due_date') }}</dt><dd dir="ltr"><bdi>{{ $payment->due_date->toDateString() }}</bdi></dd></div>
-                    <div><dt class="text-slate-500">{{ __('reports.columns.contract') }}</dt><dd dir="ltr"><bdi>{{ $payment->contract?->contract_number ?? __('reports.pdf.not_available') }}</bdi></dd></div>
-                    <div><dt class="text-slate-500">{{ __('reports.columns.amount_due') }}</dt><dd dir="ltr"><bdi>{{ number_format((float) $payment->amount_due, 2) }}</bdi></dd></div>
-                    <div><dt class="text-slate-500">{{ __('reports.columns.amount_paid') }}</dt><dd dir="ltr"><bdi>{{ number_format((float) $payment->amount_paid, 2) }}</bdi></dd></div>
-                    <div><dt class="text-slate-500">{{ __('reports.columns.remaining_amount') }}</dt><dd dir="ltr"><bdi>{{ number_format((float) $payment->remaining_amount, 2) }}</bdi></dd></div>
-                    <div><dt class="text-slate-500">{{ __('reports.columns.paid_date') }}</dt><dd dir="ltr"><bdi>{{ $payment->payment_date?->toDateString() ?? __('reports.pdf.not_available') }}</bdi></dd></div>
+                    <div><dt class="text-brand-muted">{{ __('reports.columns.due_date') }}</dt><dd dir="ltr"><bdi>{{ $payment->due_date->toDateString() }}</bdi></dd></div>
+                    <div><dt class="text-brand-muted">{{ __('reports.columns.contract') }}</dt><dd dir="ltr"><bdi>{{ $payment->contract?->contract_number ?? __('reports.pdf.not_available') }}</bdi></dd></div>
+                    <div><dt class="text-brand-muted">{{ __('reports.columns.amount_due') }}</dt><dd dir="ltr"><bdi>{{ number_format((float) $payment->amount_due, 2) }}</bdi></dd></div>
+                    <div><dt class="text-brand-muted">{{ __('reports.columns.amount_paid') }}</dt><dd dir="ltr"><bdi>{{ number_format((float) $payment->amount_paid, 2) }}</bdi></dd></div>
+                    <div><dt class="text-brand-muted">{{ __('reports.columns.remaining_amount') }}</dt><dd dir="ltr"><bdi>{{ number_format((float) $payment->remaining_amount, 2) }}</bdi></dd></div>
+                    <div><dt class="text-brand-muted">{{ __('reports.columns.paid_date') }}</dt><dd dir="ltr"><bdi>{{ $payment->payment_date?->toDateString() ?? __('reports.pdf.not_available') }}</bdi></dd></div>
                 </dl>
                 @if($payment->amount_paid_minor > 0)
                     @can('view', $payment)
-                    <a class="tap-target mt-3 inline-flex min-h-11 w-full items-center justify-center rounded border px-4 text-sm font-medium text-slate-800" href="{{ route('payments.show', $payment) }}">{{ __('reports.statement.view_receipt') }}</a>
+                    <a class="tap-target mt-3 inline-flex min-h-11 w-full items-center justify-center rounded border px-4 text-sm font-medium text-brand-text" href="{{ route('payments.show', $payment) }}">{{ __('reports.statement.view_receipt') }}</a>
                     @endcan
                 @endif
             </article>
         @empty
-            <p class="rounded border border-dashed p-4 text-sm text-slate-500">{{ __('reports.statement.empty') }}</p>
+            <p class="rounded border border-dashed p-4 text-sm text-brand-muted">{{ __('reports.statement.empty') }}</p>
         @endforelse
     </div>
 
@@ -168,22 +168,22 @@
                         <td class="p-3 text-end whitespace-nowrap" dir="ltr"><bdi>{{ number_format((float) $payment->amount_due, 2) }}</bdi></td>
                         <td class="p-3 text-end whitespace-nowrap" dir="ltr"><bdi>{{ number_format((float) $payment->amount_paid, 2) }}</bdi></td>
                         <td class="p-3 text-end whitespace-nowrap" dir="ltr"><bdi>{{ number_format((float) $payment->remaining_amount, 2) }}</bdi></td>
-                        <td class="p-3 whitespace-nowrap">{{ __('payments.statuses.'.$payment->display_status_key) }}</td>
+                        <td class="p-3 whitespace-nowrap"><x-status-badge :status="$payment->display_status_key" :label="__('payments.statuses.'.$payment->display_status_key)" /></td>
                         <td class="p-3 whitespace-nowrap" dir="ltr"><bdi>{{ $payment->payment_date?->toDateString() ?? __('reports.pdf.not_available') }}</bdi></td>
                         <td class="p-3 whitespace-nowrap">
                             @if($payment->amount_paid_minor > 0)
                                 @can('view', $payment)
-                                <a class="tap-target inline-flex items-center rounded border px-3 text-sm text-slate-700" href="{{ route('payments.show', $payment) }}">{{ __('reports.statement.view_receipt') }}</a>
+                                <a class="tap-target inline-flex items-center rounded border px-3 text-sm text-brand-text" href="{{ route('payments.show', $payment) }}">{{ __('reports.statement.view_receipt') }}</a>
                                 @else
-                                <span class="text-sm text-slate-500">{{ __('reports.pdf.not_available') }}</span>
+                                <span class="text-sm text-brand-muted">{{ __('reports.pdf.not_available') }}</span>
                                 @endcan
                             @else
-                                <span class="text-sm text-slate-500">{{ __('reports.pdf.not_available') }}</span>
+                                <span class="text-sm text-brand-muted">{{ __('reports.pdf.not_available') }}</span>
                             @endif
                         </td>
                     </tr>
                 @empty
-                    <tr><td class="p-4 text-center text-slate-500" colspan="10">{{ __('reports.statement.empty') }}</td></tr>
+                    <tr><td class="p-4 text-center text-brand-muted" colspan="10">{{ __('reports.statement.empty') }}</td></tr>
                 @endforelse
             </tbody>
         </x-table>
@@ -199,7 +199,7 @@
     'net-profit' => __('reports.actions.net_profit'),
     'monthly-summary' => __('reports.actions.monthly_summary'),
 ] as $type => $label)
-<a class="tap-target flex items-center rounded border bg-white p-4 font-medium shadow-sm" href="{{ route('reports.pdf', ['type' => $type] + $filterQuery) }}">{{ $label }}</a>
+<a class="tap-target flex items-center rounded border bg-brand-surface p-4 font-medium shadow-sm" href="{{ route('reports.pdf', ['type' => $type] + $filterQuery) }}">{{ $label }}</a>
 @endforeach
 </div>
 

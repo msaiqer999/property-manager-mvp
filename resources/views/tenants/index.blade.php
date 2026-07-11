@@ -4,54 +4,54 @@
 <div class="mb-4 grid gap-3 sm:flex sm:items-center sm:justify-between">
     <h1 class="text-xl font-semibold">{{ __('tenants.title') }}</h1>
     @can('create', App\Models\Tenant::class)
-        <a class="tap-target flex min-h-11 items-center justify-center rounded bg-slate-900 px-4 text-sm font-medium text-white" href="{{ route('tenants.create') }}">{{ __('tenants.add') }}</a>
+        <a class="tap-target flex min-h-11 items-center justify-center rounded bg-brand-primary px-4 text-sm font-medium text-white" href="{{ route('tenants.create') }}">{{ __('tenants.add') }}</a>
     @endcan
 </div>
 
-<form class="mb-4 grid gap-3 rounded border bg-white p-3 sm:grid-cols-[1fr_12rem_auto]">
+<form class="mb-4 grid gap-3 rounded border bg-brand-surface p-3 sm:grid-cols-[1fr_12rem_auto]">
     <input name="search" value="{{ request('search') }}" placeholder="{{ __('tenants.search_placeholder') }}" class="tap-target min-h-11 w-full rounded border p-2">
     <select name="lifecycle" class="form-select-safe tap-target min-h-11 w-full rounded border p-2">
         <option value="active" @selected($lifecycle === 'active')>{{ __('tenants.lifecycle.active') }}</option>
         <option value="archived" @selected($lifecycle === 'archived')>{{ __('tenants.lifecycle.archived') }}</option>
         <option value="all" @selected($lifecycle === 'all')>{{ __('tenants.lifecycle.all') }}</option>
     </select>
-    <button class="tap-target min-h-11 rounded bg-slate-900 px-4 text-white">{{ __('app.actions.search') }}</button>
+    <button class="tap-target min-h-11 rounded bg-brand-primary px-4 text-white">{{ __('app.actions.search') }}</button>
 </form>
 
 @if($tenants->isEmpty())
-    <section data-empty-state-tenants class="rounded border bg-white p-5 text-center shadow-sm sm:p-6">
-        <h2 class="text-lg font-semibold text-slate-950">{{ __('app.empty_states.tenants.title') }}</h2>
-        <p class="mx-auto mt-2 max-w-xl text-sm leading-6 text-slate-600">{{ __('app.empty_states.tenants.body') }}</p>
+    <section data-empty-state-tenants class="rounded border bg-brand-surface p-5 text-center shadow-sm sm:p-6">
+        <h2 class="text-lg font-semibold text-brand-text">{{ __('app.empty_states.tenants.title') }}</h2>
+        <p class="mx-auto mt-2 max-w-xl text-sm leading-6 text-brand-muted">{{ __('app.empty_states.tenants.body') }}</p>
         @can('create', App\Models\Tenant::class)
-            <a class="tap-target mt-4 inline-flex min-h-11 items-center justify-center rounded bg-slate-900 px-4 text-center text-sm font-medium text-white" href="{{ route('tenants.create') }}">{{ __('app.empty_states.tenants.action') }}</a>
+            <a class="tap-target mt-4 inline-flex min-h-11 items-center justify-center rounded bg-brand-primary px-4 text-center text-sm font-medium text-white" href="{{ route('tenants.create') }}">{{ __('app.empty_states.tenants.action') }}</a>
         @endcan
     </section>
 @else
     <div data-mobile-tenants-list class="grid gap-3 md:hidden">
         @foreach($tenants as $tenant)
-            <article data-tenant-mobile-card class="rounded border bg-white p-4 shadow-sm">
+            <article data-tenant-mobile-card class="rounded border bg-brand-surface p-4 shadow-sm">
                 <div class="grid gap-2">
                     <h2 class="min-w-0 break-words text-base font-semibold">{{ $tenant->full_name }}</h2>
                     @if($tenant->archived_at)
-                        <span class="w-fit rounded bg-amber-100 px-2 py-1 text-xs font-medium text-amber-800">{{ __('tenants.lifecycle.archived') }}</span>
+                        <x-status-badge class="w-fit" status="archived" :label="__('tenants.lifecycle.archived')" />
                     @else
-                        <span class="w-fit rounded bg-emerald-100 px-2 py-1 text-xs font-medium text-emerald-800">{{ __('tenants.lifecycle.active') }}</span>
+                        <x-status-badge class="w-fit" status="active" :label="__('tenants.lifecycle.active')" />
                     @endif
                 </div>
                 <dl class="mt-3 grid gap-2 text-sm">
                     <div class="grid min-w-0 gap-1">
-                        <dt class="text-slate-500">{{ __('tenants.fields.phone') }}</dt>
+                        <dt class="text-brand-muted">{{ __('tenants.fields.phone') }}</dt>
                         <dd class="min-w-0 break-words"><bdi dir="ltr">{{ $tenant->phone ?: __('payments.not_available') }}</bdi></dd>
                     </div>
                     @if($tenant->email)
                         <div class="grid min-w-0 gap-1">
-                            <dt class="text-slate-500">{{ __('tenants.fields.email') }}</dt>
+                            <dt class="text-brand-muted">{{ __('tenants.fields.email') }}</dt>
                             <dd class="min-w-0 break-words"><bdi dir="ltr">{{ $tenant->email }}</bdi></dd>
                         </div>
                     @endif
                     @if($tenant->id_number)
                         <div class="grid min-w-0 gap-1">
-                            <dt class="text-slate-500">{{ __('tenants.fields.id_number') }}</dt>
+                            <dt class="text-brand-muted">{{ __('tenants.fields.id_number') }}</dt>
                             <dd class="min-w-0 break-words"><bdi dir="ltr">{{ $tenant->id_number }}</bdi></dd>
                         </div>
                     @endif
@@ -68,8 +68,8 @@
                     <tr class="border-t">
                         <td class="p-4 font-medium">{{ $tenant->full_name }}</td>
                         <td class="p-4 whitespace-nowrap"><bdi dir="ltr">{{ $tenant->phone }}</bdi></td>
-                        <td class="p-4 whitespace-nowrap">@if($tenant->archived_at)<span class="rounded bg-amber-100 px-2 py-1 text-xs font-medium text-amber-800">{{ __('tenants.lifecycle.archived') }}</span>@else<span class="rounded bg-emerald-100 px-2 py-1 text-xs font-medium text-emerald-800">{{ __('tenants.lifecycle.active') }}</span>@endif</td>
-                        <td class="p-4 whitespace-nowrap"><a class="tap-target inline-flex items-center rounded border px-3 text-slate-700" href="{{ route('tenants.show', $tenant) }}">{{ __('app.actions.view') }}</a></td>
+                        <td class="p-4 whitespace-nowrap">@if($tenant->archived_at)<x-status-badge status="archived" :label="__('tenants.lifecycle.archived')" />@else<x-status-badge status="active" :label="__('tenants.lifecycle.active')" />@endif</td>
+                        <td class="p-4 whitespace-nowrap"><a class="tap-target inline-flex items-center rounded border px-3 text-brand-text" href="{{ route('tenants.show', $tenant) }}">{{ __('app.actions.view') }}</a></td>
                     </tr>
                 @endforeach
             </tbody>

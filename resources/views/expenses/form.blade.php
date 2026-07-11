@@ -5,10 +5,10 @@
 
 <div class="mb-4 max-w-3xl">
     <h1 class="text-xl font-semibold">{{ $expense->exists ? __('expenses.edit') : __('expenses.add') }}</h1>
-    <p class="mt-1 text-sm text-slate-600">{{ __('expenses.form.description') }}</p>
+    <p class="mt-1 text-sm text-brand-muted">{{ __('expenses.form.description') }}</p>
 </div>
 
-<form method="post" enctype="multipart/form-data" action="{{ $expense->exists ? route('expenses.update', $expense) : route('expenses.store') }}" class="max-w-3xl rounded border bg-white p-4 shadow-sm sm:p-5">
+<form method="post" enctype="multipart/form-data" action="{{ $expense->exists ? route('expenses.update', $expense) : route('expenses.store') }}" class="max-w-3xl rounded border bg-brand-surface p-4 shadow-sm sm:p-5">
     @csrf
     @if($expense->exists)
         @method('put')
@@ -22,7 +22,7 @@
                     <option value="{{ $building->id }}" @selected($selectedBuildingId == $building->id)>{{ $building->name }}</option>
                 @endforeach
             </select>
-            <span class="mt-1 block text-xs font-normal text-slate-500">{{ __('expenses.form.building_help') }}</span>
+            <span class="mt-1 block text-xs font-normal text-brand-muted">{{ __('expenses.form.building_help') }}</span>
         </label>
 
         <label class="block text-sm font-medium">
@@ -33,7 +33,7 @@
                     <option value="{{ $unit->id }}" data-building-id="{{ $unit->building_id }}" @selected(old('unit_id', $expense->unit_id) == $unit->id)><bdi dir="ltr">{{ $unit->unit_number }}</bdi></option>
                 @endforeach
             </select>
-            <span class="mt-1 block text-xs font-normal text-slate-500">{{ __('expenses.form.unit_help') }}</span>
+            <span class="mt-1 block text-xs font-normal text-brand-muted">{{ __('expenses.form.unit_help') }}</span>
         </label>
 
         <label class="block text-sm font-medium">{{ __('expenses.form.category') }}
@@ -42,22 +42,22 @@
                     <option value="{{ $category }}" @selected(old('category', $expense->category) == $category)>{{ __('expenses.categories.'.$category) }}</option>
                 @endforeach
             </select>
-            <span class="mt-1 block text-xs font-normal text-slate-500">{{ __('expenses.form.category_help') }}</span>
+            <span class="mt-1 block text-xs font-normal text-brand-muted">{{ __('expenses.form.category_help') }}</span>
         </label>
 
         <label class="block text-sm font-medium">{{ __('expenses.form.amount') }}
             <input name="amount" type="number" step="0.01" value="{{ old('amount', $expense->amount) }}" class="tap-target mt-1 w-full rounded border p-2">
-            <span class="mt-1 block text-xs font-normal text-slate-500">{{ __('expenses.form.amount_help') }}</span>
+            <span class="mt-1 block text-xs font-normal text-brand-muted">{{ __('expenses.form.amount_help') }}</span>
         </label>
 
         <label class="block text-sm font-medium">{{ __('expenses.form.date') }}
             <input name="expense_date" type="date" value="{{ old('expense_date', optional($expense->expense_date)->toDateString()) }}" class="tap-target mt-1 w-full rounded border p-2">
-            <span class="mt-1 block text-xs font-normal text-slate-500">{{ __('expenses.form.date_help') }}</span>
+            <span class="mt-1 block text-xs font-normal text-brand-muted">{{ __('expenses.form.date_help') }}</span>
         </label>
 
         <label class="block text-sm font-medium">{{ __('expenses.form.invoice') }}
             <input name="invoice_image" type="file" accept="image/*" class="tap-target mt-1 w-full rounded border p-2">
-            <span class="mt-1 block text-xs font-normal text-slate-500">{{ __('expenses.form.invoice_help') }}</span>
+            <span class="mt-1 block text-xs font-normal text-brand-muted">{{ __('expenses.form.invoice_help') }}</span>
         </label>
 
         <label class="block text-sm font-medium md:col-span-2">{{ __('expenses.form.notes') }}
@@ -66,7 +66,7 @@
     </div>
 
     <div class="mt-5">
-        <button class="tap-target w-full rounded bg-slate-900 px-4 text-white">{{ __('expenses.form.save') }}</button>
+        <button class="tap-target w-full rounded bg-brand-primary px-4 text-white">{{ __('expenses.form.save') }}</button>
     </div>
 </form>
 

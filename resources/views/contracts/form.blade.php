@@ -43,19 +43,19 @@
 @endphp
 <div class="mb-4">
     <h1 class="text-xl font-semibold">{{ $isRenewal ? __('contracts.form.prepare_renewal_title') : ($isEdit ? __('contracts.form.edit_title') : __('contracts.form.add_title')) }}</h1>
-    <p class="mt-1 text-sm text-slate-600">{{ $isRenewal ? __('contracts.form.renewal_description') : __('contracts.form.description').' '.($isEdit ? __('contracts.form.number_read_only') : __('contracts.form.number_generated')) }}</p>
+    <p class="mt-1 text-sm text-brand-muted">{{ $isRenewal ? __('contracts.form.renewal_description') : __('contracts.form.description').' '.($isEdit ? __('contracts.form.number_read_only') : __('contracts.form.number_generated')) }}</p>
 </div>
 <form data-contract-form method="post" action="{{ $isEdit ? route('contracts.update', $contract) : route('contracts.store') }}" class="max-w-4xl space-y-4">
 @csrf @if($isEdit) @method('put') @endif
 @if($isRenewal)<input type="hidden" name="renew_from" value="{{ $renewalSource->id }}">@endif
-<section data-contract-step="unit" class="rounded border bg-white p-4 shadow-sm">
+<section data-contract-step="unit" class="rounded border bg-brand-surface p-4 shadow-sm">
     <div class="mb-3">
-        <p class="text-xs font-semibold uppercase tracking-wide text-slate-500">{{ __('contracts.form.step_1') }}</p>
+        <p class="text-xs font-semibold uppercase tracking-wide text-brand-muted">{{ __('contracts.form.step_1') }}</p>
         <h2 class="text-base font-semibold">{{ __('contracts.form.step_unit_title') }}</h2>
-        <p class="mt-1 text-sm text-slate-600">{{ __('contracts.form.step_unit_body') }}</p>
+        <p class="mt-1 text-sm text-brand-muted">{{ __('contracts.form.step_unit_body') }}</p>
     </div>
     @if($isEdit || $isRenewal)
-        <div class="block text-sm font-medium">{{ __('contracts.form.unit') }} <div class="tap-target mt-1 w-full rounded border bg-slate-50 p-2">{{ $displayContract->unit?->building?->name }} / {{ $displayContract->unit?->unit_number }}</div><span class="mt-1 block text-xs text-slate-500">{{ $isRenewal ? __('contracts.form.unit_fixed_renewal') : __('contracts.form.unit_locked') }}</span></div>
+        <div class="block text-sm font-medium">{{ __('contracts.form.unit') }} <div class="tap-target mt-1 w-full rounded border bg-brand-background p-2">{{ $displayContract->unit?->building?->name }} / {{ $displayContract->unit?->unit_number }}</div><span class="mt-1 block text-xs text-brand-muted">{{ $isRenewal ? __('contracts.form.unit_fixed_renewal') : __('contracts.form.unit_locked') }}</span></div>
     @else
         <div class="grid gap-4 md:grid-cols-2">
             <fieldset class="rounded border p-3 md:col-span-2">
@@ -82,9 +82,9 @@
                         <option value="{{ $unitOption['id'] }}" @selected($selectedUnitId === $unitOption['id'])>{{ ($contractMode ?? 'vacant') === 'future' ? $unitOption['future_label'] : $unitOption['unit_number'] }}</option>
                     @endforeach
                 </select>
-                <span class="mt-1 block text-xs text-slate-500">{{ __('contracts.form.unit_hint') }}</span>
+                <span class="mt-1 block text-xs text-brand-muted">{{ __('contracts.form.unit_hint') }}</span>
             </label>
-            <p data-contract-unit-empty class="{{ $selectedBuildingId !== '' && $initialUnitOptions->isNotEmpty() ? 'hidden ' : '' }}rounded border border-amber-200 bg-amber-50 p-3 text-sm text-amber-900 md:col-span-2">
+            <p data-contract-unit-empty class="{{ $selectedBuildingId !== '' && $initialUnitOptions->isNotEmpty() ? 'hidden ' : '' }}rounded border border-state-warning/30 bg-state-warning-soft p-3 text-sm text-state-warning md:col-span-2">
                 @if($selectedBuildingId === '')
                     {{ __('contracts.form.select_building_first') }}
                 @elseif(($contractMode ?? 'vacant') === 'future')
@@ -97,11 +97,11 @@
     @endif
 </section>
 
-<section data-contract-step="tenant" class="rounded border bg-white p-4 shadow-sm">
+<section data-contract-step="tenant" class="rounded border bg-brand-surface p-4 shadow-sm">
     <div class="mb-3">
-        <p class="text-xs font-semibold uppercase tracking-wide text-slate-500">{{ __('contracts.form.step_2') }}</p>
+        <p class="text-xs font-semibold uppercase tracking-wide text-brand-muted">{{ __('contracts.form.step_2') }}</p>
         <h2 class="text-base font-semibold">{{ __('contracts.form.step_tenant_title') }}</h2>
-        <p class="mt-1 text-sm text-slate-600">{{ __('contracts.form.step_tenant_body') }}</p>
+        <p class="mt-1 text-sm text-brand-muted">{{ __('contracts.form.step_tenant_body') }}</p>
     </div>
     @if(! $isEdit && ! $isRenewal)
     <fieldset class="rounded border p-3">
@@ -113,7 +113,7 @@
     </fieldset>
     @endif
     @if($isEdit || $isRenewal)
-        <div class="mt-3 block text-sm font-medium">{{ __('contracts.form.tenant') }} <div class="tap-target mt-1 w-full rounded border bg-slate-50 p-2">{{ $displayContract->tenant?->full_name }}</div><span class="mt-1 block text-xs text-slate-500">{{ $isRenewal ? __('contracts.form.tenant_fixed_renewal') : __('contracts.form.tenant_locked') }}</span></div>
+        <div class="mt-3 block text-sm font-medium">{{ __('contracts.form.tenant') }} <div class="tap-target mt-1 w-full rounded border bg-brand-background p-2">{{ $displayContract->tenant?->full_name }}</div><span class="mt-1 block text-xs text-brand-muted">{{ $isRenewal ? __('contracts.form.tenant_fixed_renewal') : __('contracts.form.tenant_locked') }}</span></div>
     @else
         <label id="existing-tenant-fields" class="mt-3 block text-sm font-medium {{ $tenantMode === 'new' ? 'hidden' : '' }}">
             {{ __('contracts.form.tenant') }}
@@ -123,10 +123,10 @@
                     <option value="{{ $tenant->id }}" @selected($selectedTenantId === (string) $tenant->id)>{{ $tenant->full_name }}</option>
                 @endforeach
             </select>
-            <span class="mt-1 block text-xs text-slate-500">{{ __('contracts.form.select_existing_tenant_hint') }}</span>
+            <span class="mt-1 block text-xs text-brand-muted">{{ __('contracts.form.select_existing_tenant_hint') }}</span>
         </label>
         <div id="new-tenant-fields" class="mt-3 grid gap-4 rounded border border-dashed p-3 md:grid-cols-2 {{ $tenantMode === 'new' ? '' : 'hidden' }}">
-            <p class="text-sm text-slate-600 md:col-span-2">{{ __('contracts.form.new_tenant_hint') }}</p>
+            <p class="text-sm text-brand-muted md:col-span-2">{{ __('contracts.form.new_tenant_hint') }}</p>
             <label class="block text-sm font-medium">{{ __('contracts.form.full_name') }} <input name="new_tenant[full_name]" value="{{ old('new_tenant.full_name') }}" class="tap-target mt-1 w-full rounded border p-2" @disabled($tenantMode !== 'new')></label>
             <label class="block text-sm font-medium">{{ __('contracts.form.phone') }} <input name="new_tenant[phone]" value="{{ old('new_tenant.phone') }}" class="tap-target mt-1 w-full rounded border p-2" @disabled($tenantMode !== 'new')></label>
             <label class="block text-sm font-medium">{{ __('contracts.form.email') }} <input name="new_tenant[email]" type="email" value="{{ old('new_tenant.email') }}" class="tap-target mt-1 w-full rounded border p-2" @disabled($tenantMode !== 'new')></label>
@@ -137,36 +137,36 @@
     @endif
 </section>
 
-<section data-contract-step="details" class="rounded border bg-white p-4 shadow-sm">
+<section data-contract-step="details" class="rounded border bg-brand-surface p-4 shadow-sm">
     <div class="mb-3">
-        <p class="text-xs font-semibold uppercase tracking-wide text-slate-500">{{ __('contracts.form.step_3') }}</p>
+        <p class="text-xs font-semibold uppercase tracking-wide text-brand-muted">{{ __('contracts.form.step_3') }}</p>
         <h2 class="text-base font-semibold">{{ __('contracts.form.step_details_title') }}</h2>
-        <p class="mt-1 text-sm text-slate-600">{{ __('contracts.form.step_details_body') }}</p>
+        <p class="mt-1 text-sm text-brand-muted">{{ __('contracts.form.step_details_body') }}</p>
     </div>
     <div class="grid gap-4 md:grid-cols-2">
-        @if($isEdit)<label class="block text-sm font-medium">{{ __('contracts.form.contract_number') }} <input value="{{ $contract->contract_number }}" class="tap-target mt-1 w-full rounded border bg-slate-50 p-2" readonly><span class="mt-1 block text-xs text-slate-500">{{ __('contracts.form.contract_number_locked') }}</span></label>@endif
-        @if($isRenewal)<div class="block text-sm font-medium">{{ __('contracts.form.status') }} <div class="tap-target mt-1 w-full rounded border bg-slate-50 p-2">{{ __('contracts.statuses.active') }}</div><input type="hidden" name="status" value="active"></div>@else<label class="block text-sm font-medium">{{ __('contracts.form.status') }} <select name="status" class="form-select-safe tap-target mt-1 w-full rounded border p-2">@foreach(['active','expired'] as $status)<option value="{{ $status }}" @selected(old('status', $contract->status)==$status)>{{ __('contracts.statuses.'.$status) }}</option>@endforeach</select></label>@endif
-        <label class="block text-sm font-medium">{{ __('contracts.form.start_date') }} <input name="start_date" type="date" value="{{ old('start_date', optional($contract->start_date)->toDateString()) }}" class="tap-target mt-1 w-full rounded border p-2" required><span class="mt-1 block text-xs text-slate-500">{{ __('contracts.form.start_date_hint') }}</span></label>
-        <label class="block text-sm font-medium">{{ __('contracts.form.end_date') }} <input name="end_date" type="date" value="{{ old('end_date', optional($contract->end_date)->toDateString()) }}" class="tap-target mt-1 w-full rounded border p-2" required><span class="mt-1 block text-xs text-slate-500">{{ __('contracts.form.end_date_hint') }}</span></label>
-        <label class="block text-sm font-medium">{{ __('contracts.form.rent_amount') }} <input name="rent_amount" type="number" step="0.01" value="{{ old('rent_amount', $contract->rent_amount) }}" class="tap-target mt-1 w-full rounded border p-2"><span class="mt-1 block text-xs text-slate-500">{{ __('contracts.form.rent_amount_hint') }}</span></label>
-        <label class="block text-sm font-medium">{{ __('contracts.form.payment_frequency') }} <select name="payment_frequency" class="form-select-safe tap-target mt-1 w-full rounded border p-2">@foreach(['monthly','quarterly','semi_annual','annual'] as $frequency)<option value="{{ $frequency }}" @selected(old('payment_frequency', $contract->payment_frequency)==$frequency)>{{ __('contracts.frequencies.'.$frequency) }}</option>@endforeach</select><span class="mt-1 block text-xs text-slate-500">{{ __('contracts.form.payment_frequency_hint') }}</span></label>
-        <label class="block text-sm font-medium">{{ __('contracts.form.deposit_amount') }} <input name="deposit_amount" type="number" step="0.01" value="{{ old('deposit_amount', $contract->deposit_amount) }}" class="tap-target mt-1 w-full rounded border p-2"><span class="mt-1 block text-xs text-slate-500">{{ __('contracts.form.deposit_amount_hint') }}</span></label>
+        @if($isEdit)<label class="block text-sm font-medium">{{ __('contracts.form.contract_number') }} <input value="{{ $contract->contract_number }}" class="tap-target mt-1 w-full rounded border bg-brand-background p-2" readonly><span class="mt-1 block text-xs text-brand-muted">{{ __('contracts.form.contract_number_locked') }}</span></label>@endif
+        @if($isRenewal)<div class="block text-sm font-medium">{{ __('contracts.form.status') }} <div class="tap-target mt-1 w-full rounded border bg-brand-background p-2">{{ __('contracts.statuses.active') }}</div><input type="hidden" name="status" value="active"></div>@else<label class="block text-sm font-medium">{{ __('contracts.form.status') }} <select name="status" class="form-select-safe tap-target mt-1 w-full rounded border p-2">@foreach(['active','expired'] as $status)<option value="{{ $status }}" @selected(old('status', $contract->status)==$status)>{{ __('contracts.statuses.'.$status) }}</option>@endforeach</select></label>@endif
+        <label class="block text-sm font-medium">{{ __('contracts.form.start_date') }} <input name="start_date" type="date" value="{{ old('start_date', optional($contract->start_date)->toDateString()) }}" class="tap-target mt-1 w-full rounded border p-2" required><span class="mt-1 block text-xs text-brand-muted">{{ __('contracts.form.start_date_hint') }}</span></label>
+        <label class="block text-sm font-medium">{{ __('contracts.form.end_date') }} <input name="end_date" type="date" value="{{ old('end_date', optional($contract->end_date)->toDateString()) }}" class="tap-target mt-1 w-full rounded border p-2" required><span class="mt-1 block text-xs text-brand-muted">{{ __('contracts.form.end_date_hint') }}</span></label>
+        <label class="block text-sm font-medium">{{ __('contracts.form.rent_amount') }} <input name="rent_amount" type="number" step="0.01" value="{{ old('rent_amount', $contract->rent_amount) }}" class="tap-target mt-1 w-full rounded border p-2"><span class="mt-1 block text-xs text-brand-muted">{{ __('contracts.form.rent_amount_hint') }}</span></label>
+        <label class="block text-sm font-medium">{{ __('contracts.form.payment_frequency') }} <select name="payment_frequency" class="form-select-safe tap-target mt-1 w-full rounded border p-2">@foreach(['monthly','quarterly','semi_annual','annual'] as $frequency)<option value="{{ $frequency }}" @selected(old('payment_frequency', $contract->payment_frequency)==$frequency)>{{ __('contracts.frequencies.'.$frequency) }}</option>@endforeach</select><span class="mt-1 block text-xs text-brand-muted">{{ __('contracts.form.payment_frequency_hint') }}</span></label>
+        <label class="block text-sm font-medium">{{ __('contracts.form.deposit_amount') }} <input name="deposit_amount" type="number" step="0.01" value="{{ old('deposit_amount', $contract->deposit_amount) }}" class="tap-target mt-1 w-full rounded border p-2"><span class="mt-1 block text-xs text-brand-muted">{{ __('contracts.form.deposit_amount_hint') }}</span></label>
         <label class="block text-sm font-medium md:col-span-2">{{ __('contracts.form.notes') }} <textarea name="notes" rows="4" class="mt-1 w-full rounded border p-2">{{ old('notes', $contract->notes) }}</textarea></label>
     </div>
 </section>
 
-<section data-contract-step="review" class="rounded border border-slate-200 bg-slate-50 p-4">
-    <p class="text-xs font-semibold uppercase tracking-wide text-slate-500">{{ __('contracts.form.step_4') }}</p>
+<section data-contract-step="review" class="rounded border border-brand-border bg-brand-background p-4">
+    <p class="text-xs font-semibold uppercase tracking-wide text-brand-muted">{{ __('contracts.form.step_4') }}</p>
     <h2 class="text-base font-semibold">{{ __('contracts.form.step_review_title') }}</h2>
-    <p class="mt-1 text-sm text-slate-600">{{ __('contracts.form.step_review_body') }}</p>
+    <p class="mt-1 text-sm text-brand-muted">{{ __('contracts.form.step_review_body') }}</p>
     <div class="mt-3 grid gap-3 text-sm sm:grid-cols-3">
-        <div class="rounded border bg-white p-3"><span class="block text-slate-500">{{ __('contracts.form.rent_amount') }}</span><span class="font-medium">{{ __('contracts.form.schedule_uses_rent') }}</span></div>
-        <div class="rounded border bg-white p-3"><span class="block text-slate-500">{{ __('contracts.form.payment_frequency') }}</span><span class="font-medium">{{ __('contracts.form.schedule_uses_frequency') }}</span></div>
-        <div class="rounded border bg-white p-3"><span class="block text-slate-500">{{ __('contracts.form.after_save_title') }}</span><span class="font-medium">{{ __('contracts.form.after_save_body') }}</span></div>
+        <div class="rounded border bg-brand-surface p-3"><span class="block text-brand-muted">{{ __('contracts.form.rent_amount') }}</span><span class="font-medium">{{ __('contracts.form.schedule_uses_rent') }}</span></div>
+        <div class="rounded border bg-brand-surface p-3"><span class="block text-brand-muted">{{ __('contracts.form.payment_frequency') }}</span><span class="font-medium">{{ __('contracts.form.schedule_uses_frequency') }}</span></div>
+        <div class="rounded border bg-brand-surface p-3"><span class="block text-brand-muted">{{ __('contracts.form.after_save_title') }}</span><span class="font-medium">{{ __('contracts.form.after_save_body') }}</span></div>
     </div>
 </section>
 
-<button type="submit" class="tap-target w-full rounded bg-slate-900 px-4 text-white">{{ __('contracts.form.save') }}</button>
+<button type="submit" class="tap-target w-full rounded bg-brand-primary px-4 text-white">{{ __('contracts.form.save') }}</button>
 </form>
 @if(! $isEdit && ! $isRenewal)
 <script>

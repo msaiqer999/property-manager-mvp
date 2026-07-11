@@ -65,15 +65,15 @@
 
 <div class="mb-5 grid gap-3 sm:flex sm:items-start sm:justify-between">
     <div>
-        <p class="text-sm font-medium text-slate-500">{{ __('app.pilot_guide.eyebrow') }}</p>
-        <h1 class="mt-1 text-2xl font-semibold text-slate-950">{{ __('app.pilot_guide.title') }}</h1>
-        <p class="mt-2 max-w-3xl text-sm leading-6 text-slate-600">{{ __('app.pilot_guide.subtitle') }}</p>
+        <p class="text-sm font-medium text-brand-muted">{{ __('app.pilot_guide.eyebrow') }}</p>
+        <h1 class="mt-1 text-2xl font-semibold text-brand-text">{{ __('app.pilot_guide.title') }}</h1>
+        <p class="mt-2 max-w-3xl text-sm leading-6 text-brand-muted">{{ __('app.pilot_guide.subtitle') }}</p>
     </div>
     <div class="grid gap-2 sm:flex sm:flex-wrap sm:justify-end">
-        <a class="tap-target inline-flex min-h-11 items-center justify-center rounded bg-slate-900 px-4 text-center text-sm font-medium text-white" href="{{ route('quick-start.index') }}">
+        <a class="tap-target inline-flex min-h-11 items-center justify-center rounded bg-brand-primary px-4 text-center text-sm font-medium text-white" href="{{ route('quick-start.index') }}">
             {{ __('app.pilot_guide.back_to_quick_start') }}
         </a>
-        <button type="button" data-feedback-open class="tap-target inline-flex min-h-11 items-center justify-center rounded border bg-white px-4 text-center text-sm font-medium text-slate-800">
+        <button type="button" data-feedback-open class="tap-target inline-flex min-h-11 items-center justify-center rounded border bg-brand-surface px-4 text-center text-sm font-medium text-brand-text">
             {{ __('app.pilot_guide.feedback_button') }}
         </button>
     </div>
@@ -81,47 +81,47 @@
 
 <div class="grid gap-4 lg:grid-cols-[minmax(0,1fr)_20rem]">
     <div class="grid gap-4">
-        <section data-pilot-guide-purpose class="rounded-xl border bg-white p-4 shadow-sm sm:p-5">
-            <h2 class="text-lg font-semibold text-slate-900">{{ __('app.pilot_guide.purpose_title') }}</h2>
-            <p class="mt-2 text-sm leading-6 text-slate-600">{{ __('app.pilot_guide.purpose_body') }}</p>
+        <section data-pilot-guide-purpose class="rounded-lg border bg-brand-surface p-4 shadow-sm sm:p-5">
+            <h2 class="text-lg font-semibold text-brand-text">{{ __('app.pilot_guide.purpose_title') }}</h2>
+            <p class="mt-2 text-sm leading-6 text-brand-muted">{{ __('app.pilot_guide.purpose_body') }}</p>
             <div class="mt-4 grid gap-3 sm:grid-cols-2">
-                <div class="rounded-lg border border-blue-100 bg-blue-50 p-3">
-                    <h3 class="text-sm font-semibold text-blue-950">{{ __('app.pilot_guide.try_title') }}</h3>
-                    <p class="mt-1 text-sm leading-6 text-blue-900">{{ __('app.pilot_guide.try_body') }}</p>
+                <div class="rounded-lg border border-brand-primary/20 bg-brand-primary-soft p-3">
+                    <h3 class="text-sm font-semibold text-brand-primary-hover">{{ __('app.pilot_guide.try_title') }}</h3>
+                    <p class="mt-1 text-sm leading-6 text-brand-primary-hover">{{ __('app.pilot_guide.try_body') }}</p>
                 </div>
-                <div class="rounded-lg border border-slate-200 bg-slate-50 p-3">
-                    <h3 class="text-sm font-semibold text-slate-950">{{ __('app.pilot_guide.report_title') }}</h3>
-                    <p class="mt-1 text-sm leading-6 text-slate-600">{{ __('app.pilot_guide.report_body') }}</p>
+                <div class="rounded-lg border border-brand-border bg-brand-background p-3">
+                    <h3 class="text-sm font-semibold text-brand-text">{{ __('app.pilot_guide.report_title') }}</h3>
+                    <p class="mt-1 text-sm leading-6 text-brand-muted">{{ __('app.pilot_guide.report_body') }}</p>
                 </div>
             </div>
         </section>
 
-        <section data-pilot-guide-path class="rounded-xl border bg-white p-4 shadow-sm sm:p-5">
+        <section data-pilot-guide-path class="rounded-lg border bg-brand-surface p-4 shadow-sm sm:p-5">
             <div class="mb-4">
-                <h2 class="text-lg font-semibold text-slate-900">{{ __('app.pilot_guide.path_title') }}</h2>
-                <p class="mt-1 text-sm leading-6 text-slate-600">{{ __('app.pilot_guide.path_body') }}</p>
+                <h2 class="text-lg font-semibold text-brand-text">{{ __('app.pilot_guide.path_title') }}</h2>
+                <p class="mt-1 text-sm leading-6 text-brand-muted">{{ __('app.pilot_guide.path_body') }}</p>
             </div>
 
             <div class="grid gap-3">
                 @foreach($pilotSteps as $step)
-                    <article data-pilot-guide-step class="grid gap-3 rounded-lg border border-slate-200 bg-slate-50 p-4 sm:grid-cols-[3rem_1fr_auto] sm:items-center">
-                        <div class="flex h-10 w-10 items-center justify-center rounded-full bg-slate-900 text-sm font-semibold text-white" dir="ltr">
+                    <article data-pilot-guide-step class="grid gap-3 rounded-lg border border-brand-border bg-brand-background p-4 sm:grid-cols-[3rem_1fr_auto] sm:items-center">
+                        <div class="flex h-10 w-10 items-center justify-center rounded-full bg-brand-primary text-sm font-semibold text-white" dir="ltr">
                             {{ $step['number'] }}
                         </div>
                         <div class="min-w-0">
-                            <h3 class="text-base font-semibold text-slate-950">{{ __('app.pilot_guide.steps.'.$step['key'].'.title') }}</h3>
-                            <p class="mt-1 text-sm leading-6 text-slate-600">{{ __('app.pilot_guide.steps.'.$step['key'].'.body') }}</p>
+                            <h3 class="text-base font-semibold text-brand-text">{{ __('app.pilot_guide.steps.'.$step['key'].'.title') }}</h3>
+                            <p class="mt-1 text-sm leading-6 text-brand-muted">{{ __('app.pilot_guide.steps.'.$step['key'].'.body') }}</p>
                         </div>
                         @if($step['key'] === 'feedback')
-                            <button type="button" data-feedback-open class="tap-target inline-flex min-h-11 items-center justify-center rounded bg-slate-900 px-4 text-center text-sm font-medium text-white">
+                            <button type="button" data-feedback-open class="tap-target inline-flex min-h-11 items-center justify-center rounded bg-brand-primary px-4 text-center text-sm font-medium text-white">
                                 {{ __('app.pilot_guide.steps.feedback.action') }}
                             </button>
                         @elseif($step['allowed'])
-                            <a class="tap-target inline-flex min-h-11 items-center justify-center rounded bg-slate-900 px-4 text-center text-sm font-medium text-white" href="{{ $step['href'] }}">
+                            <a class="tap-target inline-flex min-h-11 items-center justify-center rounded bg-brand-primary px-4 text-center text-sm font-medium text-white" href="{{ $step['href'] }}">
                                 {{ __('app.pilot_guide.steps.'.$step['key'].'.action') }}
                             </a>
                         @else
-                            <span class="inline-flex min-h-11 items-center justify-center rounded border bg-white px-4 text-center text-sm font-medium text-slate-500">
+                            <span class="inline-flex min-h-11 items-center justify-center rounded border bg-brand-surface px-4 text-center text-sm font-medium text-brand-muted">
                                 {{ __('app.pilot_guide.not_available') }}
                             </span>
                         @endif
@@ -132,15 +132,15 @@
     </div>
 
     <aside class="grid content-start gap-4">
-        <section data-pilot-guide-feedback class="rounded-xl border bg-white p-4 shadow-sm sm:p-5">
-            <h2 class="text-lg font-semibold text-slate-900">{{ __('app.pilot_guide.feedback_title') }}</h2>
-            <p class="mt-2 text-sm leading-6 text-slate-600">{{ __('app.pilot_guide.feedback_body') }}</p>
-            <button type="button" data-feedback-open class="tap-target mt-4 inline-flex min-h-11 w-full items-center justify-center rounded bg-slate-900 px-4 text-center text-sm font-medium text-white">
+        <section data-pilot-guide-feedback class="rounded-lg border bg-brand-surface p-4 shadow-sm sm:p-5">
+            <h2 class="text-lg font-semibold text-brand-text">{{ __('app.pilot_guide.feedback_title') }}</h2>
+            <p class="mt-2 text-sm leading-6 text-brand-muted">{{ __('app.pilot_guide.feedback_body') }}</p>
+            <button type="button" data-feedback-open class="tap-target mt-4 inline-flex min-h-11 w-full items-center justify-center rounded bg-brand-primary px-4 text-center text-sm font-medium text-white">
                 {{ __('app.pilot_guide.feedback_button') }}
             </button>
-            <div class="mt-4 rounded-lg border border-slate-200 bg-slate-50 p-3">
-                <h3 class="text-sm font-semibold text-slate-950">{{ __('app.pilot_guide.examples_title') }}</h3>
-                <ul class="mt-2 space-y-2 text-sm leading-6 text-slate-600">
+            <div class="mt-4 rounded-lg border border-brand-border bg-brand-background p-3">
+                <h3 class="text-sm font-semibold text-brand-text">{{ __('app.pilot_guide.examples_title') }}</h3>
+                <ul class="mt-2 space-y-2 text-sm leading-6 text-brand-muted">
                     @foreach(__('app.pilot_guide.examples') as $example)
                         <li>{{ $example }}</li>
                     @endforeach
@@ -149,13 +149,13 @@
         </section>
 
         @if($isPilotHandoverRole)
-            <section data-pilot-guide-handover class="rounded-xl border bg-white p-4 shadow-sm sm:p-5">
-                <h2 class="text-lg font-semibold text-slate-900">{{ __('app.pilot_guide.handover_title') }}</h2>
-                <p class="mt-2 text-sm leading-6 text-slate-600">{{ __('app.pilot_guide.handover_body') }}</p>
+            <section data-pilot-guide-handover class="rounded-lg border bg-brand-surface p-4 shadow-sm sm:p-5">
+                <h2 class="text-lg font-semibold text-brand-text">{{ __('app.pilot_guide.handover_title') }}</h2>
+                <p class="mt-2 text-sm leading-6 text-brand-muted">{{ __('app.pilot_guide.handover_body') }}</p>
                 <ul class="mt-4 space-y-3">
                     @foreach(__('app.pilot_guide.handover_items') as $item)
-                        <li class="flex gap-3 rounded-lg border border-slate-200 bg-slate-50 p-3 text-sm leading-6 text-slate-700">
-                            <span class="mt-1 h-2 w-2 shrink-0 rounded-full bg-slate-500"></span>
+                        <li class="flex gap-3 rounded-lg border border-brand-border bg-brand-background p-3 text-sm leading-6 text-brand-text">
+                            <span class="mt-1 h-2 w-2 shrink-0 rounded-full bg-brand-accent"></span>
                             <span>{{ $item }}</span>
                         </li>
                     @endforeach
