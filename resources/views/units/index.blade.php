@@ -5,15 +5,15 @@
     <h1 class="text-xl font-semibold">{{ __('units.title') }}</h1>
     <div class="grid gap-2 sm:flex sm:flex-wrap">
         @if($buildings->isEmpty())
-            <a class="tap-target flex min-h-11 items-center justify-center rounded bg-slate-900 px-4 text-sm font-medium text-white" href="{{ route('buildings.create') }}">{{ __('buildings.add') }}</a>
+            <a class="tap-target flex min-h-11 items-center justify-center rounded bg-brand-primary px-4 text-sm font-medium text-white" href="{{ route('buildings.create') }}">{{ __('buildings.add') }}</a>
         @else
             <a class="tap-target flex min-h-11 items-center justify-center rounded border px-4 text-center text-sm font-medium" href="{{ route('units.bulk-create') }}">{{ __('units.bulk.add_multiple') }}</a>
-            <a class="tap-target flex min-h-11 items-center justify-center rounded bg-slate-900 px-4 text-sm font-medium text-white" href="{{ route('units.create') }}">{{ __('units.add') }}</a>
+            <a class="tap-target flex min-h-11 items-center justify-center rounded bg-brand-primary px-4 text-sm font-medium text-white" href="{{ route('units.create') }}">{{ __('units.add') }}</a>
         @endif
     </div>
 </div>
 
-<form class="mb-4 grid gap-3 rounded border bg-white p-3 sm:grid-cols-3">
+<form class="mb-4 grid gap-3 rounded border bg-brand-surface p-3 sm:grid-cols-3">
     <select name="building_id" class="form-select-safe tap-target min-h-11 rounded border p-2">
         <option value="">{{ __('units.filters.all_buildings') }}</option>
         @foreach($buildings as $building)
@@ -26,40 +26,40 @@
             <option value="{{ $status }}" @selected(request('status') === $status)>{{ __('units.statuses.'.$status) }}</option>
         @endforeach
     </select>
-    <button class="tap-target min-h-11 rounded bg-slate-900 px-4 text-white">{{ __('app.actions.filter') }}</button>
+    <button class="tap-target min-h-11 rounded bg-brand-primary px-4 text-white">{{ __('app.actions.filter') }}</button>
 </form>
 
 @if($units->isEmpty())
-    <section data-empty-state-units class="rounded border bg-white p-5 text-center shadow-sm sm:p-6">
-        <h2 class="text-lg font-semibold text-slate-950">{{ $buildings->isEmpty() ? __('app.empty_states.units.no_buildings_title') : __('app.empty_states.units.title') }}</h2>
-        <p class="mx-auto mt-2 max-w-xl text-sm leading-6 text-slate-600">{{ $buildings->isEmpty() ? __('app.empty_states.units.no_buildings_body') : __('app.empty_states.units.body') }}</p>
+    <section data-empty-state-units class="rounded border bg-brand-surface p-5 text-center shadow-sm sm:p-6">
+        <h2 class="text-lg font-semibold text-brand-text">{{ $buildings->isEmpty() ? __('app.empty_states.units.no_buildings_title') : __('app.empty_states.units.title') }}</h2>
+        <p class="mx-auto mt-2 max-w-xl text-sm leading-6 text-brand-muted">{{ $buildings->isEmpty() ? __('app.empty_states.units.no_buildings_body') : __('app.empty_states.units.body') }}</p>
         <div class="mt-4 grid gap-2 sm:flex sm:justify-center">
             @if($buildings->isEmpty())
-                <a class="tap-target inline-flex min-h-11 items-center justify-center rounded bg-slate-900 px-4 text-center text-sm font-medium text-white" href="{{ route('buildings.create') }}">{{ __('app.empty_states.units.no_buildings_action') }}</a>
+                <a class="tap-target inline-flex min-h-11 items-center justify-center rounded bg-brand-primary px-4 text-center text-sm font-medium text-white" href="{{ route('buildings.create') }}">{{ __('app.empty_states.units.no_buildings_action') }}</a>
             @else
-                <a class="tap-target inline-flex min-h-11 items-center justify-center rounded bg-slate-900 px-4 text-center text-sm font-medium text-white" href="{{ route('units.bulk-create') }}">{{ __('app.empty_states.units.secondary_action') }}</a>
-                <a class="tap-target inline-flex min-h-11 items-center justify-center rounded border bg-white px-4 text-center text-sm font-medium text-slate-800" href="{{ route('units.create') }}">{{ __('app.empty_states.units.action') }}</a>
+                <a class="tap-target inline-flex min-h-11 items-center justify-center rounded bg-brand-primary px-4 text-center text-sm font-medium text-white" href="{{ route('units.bulk-create') }}">{{ __('app.empty_states.units.secondary_action') }}</a>
+                <a class="tap-target inline-flex min-h-11 items-center justify-center rounded border bg-brand-surface px-4 text-center text-sm font-medium text-brand-text" href="{{ route('units.create') }}">{{ __('app.empty_states.units.action') }}</a>
             @endif
         </div>
     </section>
 @else
     <div data-mobile-units-list class="grid gap-3 md:hidden">
         @foreach($units as $unit)
-            <article data-unit-mobile-card class="rounded border bg-white p-4 shadow-sm">
+            <article data-unit-mobile-card class="rounded border bg-brand-surface p-4 shadow-sm">
                 <div class="flex items-start justify-between gap-3">
                     <div class="min-w-0">
                         <h2 class="text-base font-semibold"><bdi dir="ltr">{{ $unit->unit_number }}</bdi></h2>
-                        <p class="mt-1 break-words text-sm text-slate-600">{{ $unit->building->name }}</p>
+                        <p class="mt-1 break-words text-sm text-brand-muted">{{ $unit->building->name }}</p>
                     </div>
-                    <span class="shrink-0 rounded bg-slate-100 px-2 py-1 text-xs text-slate-700">{{ __('units.statuses.'.$unit->status) }}</span>
+                    <x-status-badge class="shrink-0" :status="$unit->status" :label="__('units.statuses.'.$unit->status)" />
                 </div>
                 <dl class="mt-3 grid gap-2 text-sm">
                     <div class="flex items-center justify-between gap-3">
-                        <dt class="text-slate-500">{{ __('units.fields.type') }}</dt>
+                        <dt class="text-brand-muted">{{ __('units.fields.type') }}</dt>
                         <dd>{{ __('units.types.'.$unit->type) }}</dd>
                     </div>
                     <div class="flex items-center justify-between gap-3">
-                        <dt class="text-slate-500">{{ __('units.fields.rent') }}</dt>
+                        <dt class="text-brand-muted">{{ __('units.fields.rent') }}</dt>
                         <dd><bdi dir="ltr">{{ number_format($unit->rent_amount, 2) }}</bdi></dd>
                     </div>
                 </dl>
@@ -84,9 +84,9 @@
                 <tr class="border-t">
                     <td class="p-4 font-medium whitespace-nowrap"><bdi dir="ltr">{{ $unit->unit_number }}</bdi></td>
                     <td class="p-4">{{ $unit->building->name }}</td>
-                    <td class="p-4 text-center whitespace-nowrap"><span class="rounded bg-slate-100 px-2 py-1 text-xs">{{ __('units.statuses.'.$unit->status) }}</span></td>
+                    <td class="p-4 text-center whitespace-nowrap"><x-status-badge :status="$unit->status" :label="__('units.statuses.'.$unit->status)" /></td>
                     <td class="p-4 text-end whitespace-nowrap"><bdi dir="ltr">{{ number_format($unit->rent_amount, 2) }}</bdi></td>
-                    <td class="p-4 text-center whitespace-nowrap"><a class="tap-target inline-flex items-center rounded border px-3 text-slate-700" href="{{ route('units.show', $unit) }}">{{ __('app.actions.view') }}</a></td>
+                    <td class="p-4 text-center whitespace-nowrap"><a class="tap-target inline-flex items-center rounded border px-3 text-brand-text" href="{{ route('units.show', $unit) }}">{{ __('app.actions.view') }}</a></td>
                 </tr>
             @endforeach
         </tbody>

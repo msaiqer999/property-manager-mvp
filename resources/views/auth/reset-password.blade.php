@@ -1,15 +1,16 @@
 @extends('layouts.app')
 
 @section('content')
-<div class="mx-auto max-w-md rounded border bg-white p-5 shadow-sm">
-    <h1 class="mb-4 text-xl font-semibold">{{ __('app.auth.choose_new_password') }}</h1>
+<div class="auth-card mx-auto max-w-md p-5">
+    <x-app-identity class="mb-5" />
+    <h1 class="mb-4 text-xl font-semibold text-brand-text">{{ __('app.auth.choose_new_password') }}</h1>
     <form method="post" action="{{ route('password.store') }}" class="space-y-4">
         @csrf
         <input type="hidden" name="token" value="{{ $token }}">
-        <label class="block text-sm font-medium">{{ __('app.auth.email') }} <input name="email" type="email" value="{{ old('email', $email) }}" class="tap-target mt-1 w-full rounded border p-2" required></label>
-        <label class="block text-sm font-medium">{{ __('app.auth.password') }} <input name="password" type="password" class="tap-target mt-1 w-full rounded border p-2" required></label>
-        <label class="block text-sm font-medium">{{ __('app.auth.confirm_password') }} <input name="password_confirmation" type="password" class="tap-target mt-1 w-full rounded border p-2" required></label>
-        <button class="tap-target w-full rounded bg-slate-900 px-4 text-white">{{ __('app.auth.reset_password') }}</button>
+        <label class="form-label">{{ __('app.auth.email') }} <input name="email" type="email" value="{{ old('email', $email) }}" class="form-control tap-target mt-1" required></label>
+        <label class="form-label">{{ __('app.auth.password') }} <input name="password" type="password" class="form-control tap-target mt-1" required></label>
+        <label class="form-label">{{ __('app.auth.confirm_password') }} <input name="password_confirmation" type="password" class="form-control tap-target mt-1" required></label>
+        <button class="btn-primary tap-target w-full px-4">{{ __('app.auth.reset_password') }}</button>
     </form>
 </div>
 @endsection

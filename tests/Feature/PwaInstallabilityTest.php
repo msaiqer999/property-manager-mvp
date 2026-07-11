@@ -22,7 +22,7 @@ class PwaInstallabilityTest extends TestCase
             ->assertOk()
             ->assertSee('rel="manifest"', false)
             ->assertSee(asset('manifest.webmanifest'), false)
-            ->assertSee('<meta name="theme-color" content="#0f172a">', false)
+            ->assertSee('<meta name="theme-color" content="#0F4C5C">', false)
             ->assertSee('<meta name="mobile-web-app-capable" content="yes">', false)
             ->assertSee('<meta name="apple-mobile-web-app-capable" content="yes">', false)
             ->assertSee('<meta name="apple-mobile-web-app-title" content="Property Manager">', false)
@@ -45,8 +45,8 @@ class PwaInstallabilityTest extends TestCase
         $this->assertSame('/', $manifest['start_url']);
         $this->assertSame('/', $manifest['scope']);
         $this->assertSame('standalone', $manifest['display']);
-        $this->assertSame('#f8fafc', $manifest['background_color']);
-        $this->assertSame('#0f172a', $manifest['theme_color']);
+        $this->assertSame('#F7F5F0', $manifest['background_color']);
+        $this->assertSame('#0F4C5C', $manifest['theme_color']);
         $this->assertSame('auto', $manifest['dir']);
         $this->assertSame('en', $manifest['lang']);
         $this->assertFalse($manifest['prefer_related_applications']);

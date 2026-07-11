@@ -4,11 +4,11 @@
 <div class="mb-4 grid gap-3 sm:flex sm:items-center sm:justify-between">
     <h1 class="text-xl font-semibold">{{ __('expenses.title') }}</h1>
     @can('create', App\Models\Expense::class)
-        <a class="tap-target flex items-center justify-center rounded bg-slate-900 px-4 text-sm font-medium text-white" href="{{ route('expenses.create') }}">{{ __('expenses.add') }}</a>
+        <a class="tap-target flex items-center justify-center rounded bg-brand-primary px-4 text-sm font-medium text-white" href="{{ route('expenses.create') }}">{{ __('expenses.add') }}</a>
     @endcan
 </div>
 
-<form method="get" action="{{ route('expenses.index') }}" class="mb-4 grid gap-3 rounded border bg-white p-4 sm:grid-cols-2 lg:grid-cols-5">
+<form method="get" action="{{ route('expenses.index') }}" class="mb-4 grid gap-3 rounded border bg-brand-surface p-4 sm:grid-cols-2 lg:grid-cols-5">
     <label class="block text-sm font-medium">
         {{ __('expenses.form.building') }}
         <select name="building_id" data-building-select class="form-select-safe tap-target mt-1 w-full rounded border p-2">
@@ -49,54 +49,54 @@
     </label>
 
     <div class="flex items-end">
-        <button class="tap-target w-full rounded bg-slate-900 px-4 text-sm font-medium text-white">{{ __('app.actions.filter') }}</button>
+        <button class="tap-target w-full rounded bg-brand-primary px-4 text-sm font-medium text-white">{{ __('app.actions.filter') }}</button>
     </div>
 </form>
 
 <div data-mobile-expenses-list class="grid gap-3 md:hidden">
     @forelse($expenses as $expense)
-        <article class="rounded border bg-white p-4 shadow-sm">
+        <article class="rounded border bg-brand-surface p-4 shadow-sm">
             <div class="flex items-start justify-between gap-3">
                 <div>
-                    <p class="text-sm font-semibold text-slate-900">{{ __('expenses.categories.'.$expense->category) }}</p>
-                    <p class="mt-1 text-xs text-slate-500">{{ __('expenses.show.date') }}: <bdi dir="ltr">{{ $expense->expense_date->toDateString() }}</bdi></p>
+                    <p class="text-sm font-semibold text-brand-text">{{ __('expenses.categories.'.$expense->category) }}</p>
+                    <p class="mt-1 text-xs text-brand-muted">{{ __('expenses.show.date') }}: <bdi dir="ltr">{{ $expense->expense_date->toDateString() }}</bdi></p>
                 </div>
                 @if($expense->voided_at)
-                    <span class="shrink-0 rounded bg-amber-100 px-2 py-1 text-xs font-medium text-amber-800">{{ __('expenses.lifecycle.voided') }}</span>
+                    <x-status-badge class="shrink-0" status="voided" :label="__('expenses.lifecycle.voided')" />
                 @else
-                    <span class="shrink-0 rounded bg-emerald-100 px-2 py-1 text-xs font-medium text-emerald-800">{{ __('expenses.lifecycle.active') }}</span>
+                    <x-status-badge class="shrink-0" status="active" :label="__('expenses.lifecycle.active')" />
                 @endif
             </div>
 
             <dl class="mt-3 grid grid-cols-2 gap-3 text-sm">
                 <div>
-                    <dt class="text-xs text-slate-500">{{ __('expenses.show.building') }}</dt>
-                    <dd class="font-medium text-slate-900">{{ $expense->building->name }}</dd>
+                    <dt class="text-xs text-brand-muted">{{ __('expenses.show.building') }}</dt>
+                    <dd class="font-medium text-brand-text">{{ $expense->building->name }}</dd>
                 </div>
                 <div>
-                    <dt class="text-xs text-slate-500">{{ __('expenses.show.unit') }}</dt>
-                    <dd class="font-medium text-slate-900"><bdi dir="ltr">{{ $expense->unit?->unit_number ?? __('expenses.not_available') }}</bdi></dd>
+                    <dt class="text-xs text-brand-muted">{{ __('expenses.show.unit') }}</dt>
+                    <dd class="font-medium text-brand-text"><bdi dir="ltr">{{ $expense->unit?->unit_number ?? __('expenses.not_available') }}</bdi></dd>
                 </div>
                 <div>
-                    <dt class="text-xs text-slate-500">{{ __('expenses.show.amount') }}</dt>
-                    <dd class="font-semibold text-slate-900"><bdi dir="ltr">{{ number_format($expense->amount, 2) }}</bdi></dd>
+                    <dt class="text-xs text-brand-muted">{{ __('expenses.show.amount') }}</dt>
+                    <dd class="font-semibold text-brand-text"><bdi dir="ltr">{{ number_format($expense->amount, 2) }}</bdi></dd>
                 </div>
                 <div>
-                    <dt class="text-xs text-slate-500">{{ __('expenses.show.status') }}</dt>
-                    <dd class="font-medium text-slate-900">{{ $expense->voided_at ? __('expenses.lifecycle.voided') : __('expenses.lifecycle.active') }}</dd>
+                    <dt class="text-xs text-brand-muted">{{ __('expenses.show.status') }}</dt>
+                    <dd class="font-medium text-brand-text">{{ $expense->voided_at ? __('expenses.lifecycle.voided') : __('expenses.lifecycle.active') }}</dd>
                 </div>
             </dl>
 
             <div class="mt-4">
-                <a class="tap-target inline-flex w-full items-center justify-center rounded border px-3 text-sm font-medium text-slate-700" href="{{ route('expenses.show', $expense) }}">{{ __('expenses.view') }}</a>
+                <a class="tap-target inline-flex w-full items-center justify-center rounded border px-3 text-sm font-medium text-brand-text" href="{{ route('expenses.show', $expense) }}">{{ __('expenses.view') }}</a>
             </div>
         </article>
     @empty
-        <section data-empty-state-expenses class="rounded border bg-white p-5 text-center shadow-sm sm:p-6">
-            <h2 class="text-lg font-semibold text-slate-950">{{ __('app.empty_states.expenses.title') }}</h2>
-            <p class="mx-auto mt-2 max-w-xl text-sm leading-6 text-slate-600">{{ __('app.empty_states.expenses.body') }}</p>
+        <section data-empty-state-expenses class="rounded border bg-brand-surface p-5 text-center shadow-sm sm:p-6">
+            <h2 class="text-lg font-semibold text-brand-text">{{ __('app.empty_states.expenses.title') }}</h2>
+            <p class="mx-auto mt-2 max-w-xl text-sm leading-6 text-brand-muted">{{ __('app.empty_states.expenses.body') }}</p>
             @can('create', App\Models\Expense::class)
-                <a class="tap-target mt-4 inline-flex min-h-11 items-center justify-center rounded bg-slate-900 px-4 text-center text-sm font-medium text-white" href="{{ route('expenses.create') }}">{{ __('app.empty_states.expenses.action') }}</a>
+                <a class="tap-target mt-4 inline-flex min-h-11 items-center justify-center rounded bg-brand-primary px-4 text-center text-sm font-medium text-white" href="{{ route('expenses.create') }}">{{ __('app.empty_states.expenses.action') }}</a>
             @endcan
         </section>
     @endforelse
@@ -119,30 +119,30 @@
                 <tr class="border-t align-top">
                     <td class="p-3 whitespace-nowrap"><bdi dir="ltr">{{ $expense->expense_date->toDateString() }}</bdi></td>
                     <td class="p-3">
-                        <div class="font-medium text-slate-900">{{ $expense->building->name }}</div>
-                        <div class="mt-1 text-xs text-slate-500">{{ __('expenses.show.unit') }}: <bdi dir="ltr">{{ $expense->unit?->unit_number ?? __('expenses.not_available') }}</bdi></div>
+                        <div class="font-medium text-brand-text">{{ $expense->building->name }}</div>
+                        <div class="mt-1 text-xs text-brand-muted">{{ __('expenses.show.unit') }}: <bdi dir="ltr">{{ $expense->unit?->unit_number ?? __('expenses.not_available') }}</bdi></div>
                     </td>
                     <td class="p-3 capitalize">{{ __('expenses.categories.'.$expense->category) }}</td>
                     <td class="p-3 text-end whitespace-nowrap"><bdi dir="ltr">{{ number_format($expense->amount, 2) }}</bdi></td>
                     <td class="p-3 text-center whitespace-nowrap">
                         @if($expense->voided_at)
-                            <span class="rounded bg-amber-100 px-2 py-1 text-xs font-medium text-amber-800">{{ __('expenses.lifecycle.voided') }}</span>
+                            <x-status-badge status="voided" :label="__('expenses.lifecycle.voided')" />
                         @else
-                            <span class="rounded bg-emerald-100 px-2 py-1 text-xs font-medium text-emerald-800">{{ __('expenses.lifecycle.active') }}</span>
+                            <x-status-badge status="active" :label="__('expenses.lifecycle.active')" />
                         @endif
                     </td>
                     <td class="p-3 text-center">
-                        <a class="tap-target inline-flex items-center rounded border px-3 text-sm font-medium text-slate-700" href="{{ route('expenses.show', $expense) }}">{{ __('expenses.view') }}</a>
+                        <a class="tap-target inline-flex items-center rounded border px-3 text-sm font-medium text-brand-text" href="{{ route('expenses.show', $expense) }}">{{ __('expenses.view') }}</a>
                     </td>
                 </tr>
             @empty
                 <tr>
                     <td colspan="6" class="p-4">
-                        <section data-empty-state-expenses class="rounded border bg-white p-5 text-center shadow-sm">
-                            <h2 class="text-lg font-semibold text-slate-950">{{ __('app.empty_states.expenses.title') }}</h2>
-                            <p class="mx-auto mt-2 max-w-xl text-sm leading-6 text-slate-600">{{ __('app.empty_states.expenses.body') }}</p>
+                        <section data-empty-state-expenses class="rounded border bg-brand-surface p-5 text-center shadow-sm">
+                            <h2 class="text-lg font-semibold text-brand-text">{{ __('app.empty_states.expenses.title') }}</h2>
+                            <p class="mx-auto mt-2 max-w-xl text-sm leading-6 text-brand-muted">{{ __('app.empty_states.expenses.body') }}</p>
                             @can('create', App\Models\Expense::class)
-                                <a class="tap-target mt-4 inline-flex min-h-11 items-center justify-center rounded bg-slate-900 px-4 text-center text-sm font-medium text-white" href="{{ route('expenses.create') }}">{{ __('app.empty_states.expenses.action') }}</a>
+                                <a class="tap-target mt-4 inline-flex min-h-11 items-center justify-center rounded bg-brand-primary px-4 text-center text-sm font-medium text-white" href="{{ route('expenses.create') }}">{{ __('app.empty_states.expenses.action') }}</a>
                             @endcan
                         </section>
                     </td>

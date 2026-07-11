@@ -97,7 +97,7 @@ class TenantLocalizationTest extends TestCase
             ->assertSee('data-tenant-mobile-card', false)
             ->assertSee('grid min-w-0 gap-1', false)
             ->assertSee('min-w-0 break-words', false)
-            ->assertSee('w-fit rounded bg-emerald-100', false)
+            ->assertSee('badge-success', false)
             ->assertSee('Tenant Mobile Card Name')
             ->assertSee('+971501010101')
             ->assertSee('tenant-mobile-card@example.com')

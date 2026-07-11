@@ -4,37 +4,37 @@
 <div class="mb-4 grid gap-3 sm:flex sm:items-start sm:justify-between">
     <div>
         <h1 class="text-xl font-semibold">{{ __('contracts.title') }}</h1>
-        <p class="mt-1 text-sm text-slate-600">{{ __('contracts.description') }}</p>
+        <p class="mt-1 text-sm text-brand-muted">{{ __('contracts.description') }}</p>
     </div>
-    <a class="tap-target flex min-h-11 items-center justify-center rounded bg-slate-900 px-4 text-sm font-medium text-white" href="{{ route('contracts.create') }}">{{ __('contracts.add') }}</a>
+    <a class="tap-target flex min-h-11 items-center justify-center rounded bg-brand-primary px-4 text-sm font-medium text-white" href="{{ route('contracts.create') }}">{{ __('contracts.add') }}</a>
 </div>
 
-<form class="mb-4 grid gap-3 rounded border bg-white p-3 sm:grid-cols-[1fr_auto]">
+<form class="mb-4 grid gap-3 rounded border bg-brand-surface p-3 sm:grid-cols-[1fr_auto]">
     <select name="status" class="form-select-safe tap-target min-h-11 rounded border p-2">
         <option value="">{{ __('contracts.all_statuses') }}</option>
         @foreach(['active', 'expired', 'terminated'] as $status)
             <option value="{{ $status }}" @selected(request('status') === $status)>{{ __('contracts.statuses.'.$status) }}</option>
         @endforeach
     </select>
-    <button class="tap-target min-h-11 rounded bg-slate-900 px-4 text-white">{{ __('contracts.filter') }}</button>
+    <button class="tap-target min-h-11 rounded bg-brand-primary px-4 text-white">{{ __('contracts.filter') }}</button>
 </form>
 
 <div data-mobile-contracts-list class="grid gap-3 md:hidden">
     @forelse($contracts as $contract)
-        <article data-contract-mobile-card class="rounded border bg-white p-4 shadow-sm">
+        <article data-contract-mobile-card class="rounded border bg-brand-surface p-4 shadow-sm">
             <div class="flex items-start justify-between gap-3">
                 <h2 class="font-semibold"><bdi dir="ltr">{{ $contract->contract_number }}</bdi></h2>
-                <span class="rounded bg-slate-100 px-2 py-1 text-xs">{{ __('contracts.statuses.'.$contract->status) }}</span>
+                <x-status-badge :status="$contract->status" :label="__('contracts.statuses.'.$contract->status)" />
             </div>
             <dl class="mt-3 grid gap-2 text-sm">
-                <div class="flex items-center justify-between gap-3"><dt class="text-slate-500">{{ __('contracts.columns.tenant') }}</dt><dd class="break-words">{{ $contract->tenant->full_name }}</dd></div>
-                <div class="flex items-center justify-between gap-3"><dt class="text-slate-500">{{ __('contracts.columns.unit') }}</dt><dd><bdi dir="ltr">{{ $contract->unit->unit_number }}</bdi></dd></div>
-                <div class="flex items-center justify-between gap-3"><dt class="text-slate-500">{{ __('contracts.columns.start_date') }}</dt><dd><bdi dir="ltr">{{ $contract->start_date->toDateString() }}</bdi></dd></div>
-                <div class="flex items-center justify-between gap-3"><dt class="text-slate-500">{{ __('contracts.columns.end_date') }}</dt><dd><bdi dir="ltr">{{ $contract->end_date->toDateString() }}</bdi></dd></div>
-                <div class="flex items-center justify-between gap-3"><dt class="text-slate-500">{{ __('contracts.columns.rent_per_period') }}</dt><dd><bdi dir="ltr">{{ number_format($contract->rent_amount, 2) }}</bdi></dd></div>
+                <div class="flex items-center justify-between gap-3"><dt class="text-brand-muted">{{ __('contracts.columns.tenant') }}</dt><dd class="break-words">{{ $contract->tenant->full_name }}</dd></div>
+                <div class="flex items-center justify-between gap-3"><dt class="text-brand-muted">{{ __('contracts.columns.unit') }}</dt><dd><bdi dir="ltr">{{ $contract->unit->unit_number }}</bdi></dd></div>
+                <div class="flex items-center justify-between gap-3"><dt class="text-brand-muted">{{ __('contracts.columns.start_date') }}</dt><dd><bdi dir="ltr">{{ $contract->start_date->toDateString() }}</bdi></dd></div>
+                <div class="flex items-center justify-between gap-3"><dt class="text-brand-muted">{{ __('contracts.columns.end_date') }}</dt><dd><bdi dir="ltr">{{ $contract->end_date->toDateString() }}</bdi></dd></div>
+                <div class="flex items-center justify-between gap-3"><dt class="text-brand-muted">{{ __('contracts.columns.rent_per_period') }}</dt><dd><bdi dir="ltr">{{ number_format($contract->rent_amount, 2) }}</bdi></dd></div>
             </dl>
             @if($contract->daysUntilExpiry() !== null && $contract->daysUntilExpiry() <= 90)
-                <p class="mt-3 inline-flex rounded bg-amber-100 px-2 py-1 text-xs text-amber-800">
+                <p class="mt-3 inline-flex rounded bg-state-warning-soft px-2 py-1 text-xs text-state-warning">
                     @if($contract->daysUntilExpiry() === 0)
                         {{ __('app.dashboard.expires_today') }}
                     @elseif($contract->daysUntilExpiry() === 1)
@@ -47,10 +47,10 @@
             <a class="tap-target mt-4 inline-flex min-h-11 w-full items-center justify-center rounded border px-4 text-center text-sm font-medium" href="{{ route('contracts.show', $contract) }}">{{ __('contracts.view') }}</a>
         </article>
     @empty
-        <section data-empty-state-contracts class="rounded border bg-white p-5 text-center shadow-sm sm:p-6">
-            <h2 class="text-lg font-semibold text-slate-950">{{ __('app.empty_states.contracts.title') }}</h2>
-            <p class="mx-auto mt-2 max-w-xl text-sm leading-6 text-slate-600">{{ __('app.empty_states.contracts.body') }}</p>
-            <a class="tap-target mt-4 inline-flex min-h-11 items-center justify-center rounded bg-slate-900 px-4 text-center text-sm font-medium text-white" href="{{ route('contracts.create') }}">{{ __('app.empty_states.contracts.action') }}</a>
+        <section data-empty-state-contracts class="rounded border bg-brand-surface p-5 text-center shadow-sm sm:p-6">
+            <h2 class="text-lg font-semibold text-brand-text">{{ __('app.empty_states.contracts.title') }}</h2>
+            <p class="mx-auto mt-2 max-w-xl text-sm leading-6 text-brand-muted">{{ __('app.empty_states.contracts.body') }}</p>
+            <a class="tap-target mt-4 inline-flex min-h-11 items-center justify-center rounded bg-brand-primary px-4 text-center text-sm font-medium text-white" href="{{ route('contracts.create') }}">{{ __('app.empty_states.contracts.action') }}</a>
         </section>
     @endforelse
 </div>
@@ -80,7 +80,7 @@
                     <td class="p-4 whitespace-nowrap">
                         <span class="bidi-isolate" dir="ltr">{{ $contract->end_date->toDateString() }}</span>
                         @if($contract->daysUntilExpiry() !== null && $contract->daysUntilExpiry() <= 90)
-                            <span class="mt-1 inline-flex rounded bg-amber-100 px-2 py-1 text-xs text-amber-800">
+                            <span class="mt-1 inline-flex rounded bg-state-warning-soft px-2 py-1 text-xs text-state-warning">
                                 @if($contract->daysUntilExpiry() === 0)
                                     {{ __('app.dashboard.expires_today') }}
                                 @elseif($contract->daysUntilExpiry() === 1)
@@ -93,16 +93,16 @@
                     </td>
                     <td class="bidi-isolate p-4 whitespace-nowrap" dir="ltr">{{ number_format($contract->rent_amount, 2) }}</td>
                     <td class="p-4 whitespace-nowrap">{{ __('contracts.frequencies.'.$contract->payment_frequency) }}</td>
-                    <td class="p-4 whitespace-nowrap"><span class="rounded bg-slate-100 px-2 py-1 text-xs">{{ __('contracts.statuses.'.$contract->status) }}</span></td>
-                    <td class="p-4 whitespace-nowrap"><a class="tap-target inline-flex items-center rounded border px-3 text-slate-700" href="{{ route('contracts.show', $contract) }}">{{ __('contracts.view') }}</a></td>
+                    <td class="p-4 whitespace-nowrap"><x-status-badge :status="$contract->status" :label="__('contracts.statuses.'.$contract->status)" /></td>
+                    <td class="p-4 whitespace-nowrap"><a class="tap-target inline-flex items-center rounded border px-3 text-brand-text" href="{{ route('contracts.show', $contract) }}">{{ __('contracts.view') }}</a></td>
                 </tr>
             @empty
                 <tr class="border-t">
                     <td colspan="9" class="p-4">
-                        <section data-empty-state-contracts class="rounded border bg-white p-5 text-center shadow-sm">
-                            <h2 class="text-lg font-semibold text-slate-950">{{ __('app.empty_states.contracts.title') }}</h2>
-                            <p class="mx-auto mt-2 max-w-xl text-sm leading-6 text-slate-600">{{ __('app.empty_states.contracts.body') }}</p>
-                            <a class="tap-target mt-4 inline-flex min-h-11 items-center justify-center rounded bg-slate-900 px-4 text-center text-sm font-medium text-white" href="{{ route('contracts.create') }}">{{ __('app.empty_states.contracts.action') }}</a>
+                        <section data-empty-state-contracts class="rounded border bg-brand-surface p-5 text-center shadow-sm">
+                            <h2 class="text-lg font-semibold text-brand-text">{{ __('app.empty_states.contracts.title') }}</h2>
+                            <p class="mx-auto mt-2 max-w-xl text-sm leading-6 text-brand-muted">{{ __('app.empty_states.contracts.body') }}</p>
+                            <a class="tap-target mt-4 inline-flex min-h-11 items-center justify-center rounded bg-brand-primary px-4 text-center text-sm font-medium text-white" href="{{ route('contracts.create') }}">{{ __('app.empty_states.contracts.action') }}</a>
                         </section>
                     </td>
                 </tr>

@@ -3,13 +3,13 @@
 @section('content')
 <div class="mb-4">
     <h1 class="text-xl font-semibold">{{ __('units.bulk.title') }}</h1>
-    <p class="mt-1 text-sm text-slate-600">{{ __('units.bulk.description', ['building' => $building->name]) }}</p>
+    <p class="mt-1 text-sm text-brand-muted">{{ __('units.bulk.description', ['building' => $building->name]) }}</p>
 </div>
 
-<form method="post" action="{{ route('buildings.units.bulk.preview', $building) }}" class="grid max-w-3xl gap-4 rounded border bg-white p-4 shadow-sm md:grid-cols-2">
+<form method="post" action="{{ route('buildings.units.bulk.preview', $building) }}" class="grid max-w-3xl gap-4 rounded border bg-brand-surface p-4 shadow-sm md:grid-cols-2">
     @csrf
     @if($errors->any())
-        <div class="rounded border border-red-200 bg-red-50 p-3 text-sm text-red-700 md:col-span-2">
+        <div class="rounded border border-state-danger/25 bg-state-danger-soft p-3 text-sm text-state-danger md:col-span-2">
             <p class="font-medium">{{ __('app.validation.check_fields') }}</p>
             <ul class="mt-2 list-disc space-y-1 ps-5">
                 @foreach($errors->all() as $error)
@@ -27,6 +27,6 @@
     <label class="block text-sm font-medium">{{ __('units.bulk.default_size') }} <input name="size" type="number" step="0.01" min="0" value="{{ old('size') }}" class="tap-target mt-1 w-full rounded border p-2"></label>
     <label class="block text-sm font-medium">{{ __('units.bulk.default_status') }} <select name="status" class="form-select-safe tap-target mt-1 w-full rounded border p-2">@foreach($statuses as $status)<option value="{{ $status }}" @selected(old('status', 'vacant') === $status)>{{ __('units.statuses.'.$status) }}</option>@endforeach</select></label>
     <label class="block text-sm font-medium md:col-span-2">{{ __('units.bulk.default_notes') }} <textarea name="notes" rows="4" class="mt-1 w-full rounded border p-2">{{ old('notes') }}</textarea></label>
-    <button type="submit" class="tap-target w-full rounded bg-slate-900 px-4 text-white md:col-span-2">{{ __('units.bulk.generate_preview') }}</button>
+    <button type="submit" class="tap-target w-full rounded bg-brand-primary px-4 text-white md:col-span-2">{{ __('units.bulk.generate_preview') }}</button>
 </form>
 @endsection
