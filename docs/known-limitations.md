@@ -17,10 +17,12 @@ been installed, tested, reviewed, and hardened in the target environment.
 ## Authorization
 
 - Permissions are enum-based and enforced through route middleware plus
-  controller checks.
-- Full Laravel model Policies are not implemented yet.
-- Organization isolation is implemented in controller queries and guards, but a
-  production version should add Policies or global organization scopes.
+  Laravel Policies and controller checks.
+- Policies exist for the current core models, but future modules must keep
+  policy coverage, route middleware, and controller gates aligned.
+- Organization isolation is implemented in controller queries, policies, and
+  guards, but a production version should continue evaluating whether shared
+  query helpers or global organization scopes are useful for future modules.
 
 ## Payments
 
@@ -35,22 +37,26 @@ been installed, tested, reviewed, and hardened in the target environment.
 
 - Contract editing avoids schedule replacement once payments have been recorded,
   but advanced amendment workflows are not implemented.
-- Unit availability conflict checks are minimal.
-- No renewal workflow.
-- No termination settlement workflow.
+- Unit availability checks cover current long-term active contract overlap, but
+  future short-stay availability needs a separate booking calendar model.
+- Renewal preparation exists for the current long-term rental workflow, but
+  advanced renewal negotiation and approval workflows are not implemented.
+- Termination lifecycle support exists, but full settlement accounting is not
+  implemented.
 
 ## Reports
 
 - Reports are basic business summaries, not audited accounting statements.
-- Date range filters are not implemented yet.
+- Date range filters exist for current report views, but reporting is still not
+  a complete accounting, owner-statement, or reconciliation system.
 - Tax/VAT handling is not implemented.
 - Multi-currency is not implemented.
 
 ## Files
 
 - Payment proofs and invoices use basic image validation.
-- Sensitive documents are stored privately by default, but signed download/view
-  routes are not implemented yet.
+- Sensitive documents are stored privately by default and served through
+  authorized application routes, but expiring signed links are not implemented.
 - No virus scanning or advanced file validation.
 
 ## UI
