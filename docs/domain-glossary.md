@@ -1,37 +1,83 @@
 # Domain Glossary
 
-This glossary defines the core product terms for Property Manager / المدير العقاري.
+This glossary defines the core product terms for Property Manager.
 
-## Workspace / Account
+## Organization / Account
 
-A Workspace, currently represented in the codebase by `Organization`, is the account that uses the system.
+An Organization / Account, currently represented in the codebase by `Organization`, is the workspace that uses the system.
 
-It may represent:
+It is the current boundary for:
+
+- Authentication membership.
+- Security and organization isolation.
+- Role-based access.
+- Team administration.
+- Future platform subscription billing.
+
+It may currently represent:
 
 - An individual landlord.
 - A family property owner.
 - A small owner-managed property team.
 - A future property management company.
 
-Important: `Organization` must not always be treated as the real legal property owner. In future stages, one workspace may manage properties for multiple real property owners.
+Important: `Organization` must not always be treated as the real legal property owner. In future stages, one workspace may manage properties for multiple legal property owner clients.
 
-## Organization
+## Workspace / Account
 
-The current database and application term for Workspace / Account.
+The product-facing name for the organization boundary.
 
-For future development, developers should understand `Organization` as the operating account, not necessarily the legal owner of every property.
+For future development, developers should understand Workspace / Account as the operating account, not necessarily the legal owner of every property.
 
-## Real Property Owner
+## Account Owner
 
-The legal or beneficial owner of a property.
+The administrative user role inside an organization.
 
-In Stage 1, the workspace and real property owner may often be the same person or family. In Stage 2, a property management company workspace may manage properties for many real property owners.
+The current `owner` role controls access, roles, permissions, and team membership. It should not be treated as proof that the user is the legal owner of every managed property.
+
+## Legal Property Owner / Client
+
+The future real-world person or entity that legally owns managed properties.
+
+In Stage 1, the workspace and legal property owner may often be the same person or family. In a future property-management company stage, one workspace may manage properties for many legal property owner clients.
+
+This is not the current `owner` user role.
+
+## Organization Type
+
+A future classification of what kind of account the organization is.
+
+Possible future organization types include:
+
+- `owner_operator`.
+- `property_management_company`.
+- `maintenance_provider`.
+
+Organization type is separate from user role.
 
 ## Property Management Company
 
-A professional company that manages properties on behalf of real property owners.
+A professional company that manages properties on behalf of legal property owner clients.
 
-This is a future Stage 2 concept and should not be forced into the current Stage 1 data model too early.
+This is a future concept and should not be forced into the current Stage 1 data model too early.
+
+## Property Manager
+
+Depending on context, a Property Manager may mean an operational user inside an organization or a future property-management organization.
+
+Documentation and UI copy should avoid using this term when the intended meaning is account owner, legal property owner, manager user role, or property-management company.
+
+## Portfolio
+
+A future grouping of properties belonging to a legal property owner/client or a management relationship.
+
+Portfolios are not implemented in Stage 1.
+
+## Service Provider
+
+A future internal or external maintenance, cleaning, or operational provider.
+
+Service providers may later include maintenance companies, cleaning providers, internal teams, or individual technicians. This concept is separate from the current caretaker user role.
 
 ## Building
 
@@ -57,9 +103,15 @@ Future versions may need broader property and asset abstractions for land, indus
 
 ## Tenant
 
-A tenant is a record in Stage 1.
+A tenant is a long-term rental party and a record in Stage 1.
 
 Tenants should not have login accounts yet. A future tenant portal may allow tenants to log in, view balances, upload documents, request maintenance, or receive notifications.
+
+## Guest
+
+A future short-stay customer.
+
+A guest is not a tenant contract substitute. Guest stays should use booking concepts, not long-term contract records.
 
 ## Contract
 
@@ -71,7 +123,13 @@ Current contracts are for long-term rental operations. Future daily or short-ter
 
 A scheduled or recorded rent payment linked to a contract and workspace.
 
-Payments should remain organization-scoped and should not be confused with online payment gateway transactions unless a future payment gateway module is added.
+Payments should remain organization-scoped and should not be confused with future booking payments, SaaS subscription payments, or online payment gateway transactions.
+
+## Platform Subscription
+
+A future payment by the organization/account for using the SaaS platform.
+
+Platform subscription billing must remain separate from tenant rent payments and future guest booking payments.
 
 ## Expense
 

@@ -179,6 +179,11 @@ isolated test database.
 
 ## Documentation
 
+- [Platform Architecture](docs/platform-architecture.md)
+- [Payment Domain Boundaries](docs/payment-domain-boundaries.md)
+- [Package Entitlements Strategy](docs/package-entitlements-strategy.md)
+- [Domain Glossary](docs/domain-glossary.md)
+- [Workspace vs Property Owner](docs/workspace-vs-property-owner.md)
 - [Database Structure](docs/database-structure.md)
 - [User Roles And Permissions](docs/user-roles.md)
 - [Business Logic](docs/business-logic.md)
