@@ -75,10 +75,12 @@ php artisan migrate:fresh --seed
 
 Never run php artisan migrate:fresh, php artisan db:wipe, or demo seeders against the real pilot database.
 
-Payment proofs and expense invoices are stored on the private local disk and
-are downloaded only through authorized application routes. Do not expose private
-uploads with `php artisan storage:link`; use `storage:link` only if genuinely
-public assets are added later and require it.
+Payment proofs, expense invoices, and unit documents are stored on the
+configured private document disk. Local development defaults to
+`PRIVATE_DOCUMENTS_DISK=local`; production should use a durable private
+S3-compatible disk. Downloads are served only through authorized application
+routes. Do not expose private uploads with `php artisan storage:link`; use
+`storage:link` only if genuinely public assets are added later and require it.
 
 Run the frontend and backend:
 

@@ -60,13 +60,18 @@ When recording a payment:
 1. User must have `record-payment`.
 2. Payment must belong to the user organization.
 3. `amount_paid` is validated and capped at `amount_due`.
-4. Optional proof image is stored on the public disk.
+4. Optional proof image is stored on the configured private document disk.
 5. Status is calculated:
    - `paid` when amount paid is equal to amount due
    - `partial` when some amount is paid before due date
    - `overdue` when unpaid and due date is in the past
    - `pending` when unpaid and not overdue
 6. Activity is logged.
+
+Payment proof files use app-generated private keys under
+`organizations/{organization_id}/payments/{payment_id}/proofs`. Downloads are
+served through authorized application routes. Older rows with no stored disk
+value are treated as legacy local private files.
 
 ## Expenses
 
@@ -79,6 +84,10 @@ Expenses are attached to:
 
 Building and optional unit are checked to ensure they belong to the current
 organization.
+
+Expense invoices use the same private document disk strategy as payment proofs,
+with keys under `organizations/{organization_id}/expenses/{expense_id}/invoices`.
+Invoice downloads authorize the expense before checking file existence.
 
 ## Dashboard Numbers
 

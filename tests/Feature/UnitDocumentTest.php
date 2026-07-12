@@ -10,6 +10,7 @@ use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
+use RuntimeException;
 use Tests\TestCase;
 
 class UnitDocumentTest extends TestCase
@@ -33,14 +34,14 @@ class UnitDocumentTest extends TestCase
         $this->assertSame($unit->id, $document->unit_id);
         $this->assertSame($owner->id, $document->uploaded_by);
         $this->assertSame('local', $document->disk);
-        $this->assertStringStartsWith("unit-documents/{$owner->organization_id}/{$unit->id}/", $document->path);
+        $this->assertStringStartsWith("organizations/{$owner->organization_id}/units/{$unit->id}/documents/", $document->path);
         $this->assertSame('lease.pdf', $document->original_name);
         Storage::disk('local')->assertExists($document->path);
     }
 
-    public function test_configured_unit_documents_disk_is_used_on_upload(): void
+    public function test_configured_private_documents_disk_is_used_on_upload(): void
     {
-        config(['filesystems.unit_documents_disk' => 'unit-documents-test']);
+        config(['filesystems.private_documents_disk' => 'unit-documents-test']);
         Storage::fake('local');
         Storage::fake('unit-documents-test');
         [$owner, , , , $unit] = $this->scenario();
@@ -51,9 +52,36 @@ class UnitDocumentTest extends TestCase
 
         $document = UnitDocument::firstOrFail();
         $this->assertSame('unit-documents-test', $document->disk);
-        $this->assertStringStartsWith("unit-documents/{$owner->organization_id}/{$unit->id}/", $document->path);
+        $this->assertStringStartsWith("organizations/{$owner->organization_id}/units/{$unit->id}/documents/", $document->path);
         Storage::disk('unit-documents-test')->assertExists($document->path);
         Storage::disk('local')->assertMissing($document->path);
+    }
+
+    public function test_uploaded_unit_document_is_removed_when_record_create_fails(): void
+    {
+        config(['filesystems.private_documents_disk' => 'unit-documents-test']);
+        Storage::fake('unit-documents-test');
+        [$owner, , , , $unit] = $this->scenario();
+
+        UnitDocument::creating(function (): void {
+            throw new RuntimeException('forced unit document create failure');
+        });
+
+        $this->withoutExceptionHandling();
+
+        try {
+            $this->actingAs($owner)
+                ->post(route('unit-documents.store', $unit), $this->validPayload());
+
+            $this->fail('The forced unit document create failure was not thrown.');
+        } catch (RuntimeException $exception) {
+            $this->assertSame('forced unit document create failure', $exception->getMessage());
+        } finally {
+            UnitDocument::flushEventListeners();
+        }
+
+        $this->assertDatabaseCount('unit_documents', 0);
+        $this->assertSame([], Storage::disk('unit-documents-test')->allFiles());
     }
 
     public function test_manager_can_upload_when_unit_policy_allows_unit_management(): void
@@ -403,6 +431,8 @@ class UnitDocumentTest extends TestCase
             '/absolute/secret.pdf',
             'C:/absolute/secret.pdf',
             'wrong-prefix/secret.pdf',
+            "organizations/{$owner->organization_id}/units/999/documents/missing.pdf",
+            "organizations/{$owner->organization_id}/units/{$unit->id}/documents/missing.pdf",
             "unit-documents/{$owner->organization_id}/999/missing.pdf",
             "unit-documents/{$owner->organization_id}/{$unit->id}/missing.pdf",
         ] as $path) {

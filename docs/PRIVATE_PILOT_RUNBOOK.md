@@ -118,17 +118,26 @@ Review `/var/log/property-manager-scheduler.log` after deployment and after the 
 
 ## Private Uploads
 
-Payment proofs and expense invoices are stored on the private local filesystem under `storage/app/private`.
+Payment proofs, expense invoices, and unit documents are stored on the disk
+configured by `PRIVATE_DOCUMENTS_DISK`. Local development can use `local`, but a
+real pilot on Laravel Cloud or another ephemeral-filesystem platform must use a
+private durable object-storage disk such as `s3`.
 
 Pilot rules:
 
-- Back up `storage/app/private` every day.
+- Set `PRIVATE_DOCUMENTS_DISK=s3` only after the private bucket and credentials
+  are configured.
+- Back up the private document bucket every day.
 - Do not use `php artisan storage:link` to expose private uploads.
 - Do not move private uploads to the public disk.
 - Payment proofs are downloaded only through `payments.proof.download`.
 - Expense invoices are downloaded only through `expenses.invoice.download`.
+- Unit documents are downloaded only through `unit-documents.download`.
 - The application authorizes the underlying payment or expense before checking
-  stored path validity or file existence.
+  stored path validity or file existence. Unit document downloads authorize the
+  unit before checking storage.
+- Existing payment and expense rows with no stored disk value are legacy local
+  files and must remain restorable until they are retired or migrated.
 
 Use `php artisan storage:link` only if the app later adds genuinely public
 assets that require the public disk. It must not expose payment proofs or
@@ -170,7 +179,7 @@ Contract termination behavior must be verified exactly as implemented:
 ## Backup Plan
 
 - Daily PostgreSQL backup.
-- Daily backup of `storage/app/private`.
+- Daily backup of private document object storage.
 - Pre-deployment database and private-upload backup before every release.
 - Keep daily backups for 14 days.
 - Keep weekly backups for 8 weeks.
@@ -187,7 +196,8 @@ Never rehearse restore directly on production.
 Use staging:
 
 1. Restore the latest PostgreSQL backup into a staging database.
-2. Restore private uploads into staging `storage/app/private`.
+2. Restore private document objects into the staging object-storage bucket or,
+   for legacy local files, into staging `storage/app/private`.
 3. Point staging `.env` at the restored database and upload directory.
 4. Verify organization, user, building, unit, tenant, contract, payment, expense, and activity-log counts.
 5. Verify owner login.

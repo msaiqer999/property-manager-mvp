@@ -86,15 +86,24 @@ isolated test database.
 
 ## File Storage
 
-Current application stores uploaded proofs and invoices on the local private disk.
+Private documents use the disk configured by `PRIVATE_DOCUMENTS_DISK`. Local
+development defaults to `local`; production should use a private durable
+S3-compatible disk such as `s3`.
 
 For production:
 
-- Prefer private storage.
-- Serve payment proofs and expense invoices only through authorized application
-  routes.
+- Set `PRIVATE_DOCUMENTS_DISK=s3` after configuring the private object-storage
+  credentials and bucket.
+- Serve payment proofs, expense invoices, and unit documents only through
+  authorized application routes.
 - Restrict access by organization and role.
-- Consider S3-compatible object storage.
+- Do not expose this bucket publicly.
+- Keep legacy local objects available until old rows have been retired or
+  migrated; rows with no stored disk value still fall back to local storage.
+
+Laravel Cloud and similar platforms have ephemeral application filesystems, so
+production uploads must not depend on `storage/app/private` as the only durable
+copy.
 
 ## Scheduler
 
@@ -117,7 +126,7 @@ Example cron:
 Back up:
 
 - PostgreSQL database
-- uploaded files
+- private document object storage
 - `.env` secrets in secure secret storage
 
 Recommended:

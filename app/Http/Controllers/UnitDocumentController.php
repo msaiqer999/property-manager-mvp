@@ -4,15 +4,17 @@ namespace App\Http\Controllers;
 
 use App\Models\Unit;
 use App\Models\UnitDocument;
+use App\Support\PrivateDocumentStorage;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
+use Throwable;
 
 class UnitDocumentController extends Controller
 {
-    public function store(Request $request, Unit $unit)
+    public function store(Request $request, Unit $unit, PrivateDocumentStorage $documents)
     {
         Gate::authorize('update', $unit);
 
@@ -27,34 +29,41 @@ class UnitDocumentController extends Controller
             'title' => ['required', 'string', 'max:255'],
             'category' => ['required', Rule::in(UnitDocument::CATEGORIES)],
             'notes' => ['nullable', 'string', 'max:5000'],
-            'document' => ['required', 'file', 'max:5120', 'mimes:pdf,jpg,jpeg,png,webp'],
+            'document' => ['required', 'file', 'max:5120', 'mimes:pdf,jpg,jpeg,png,webp', 'extensions:pdf,jpg,jpeg,png,webp'],
         ]);
 
         $file = $request->file('document');
-        $prefix = $this->storagePrefix($organizationId, (int) $unit->id);
-        $disk = $this->unitDocumentsDisk();
-        $path = $file->store($prefix, $disk);
+        $uploaded = $documents->store(
+            $file,
+            $documents->unitDocumentPrefix($organizationId, (int) $unit->id)
+        );
 
-        UnitDocument::create([
-            'organization_id' => $organizationId,
-            'unit_id' => $unit->id,
-            'uploaded_by' => auth()->id(),
-            'title' => $data['title'],
-            'category' => $data['category'],
-            'notes' => $data['notes'] ?? null,
-            'disk' => $disk,
-            'path' => $path,
-            'original_name' => $file->getClientOriginalName(),
-            'mime_type' => $file->getClientMimeType(),
-            'size' => $file->getSize(),
-        ]);
+        try {
+            UnitDocument::create([
+                'organization_id' => $organizationId,
+                'unit_id' => $unit->id,
+                'uploaded_by' => auth()->id(),
+                'title' => $data['title'],
+                'category' => $data['category'],
+                'notes' => $data['notes'] ?? null,
+                'disk' => $uploaded['disk'],
+                'path' => $uploaded['path'],
+                'original_name' => $file->getClientOriginalName(),
+                'mime_type' => $file->getClientMimeType(),
+                'size' => $file->getSize(),
+            ]);
+        } catch (Throwable $exception) {
+            $documents->delete($uploaded['disk'], $uploaded['path']);
+
+            throw $exception;
+        }
 
         return redirect()
             ->route('units.show', $unit)
             ->with('success', __('unit_documents.messages.uploaded'));
     }
 
-    public function download(UnitDocument $unitDocument)
+    public function download(UnitDocument $unitDocument, PrivateDocumentStorage $documents)
     {
         $unitDocument->loadMissing('unit.building');
 
@@ -66,10 +75,12 @@ class UnitDocumentController extends Controller
 
         $path = $this->validatedPrivatePath(
             $unitDocument->path,
-            $this->storagePrefix((int) $unitDocument->organization_id, (int) $unitDocument->unit_id)
+            $documents,
+            (int) $unitDocument->organization_id,
+            (int) $unitDocument->unit_id
         );
 
-        $disk = $unitDocument->disk ?: $this->unitDocumentsDisk();
+        $disk = $documents->legacyDisk($unitDocument->disk);
 
         if (! Storage::disk($disk)->exists($path)) {
             abort(404);
@@ -81,7 +92,7 @@ class UnitDocumentController extends Controller
         ]);
     }
 
-    public function destroy(UnitDocument $unitDocument)
+    public function destroy(UnitDocument $unitDocument, PrivateDocumentStorage $documents)
     {
         $unitDocument->loadMissing('unit.building');
 
@@ -93,14 +104,14 @@ class UnitDocumentController extends Controller
 
         $path = $this->validatedPrivatePath(
             $unitDocument->path,
-            $this->storagePrefix((int) $unitDocument->organization_id, (int) $unitDocument->unit_id)
+            $documents,
+            (int) $unitDocument->organization_id,
+            (int) $unitDocument->unit_id
         );
 
-        $disk = $unitDocument->disk ?: $this->unitDocumentsDisk();
+        $disk = $documents->legacyDisk($unitDocument->disk);
 
-        if (Storage::disk($disk)->exists($path)) {
-            Storage::disk($disk)->delete($path);
-        }
+        $documents->delete($disk, $path);
 
         $unit = $unitDocument->unit;
         $unitDocument->delete();
@@ -110,31 +121,12 @@ class UnitDocumentController extends Controller
             ->with('success', __('unit_documents.messages.deleted'));
     }
 
-    private function unitDocumentsDisk(): string
+    private function validatedPrivatePath(?string $storedPath, PrivateDocumentStorage $documents, int $organizationId, int $unitId): string
     {
-        $disk = trim((string) config('filesystems.unit_documents_disk', 'local'));
-
-        return $disk !== '' ? $disk : 'local';
-    }
-
-    private function storagePrefix(int $organizationId, int $unitId): string
-    {
-        return "unit-documents/{$organizationId}/{$unitId}";
-    }
-
-    private function validatedPrivatePath(?string $storedPath, string $prefix): string
-    {
-        $rawPath = trim((string) $storedPath);
-
-        if ($rawPath === ''
-            || str_contains($rawPath, '..')
-            || str_starts_with($rawPath, '/')
-            || preg_match('/^[A-Za-z]:[\/\\\\]/', $rawPath)
-            || ! str_starts_with($rawPath, $prefix.'/')) {
-            abort(404);
-        }
-
-        return $rawPath;
+        return $documents->validatePath($storedPath, [
+            $documents->unitDocumentPrefix($organizationId, $unitId),
+            $documents->legacyUnitDocumentPrefix($organizationId, $unitId),
+        ]);
     }
 
     private function safeDownloadName(UnitDocument $unitDocument): string

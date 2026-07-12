@@ -288,7 +288,7 @@ class ValidationLocalizationTest extends TestCase
         $this->assertErrorContains($messages, 'يجب ألا تزيد قيمة حقل المبلغ المدفوع عن');
         $this->assertContains('يجب أن يكون حقل تاريخ الدفع تاريخاً صالحاً.', $messages);
         $this->assertContains('قيمة حقل طريقة الدفع المحددة غير صالحة.', $messages);
-        $this->assertContains('يجب أن يكون حقل صورة الإثبات صورة.', $messages);
+        $this->assertContains('يجب أن يكون حقل صورة الإثبات ملفاً من نوع: jpg, jpeg, png, webp.', $messages);
 
         $payment->refresh();
 
