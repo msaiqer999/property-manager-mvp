@@ -57,7 +57,7 @@ been installed, tested, reviewed, and hardened in the target environment.
 - Payment proofs and invoices use basic image validation.
 - Sensitive documents are stored privately by default and served through
   authorized application routes, but expiring signed links are not implemented.
-- No virus scanning or advanced file validation.
+- No virus scanning, PDF malware scanning, or advanced file validation.
 
 ## UI
 

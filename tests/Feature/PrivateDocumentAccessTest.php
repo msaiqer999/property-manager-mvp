@@ -10,9 +10,11 @@ use App\Models\Payment;
 use App\Models\Tenant;
 use App\Models\Unit;
 use App\Models\User;
+use App\Services\ActivityLogger;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
+use RuntimeException;
 use Tests\TestCase;
 
 class PrivateDocumentAccessTest extends TestCase
@@ -166,7 +168,9 @@ class PrivateDocumentAccessTest extends TestCase
     public function test_owner_can_upload_invoice_when_creating_an_expense_and_open_it(): void
     {
         [$owner, , , , , $data] = $this->createTwoOrganizationScenario();
+        config(['filesystems.private_documents_disk' => 'private-docs-test']);
         Storage::fake('local');
+        Storage::fake('private-docs-test');
 
         $this->actingAs($owner)
             ->post(route('expenses.store'), [
@@ -175,7 +179,7 @@ class PrivateDocumentAccessTest extends TestCase
                 'category' => 'maintenance',
                 'amount' => 125,
                 'expense_date' => now()->toDateString(),
-                'invoice_image' => UploadedFile::fake()->image('invoice.png'),
+                'invoice_image' => $this->fakePngUpload('invoice.png'),
                 'notes' => 'Created with invoice.',
             ])
             ->assertRedirect();
@@ -183,12 +187,221 @@ class PrivateDocumentAccessTest extends TestCase
         $expense = Expense::where('notes', 'Created with invoice.')->firstOrFail();
 
         $this->assertNotNull($expense->invoice_image);
-        $this->assertStringStartsWith('expense-invoices/', $expense->invoice_image);
-        Storage::disk('local')->assertExists($expense->invoice_image);
+        $this->assertSame('private-docs-test', $expense->invoice_disk);
+        $this->assertStringStartsWith("organizations/{$owner->organization_id}/expenses/{$expense->id}/invoices/", $expense->invoice_image);
+        Storage::disk('private-docs-test')->assertExists($expense->invoice_image);
+        Storage::disk('local')->assertMissing($expense->invoice_image);
 
         $this->actingAs($owner)
             ->get(route('expenses.invoice', $expense))
             ->assertOk();
+    }
+
+    public function test_payment_proof_upload_uses_configured_disk_and_stored_disk_download(): void
+    {
+        [$owner, , , , , $data] = $this->createTwoOrganizationScenario();
+        config(['filesystems.private_documents_disk' => 'private-docs-test']);
+        Storage::fake('local');
+        Storage::fake('private-docs-test');
+
+        $this->actingAs($owner)
+            ->put(route('payments.update', $data['payment']), $this->paymentPayload($data['payment'], [
+                'proof_image' => $this->fakePngUpload('proof.png'),
+            ]))
+            ->assertRedirect(route('payments.show', $data['payment']));
+
+        $payment = $data['payment']->fresh();
+
+        $this->assertSame('private-docs-test', $payment->proof_disk);
+        $this->assertStringStartsWith("organizations/{$owner->organization_id}/payments/{$payment->id}/proofs/", $payment->proof_image);
+        Storage::disk('private-docs-test')->assertExists($payment->proof_image);
+        Storage::disk('local')->assertMissing($payment->proof_image);
+
+        $this->actingAs($owner)
+            ->get(route('payments.proof.download', $payment))
+            ->assertOk();
+    }
+
+    public function test_payment_proof_replacement_removes_old_private_object_after_success(): void
+    {
+        [$owner, , , , , $data] = $this->createTwoOrganizationScenario();
+        config(['filesystems.private_documents_disk' => 'private-docs-test']);
+        Storage::fake('private-docs-test');
+
+        $oldPath = "organizations/{$owner->organization_id}/payments/{$data['payment']->id}/proofs/original-proof.png";
+        Storage::disk('private-docs-test')->put($oldPath, 'old-proof');
+        $data['payment']->update([
+            'proof_disk' => 'private-docs-test',
+            'proof_image' => $oldPath,
+        ]);
+
+        $this->actingAs($owner)
+            ->put(route('payments.update', $data['payment']), $this->paymentPayload($data['payment'], [
+                'proof_image' => $this->fakePngUpload('replacement-proof.png'),
+            ]))
+            ->assertRedirect(route('payments.show', $data['payment']));
+
+        $payment = $data['payment']->fresh();
+
+        $this->assertSame('private-docs-test', $payment->proof_disk);
+        $this->assertNotSame($oldPath, $payment->proof_image);
+        Storage::disk('private-docs-test')->assertMissing($oldPath);
+        Storage::disk('private-docs-test')->assertExists($payment->proof_image);
+    }
+
+    public function test_expense_invoice_replacement_removes_old_private_object_after_success(): void
+    {
+        [$owner, , , , , $data] = $this->createTwoOrganizationScenario();
+        config(['filesystems.private_documents_disk' => 'private-docs-test']);
+        Storage::fake('private-docs-test');
+
+        $oldPath = "organizations/{$owner->organization_id}/expenses/{$data['expense']->id}/invoices/original-invoice.png";
+        Storage::disk('private-docs-test')->put($oldPath, 'old-invoice');
+        $data['expense']->update([
+            'invoice_disk' => 'private-docs-test',
+            'invoice_image' => $oldPath,
+        ]);
+
+        $this->actingAs($owner)
+            ->put(route('expenses.update', $data['expense']), $this->expensePayload($data, [
+                'invoice_image' => $this->fakePngUpload('replacement-invoice.png'),
+            ]))
+            ->assertRedirect(route('expenses.show', $data['expense']));
+
+        $expense = $data['expense']->fresh();
+
+        $this->assertSame('private-docs-test', $expense->invoice_disk);
+        $this->assertNotSame($oldPath, $expense->invoice_image);
+        Storage::disk('private-docs-test')->assertMissing($oldPath);
+        Storage::disk('private-docs-test')->assertExists($expense->invoice_image);
+    }
+
+    public function test_uploaded_payment_proof_is_removed_when_database_work_fails(): void
+    {
+        [$owner, , , , , $data] = $this->createTwoOrganizationScenario();
+        config(['filesystems.private_documents_disk' => 'private-docs-test']);
+        Storage::fake('private-docs-test');
+
+        $this->mock(ActivityLogger::class, function ($mock): void {
+            $mock->shouldReceive('log')
+                ->once()
+                ->andThrow(new RuntimeException('forced payment log failure'));
+        });
+
+        $this->withoutExceptionHandling();
+
+        try {
+            $this->actingAs($owner)
+                ->put(route('payments.update', $data['payment']), $this->paymentPayload($data['payment'], [
+                    'proof_image' => $this->fakePngUpload('proof.png'),
+                ]));
+
+            $this->fail('The forced payment log failure was not thrown.');
+        } catch (RuntimeException $exception) {
+            $this->assertSame('forced payment log failure', $exception->getMessage());
+        }
+
+        $payment = $data['payment']->fresh();
+
+        $this->assertNull($payment->proof_disk);
+        $this->assertNull($payment->proof_image);
+        $this->assertSame([], Storage::disk('private-docs-test')->allFiles());
+    }
+
+    public function test_uploaded_expense_invoice_is_removed_when_database_work_fails(): void
+    {
+        [$owner, , , , , $data] = $this->createTwoOrganizationScenario();
+        config(['filesystems.private_documents_disk' => 'private-docs-test']);
+        Storage::fake('private-docs-test');
+
+        $this->mock(ActivityLogger::class, function ($mock): void {
+            $mock->shouldReceive('log')
+                ->once()
+                ->andThrow(new RuntimeException('forced expense log failure'));
+        });
+
+        $this->withoutExceptionHandling();
+
+        try {
+            $this->actingAs($owner)
+                ->post(route('expenses.store'), [
+                    'building_id' => $data['building']->id,
+                    'unit_id' => $data['unit']->id,
+                    'category' => 'maintenance',
+                    'amount' => 125,
+                    'expense_date' => now()->toDateString(),
+                    'invoice_image' => $this->fakePngUpload('invoice.png'),
+                    'notes' => 'Created then rolled back.',
+                ]);
+
+            $this->fail('The forced expense log failure was not thrown.');
+        } catch (RuntimeException $exception) {
+            $this->assertSame('forced expense log failure', $exception->getMessage());
+        }
+
+        $this->assertDatabaseMissing('expenses', ['notes' => 'Created then rolled back.']);
+        $this->assertSame([], Storage::disk('private-docs-test')->allFiles());
+    }
+
+    public function test_missing_stored_disk_objects_fail_after_authorization_without_path_disclosure(): void
+    {
+        [$owner, , , , , $data] = $this->createTwoOrganizationScenario();
+        Storage::fake('private-docs-test');
+
+        $data['payment']->update([
+            'proof_disk' => 'private-docs-test',
+            'proof_image' => "organizations/{$owner->organization_id}/payments/{$data['payment']->id}/proofs/missing.png",
+        ]);
+        $data['expense']->update([
+            'invoice_disk' => 'private-docs-test',
+            'invoice_image' => "organizations/{$owner->organization_id}/expenses/{$data['expense']->id}/invoices/missing.png",
+        ]);
+
+        $this->actingAs($owner)
+            ->get(route('payments.proof.download', $data['payment']))
+            ->assertNotFound();
+
+        $this->actingAs($owner)
+            ->get(route('expenses.invoice', $data['expense']))
+            ->assertRedirect(route('expenses.show', $data['expense']))
+            ->assertSessionHas('status', __('expenses.invoice_missing'));
+    }
+
+    public function test_payment_and_expense_upload_validation_rejects_unsafe_misleading_and_oversized_files(): void
+    {
+        [$owner, , , , , $data] = $this->createTwoOrganizationScenario();
+        config(['filesystems.private_documents_disk' => 'private-docs-test']);
+        Storage::fake('private-docs-test');
+
+        foreach ([
+            UploadedFile::fake()->create('proof.svg', 10, 'image/svg+xml'),
+            UploadedFile::fake()->create('proof.png.exe', 10, 'image/png'),
+            UploadedFile::fake()->create('proof.png', 4097, 'image/png'),
+        ] as $file) {
+            $this->actingAs($owner)
+                ->from(route('payments.edit', $data['payment']))
+                ->put(route('payments.update', $data['payment']), $this->paymentPayload($data['payment'], [
+                    'proof_image' => $file,
+                ]))
+                ->assertRedirect(route('payments.edit', $data['payment']))
+                ->assertSessionHasErrors('proof_image');
+        }
+
+        foreach ([
+            UploadedFile::fake()->create('invoice.svg', 10, 'image/svg+xml'),
+            UploadedFile::fake()->create('invoice.png.exe', 10, 'image/png'),
+            UploadedFile::fake()->create('invoice.webp', 4097, 'image/webp'),
+        ] as $file) {
+            $this->actingAs($owner)
+                ->from(route('expenses.edit', $data['expense']))
+                ->put(route('expenses.update', $data['expense']), $this->expensePayload($data, [
+                    'invoice_image' => $file,
+                ]))
+                ->assertRedirect(route('expenses.edit', $data['expense']))
+                ->assertSessionHasErrors('invoice_image');
+        }
+
+        $this->assertSame([], Storage::disk('private-docs-test')->allFiles());
     }
 
     private function createTwoOrganizationScenario(): array
@@ -272,5 +485,35 @@ class PrivateDocumentAccessTest extends TestCase
         ]);
 
         return compact('building', 'unit', 'tenant', 'contract', 'payment', 'expense');
+    }
+
+    private function paymentPayload(Payment $payment, array $overrides = []): array
+    {
+        return array_merge([
+            'amount_paid' => $payment->amount_due,
+            'payment_date' => now()->toDateString(),
+            'payment_method' => 'cash',
+            'notes' => 'Private document test payment.',
+        ], $overrides);
+    }
+
+    private function expensePayload(array $data, array $overrides = []): array
+    {
+        return array_merge([
+            'building_id' => $data['building']->id,
+            'unit_id' => $data['unit']->id,
+            'category' => 'maintenance',
+            'amount' => 125,
+            'expense_date' => now()->toDateString(),
+            'notes' => 'Private document test expense.',
+        ], $overrides);
+    }
+
+    private function fakePngUpload(string $name): UploadedFile
+    {
+        return UploadedFile::fake()->createWithContent(
+            $name,
+            base64_decode('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+/p9sAAAAASUVORK5CYII=')
+        );
     }
 }

@@ -9,7 +9,7 @@ class Payment extends Model
     protected $fillable = [
         'organization_id', 'contract_id', 'due_date', 'amount_due',
         'amount_paid', 'payment_date', 'status', 'payment_method',
-        'proof_image', 'notes', 'created_by',
+        'proof_image', 'proof_disk', 'notes', 'created_by',
     ];
 
     protected function casts(): array

@@ -10,7 +10,7 @@ class Expense extends Model
 {
     protected $fillable = [
         'organization_id', 'building_id', 'unit_id', 'category', 'amount',
-        'expense_date', 'invoice_image', 'notes', 'created_by',
+        'expense_date', 'invoice_image', 'invoice_disk', 'notes', 'created_by',
     ];
 
     protected function casts(): array

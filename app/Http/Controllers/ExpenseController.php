@@ -7,13 +7,14 @@ use App\Models\Building;
 use App\Models\Expense;
 use App\Models\Unit;
 use App\Services\ActivityLogger;
+use App\Support\PrivateDocumentStorage;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Storage;
-use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
+use Throwable;
 
 class ExpenseController extends Controller
 {
@@ -54,20 +55,44 @@ class ExpenseController extends Controller
         ])));
     }
 
-    public function store(Request $request, ActivityLogger $logger)
+    public function store(Request $request, ActivityLogger $logger, PrivateDocumentStorage $documents)
     {
         Gate::authorize('create', Expense::class);
         $this->authorizeSubmittedOwnership($request);
         $data = $this->validated($request);
         $this->authorizeExpenseInputs($data);
+        unset($data['invoice_image']);
+
         $data += ['organization_id' => $this->organizationId(), 'created_by' => auth()->id()];
 
-        if ($request->hasFile('invoice_image')) {
-            $data['invoice_image'] = $request->file('invoice_image')->store('expense-invoices');
-        }
+        $uploaded = null;
 
-        $expense = Expense::create($data);
-        $logger->log('expense.created', $expense);
+        try {
+            $expense = DB::transaction(function () use ($request, $data, $logger, $documents, &$uploaded): Expense {
+                $expense = Expense::create($data);
+
+                if ($request->hasFile('invoice_image')) {
+                    $uploaded = $documents->store(
+                        $request->file('invoice_image'),
+                        $documents->expenseInvoicePrefix((int) $expense->organization_id, (int) $expense->id)
+                    );
+                    $expense->update([
+                        'invoice_image' => $uploaded['path'],
+                        'invoice_disk' => $uploaded['disk'],
+                    ]);
+                }
+
+                $logger->log('expense.created', $expense);
+
+                return $expense;
+            });
+        } catch (Throwable $exception) {
+            if ($uploaded !== null) {
+                $documents->delete($uploaded['disk'], $uploaded['path']);
+            }
+
+            throw $exception;
+        }
 
         return redirect()->route('expenses.show', $expense);
     }
@@ -81,19 +106,24 @@ class ExpenseController extends Controller
         return view('expenses.show', compact('expense'));
     }
 
-    public function downloadInvoice(Expense $expense)
+    public function downloadInvoice(Expense $expense, PrivateDocumentStorage $documents)
     {
         Gate::authorize('view', $expense);
 
-        $path = $this->validatedPrivatePath($expense->invoice_image, 'expense-invoices');
+        $disk = $documents->legacyDisk($expense->invoice_disk);
+        $hasStoredDisk = trim((string) $expense->invoice_disk) !== '';
+        $path = $documents->validatePath($expense->invoice_image, $hasStoredDisk
+            ? $documents->expenseInvoicePrefix((int) $expense->organization_id, (int) $expense->id)
+            : $documents->legacyExpenseInvoicePrefix()
+        );
 
-        if (! Storage::disk('local')->exists($path)) {
+        if (! Storage::disk($disk)->exists($path)) {
             return redirect()
                 ->route('expenses.show', $expense)
                 ->with('status', __('expenses.invoice_missing'));
         }
 
-        return Storage::disk('local')->download($path, $this->safeDownloadName('expense-invoice', $expense->id, $path), [
+        return Storage::disk($disk)->download($path, $this->safeDownloadName('expense-invoice', $expense->id, $path), [
             'Cache-Control' => 'private, no-store',
             'X-Content-Type-Options' => 'nosniff',
         ]);
@@ -107,7 +137,7 @@ class ExpenseController extends Controller
         return view('expenses.form', $this->formData($expense));
     }
 
-    public function update(Request $request, Expense $expense, ActivityLogger $logger)
+    public function update(Request $request, Expense $expense, ActivityLogger $logger, PrivateDocumentStorage $documents)
     {
         Gate::authorize('update', $expense);
         $this->ensureExpenseNotVoided($expense);
@@ -116,13 +146,39 @@ class ExpenseController extends Controller
         $data = $this->validated($request);
         $this->authorizeExpenseInputs($data);
 
+        $uploaded = null;
+        $oldDisk = $expense->invoice_disk;
+        $oldPath = $expense->invoice_image;
+
         if ($request->hasFile('invoice_image')) {
             Gate::authorize('uploadInvoice', $expense);
-            $data['invoice_image'] = $request->file('invoice_image')->store('expense-invoices');
+            $uploaded = $documents->store(
+                $request->file('invoice_image'),
+                $documents->expenseInvoicePrefix((int) $expense->organization_id, (int) $expense->id)
+            );
+            $data['invoice_image'] = $uploaded['path'];
+            $data['invoice_disk'] = $uploaded['disk'];
         }
 
-        $expense->update($data);
-        $logger->log('expense.updated', $expense);
+        try {
+            DB::transaction(function () use ($expense, $data, $logger): void {
+                $expense->update($data);
+                $logger->log('expense.updated', $expense);
+            });
+        } catch (Throwable $exception) {
+            if ($uploaded !== null) {
+                $documents->delete($uploaded['disk'], $uploaded['path']);
+            }
+
+            throw $exception;
+        }
+
+        if ($uploaded !== null && $oldPath !== null) {
+            $documents->deleteIfValid($oldDisk, $oldPath, [
+                $documents->expenseInvoicePrefix((int) $expense->organization_id, (int) $expense->id),
+                $documents->legacyExpenseInvoicePrefix(),
+            ]);
+        }
 
         return redirect()->route('expenses.show', $expense);
     }
@@ -284,34 +340,9 @@ class ExpenseController extends Controller
             'category' => ['required', 'in:maintenance,electricity,water,cleaning,security,management,other'],
             'amount' => ['required', 'numeric', 'min:0'],
             'expense_date' => ['required', 'date'],
-            'invoice_image' => ['nullable', 'image', 'max:4096'],
+            'invoice_image' => ['nullable', 'file', 'mimes:jpg,jpeg,png,webp', 'extensions:jpg,jpeg,png,webp', 'max:4096'],
             'notes' => ['nullable', 'string'],
         ]);
-    }
-
-    private function validatedPrivatePath(?string $storedPath, string $prefix): string
-    {
-        $rawPath = trim((string) $storedPath);
-
-        if ($rawPath === ''
-            || str_contains($rawPath, '\\')
-            || str_starts_with($rawPath, '/')
-            || preg_match('/^[A-Za-z]:\//', $rawPath)
-        ) {
-            abort(404);
-        }
-
-        $path = preg_replace('#/+#', '/', $rawPath);
-        $segments = explode('/', $path);
-
-        if (in_array('..', $segments, true)
-            || in_array('', $segments, true)
-            || ! Str::startsWith($path, $prefix.'/')
-        ) {
-            abort(404);
-        }
-
-        return $path;
     }
 
     private function safeDownloadName(string $label, int $id, string $path): string

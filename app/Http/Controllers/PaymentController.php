@@ -6,10 +6,12 @@ use App\Http\Controllers\Concerns\ScopesOrganization;
 use App\Models\Payment;
 use App\Services\ActivityLogger;
 use App\Support\PdfRenderer;
+use App\Support\PrivateDocumentStorage;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Storage;
-use Illuminate\Support\Str;
+use Throwable;
 
 class PaymentController extends Controller
 {
@@ -49,7 +51,7 @@ class PaymentController extends Controller
         return view('payments.form', compact('payment'));
     }
 
-    public function update(Request $request, Payment $payment, ActivityLogger $logger)
+    public function update(Request $request, Payment $payment, ActivityLogger $logger, PrivateDocumentStorage $documents)
     {
         Gate::authorize('recordPayment', $payment);
         $this->abortIfCancelled($payment);
@@ -58,7 +60,7 @@ class PaymentController extends Controller
             'amount_paid' => ['required', 'numeric', 'min:0', 'max:'.$payment->amount_due, 'regex:/^\d{1,10}(?:\.\d{1,2})?$/'],
             'payment_date' => ['required', 'date'],
             'payment_method' => ['nullable', 'in:cash,bank_transfer,cheque,other'],
-            'proof_image' => ['nullable', 'image', 'max:4096'],
+            'proof_image' => ['nullable', 'file', 'mimes:jpg,jpeg,png,webp', 'extensions:jpg,jpeg,png,webp', 'max:4096'],
             'notes' => ['nullable', 'string'],
         ]);
 
@@ -70,18 +72,44 @@ class PaymentController extends Controller
             abort(422, __('payments.validation.paid_amount_cannot_decrease'));
         }
 
+        $uploaded = null;
+        $oldDisk = $payment->proof_disk;
+        $oldPath = $payment->proof_image;
+
         if ($request->hasFile('proof_image')) {
             Gate::authorize('uploadProof', $payment);
-            $data['proof_image'] = $request->file('proof_image')->store('payment-proofs');
+            $uploaded = $documents->store(
+                $request->file('proof_image'),
+                $documents->paymentProofPrefix((int) $payment->organization_id, (int) $payment->id)
+            );
+            $data['proof_image'] = $uploaded['path'];
+            $data['proof_disk'] = $uploaded['disk'];
         }
 
         $data['status'] = $incomingPaidMinor >= $amountDueMinor
             ? 'paid'
             : ($incomingPaidMinor > 0 ? 'partial' : ($payment->due_date->isPast() ? 'overdue' : 'pending'));
         $data['created_by'] = auth()->id();
-        $payment->update($data);
 
-        $logger->log('payment.recorded', $payment);
+        try {
+            DB::transaction(function () use ($payment, $data, $logger): void {
+                $payment->update($data);
+                $logger->log('payment.recorded', $payment);
+            });
+        } catch (Throwable $exception) {
+            if ($uploaded !== null) {
+                $documents->delete($uploaded['disk'], $uploaded['path']);
+            }
+
+            throw $exception;
+        }
+
+        if ($uploaded !== null && $oldPath !== null) {
+            $documents->deleteIfValid($oldDisk, $oldPath, [
+                $documents->paymentProofPrefix((int) $payment->organization_id, (int) $payment->id),
+                $documents->legacyPaymentProofPrefix(),
+            ]);
+        }
 
         return redirect()
             ->route('payments.show', $payment)
@@ -112,17 +140,22 @@ class PaymentController extends Controller
         return $pdf->download('pdf.receipt', compact('payment'), "payment-receipt-{$payment->id}.pdf");
     }
 
-    public function downloadProof(Payment $payment)
+    public function downloadProof(Payment $payment, PrivateDocumentStorage $documents)
     {
         Gate::authorize('view', $payment);
 
-        $path = $this->validatedPrivatePath($payment->proof_image, 'payment-proofs');
+        $disk = $documents->legacyDisk($payment->proof_disk);
+        $hasStoredDisk = trim((string) $payment->proof_disk) !== '';
+        $path = $documents->validatePath($payment->proof_image, $hasStoredDisk
+            ? $documents->paymentProofPrefix((int) $payment->organization_id, (int) $payment->id)
+            : $documents->legacyPaymentProofPrefix()
+        );
 
-        if (! Storage::disk('local')->exists($path)) {
+        if (! Storage::disk($disk)->exists($path)) {
             abort(404);
         }
 
-        return Storage::disk('local')->download($path, $this->safeDownloadName('payment-proof', $payment->id, $path), [
+        return Storage::disk($disk)->download($path, $this->safeDownloadName('payment-proof', $payment->id, $path), [
             'Cache-Control' => 'private, no-store',
             'X-Content-Type-Options' => 'nosniff',
         ]);
@@ -133,31 +166,6 @@ class PaymentController extends Controller
         if ($payment->status === 'cancelled') {
             abort(422, __('payments.validation.cannot_record_cancelled'));
         }
-    }
-
-    private function validatedPrivatePath(?string $storedPath, string $prefix): string
-    {
-        $rawPath = trim((string) $storedPath);
-
-        if ($rawPath === ''
-            || str_contains($rawPath, '\\')
-            || str_starts_with($rawPath, '/')
-            || preg_match('/^[A-Za-z]:\//', $rawPath)
-        ) {
-            abort(404);
-        }
-
-        $path = preg_replace('#/+#', '/', $rawPath);
-        $segments = explode('/', $path);
-
-        if (in_array('..', $segments, true)
-            || in_array('', $segments, true)
-            || ! Str::startsWith($path, $prefix.'/')
-        ) {
-            abort(404);
-        }
-
-        return $path;
     }
 
     private function safeDownloadName(string $label, int $id, string $path): string
