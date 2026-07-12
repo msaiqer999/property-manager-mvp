@@ -8,9 +8,11 @@ use App\Models\Organization;
 use App\Models\Payment;
 use App\Models\Tenant;
 use App\Models\Unit;
+use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Artisan;
+use RuntimeException;
 use Tests\TestCase;
 
 class ContractLifecycleCommandTest extends TestCase
@@ -28,14 +30,14 @@ class ContractLifecycleCommandTest extends TestCase
         ]);
 
         $this->artisan('contracts:expire')
-            ->expectsOutput('Expired 1 contracts; synchronized 1 units.')
+            ->expectsOutput('Contracts expiry complete. Inspected: 1; expired: 1; skipped: 0; failed: 0.')
             ->assertSuccessful();
 
         $this->assertSame('expired', $contract->fresh()->status);
         $this->assertSame('vacant', $data['unit']->fresh()->status);
 
         $this->artisan('contracts:expire')
-            ->expectsOutput('Expired 0 contracts; synchronized 0 units.')
+            ->expectsOutput('Contracts expiry complete. Inspected: 0; expired: 0; skipped: 0; failed: 0.')
             ->assertSuccessful();
 
         $this->assertSame('expired', $contract->fresh()->status);
@@ -65,13 +67,50 @@ class ContractLifecycleCommandTest extends TestCase
         ]);
 
         $this->artisan('contracts:expire')
-            ->expectsOutput('Expired 0 contracts; synchronized 0 units.')
+            ->expectsOutput('Contracts expiry complete. Inspected: 0; expired: 0; skipped: 0; failed: 0.')
             ->assertSuccessful();
 
         $this->assertSame('active', $current->fresh()->status);
         $this->assertSame('terminated', $terminated->fresh()->status);
         $this->assertSame('expired', $expired->fresh()->status);
         Carbon::setTestNow();
+    }
+
+    public function test_contract_expiry_rolls_back_failed_contract_and_continues_processing(): void
+    {
+        Carbon::setTestNow('2026-06-17');
+        $data = $this->scenario();
+        $data['unit']->update(['status' => 'rented']);
+        $data['secondUnit']->update(['status' => 'rented']);
+        $failedContract = $this->contract($data, [
+            'start_date' => '2026-01-01',
+            'end_date' => '2026-06-16',
+        ]);
+        $successfulContract = $this->contract($data, [
+            'unit_id' => $data['secondUnit']->id,
+            'start_date' => '2026-01-01',
+            'end_date' => '2026-06-16',
+        ]);
+
+        Unit::updating(function (Unit $unit): void {
+            if ($unit->unit_number === '101') {
+                throw new RuntimeException('Simulated occupancy sync failure.');
+            }
+        });
+
+        try {
+            $this->artisan('contracts:expire')
+                ->expectsOutput('Contracts expiry complete. Inspected: 2; expired: 1; skipped: 0; failed: 1.')
+                ->assertExitCode(1);
+
+            $this->assertSame('active', $failedContract->fresh()->status);
+            $this->assertSame('rented', $data['unit']->fresh()->status);
+            $this->assertSame('expired', $successfulContract->fresh()->status);
+            $this->assertSame('vacant', $data['secondUnit']->fresh()->status);
+        } finally {
+            Unit::flushEventListeners();
+            Carbon::setTestNow();
+        }
     }
 
     public function test_unit_remains_rented_if_another_current_active_contract_exists(): void
@@ -142,7 +181,7 @@ class ContractLifecycleCommandTest extends TestCase
         $recordedDate = $this->payment($contract, ['status' => 'pending', 'amount_paid' => 0, 'payment_date' => '2026-06-10']);
 
         $this->artisan('payments:mark-overdue')
-            ->expectsOutput('Marked 1 payments overdue.')
+            ->expectsOutput('Payments overdue check complete. Affected: 1; status: complete.')
             ->assertSuccessful();
 
         $this->assertSame('overdue', $pending->fresh()->status);
@@ -151,7 +190,7 @@ class ContractLifecycleCommandTest extends TestCase
         $this->assertSame('pending', $recordedDate->fresh()->status);
 
         $this->artisan('payments:mark-overdue')
-            ->expectsOutput('Marked 0 payments overdue.')
+            ->expectsOutput('Payments overdue check complete. Affected: 0; status: complete.')
             ->assertSuccessful();
 
         Carbon::setTestNow();
@@ -164,6 +203,29 @@ class ContractLifecycleCommandTest extends TestCase
 
         $this->assertSame(1, substr_count($output, 'contracts:expire'));
         $this->assertSame(1, substr_count($output, 'payments:mark-overdue'));
+    }
+
+    public function test_daily_schedule_uses_overlap_protection_without_single_server_mutex(): void
+    {
+        $events = collect(app(Schedule::class)->events());
+
+        $contracts = $events->first(fn ($event) => str_contains($event->command, 'contracts:expire'));
+        $payments = $events->first(fn ($event) => str_contains($event->command, 'payments:mark-overdue'));
+
+        $this->assertNotNull($contracts);
+        $this->assertNotNull($payments);
+
+        $this->assertSame('30 0 * * *', $contracts->expression);
+        $this->assertSame('contracts:expire:daily', $contracts->description);
+        $this->assertTrue($contracts->withoutOverlapping);
+        $this->assertSame(60, $contracts->expiresAt);
+        $this->assertFalse($contracts->onOneServer);
+
+        $this->assertSame('0 1 * * *', $payments->expression);
+        $this->assertSame('payments:mark-overdue:daily', $payments->description);
+        $this->assertTrue($payments->withoutOverlapping);
+        $this->assertSame(60, $payments->expiresAt);
+        $this->assertFalse($payments->onOneServer);
     }
 
     private function scenario(): array
