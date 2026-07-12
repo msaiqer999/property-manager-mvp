@@ -98,6 +98,8 @@ Closed beta rule: keep one application replica while `CACHE_STORE=file`.
 
 The scheduled commands use `withoutOverlapping()` to avoid local overlap on one replica. Do not add `onOneServer()` while the cache is file-based.
 
+On Laravel Cloud, scheduler overlap locks currently use the database-backed environment cache. The `cache` and `cache_locks` tables are required for `php artisan schedule:list` and scheduled tasks while `withoutOverlapping()` is enabled. Do not delete these tables.
+
 Scaling above one replica requires a separate tested change:
 
 1. Move cache to a shared central store such as database or Valkey/Redis.
