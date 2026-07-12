@@ -2,6 +2,12 @@
 
 This runbook is for a controlled private pilot of Property Manager with known users and real family-property data. It does not replace later production hardening for a public commercial launch.
 
+Canonical production operations, recovery, and incident steps live in:
+
+- [Production Operations Runbook](PRODUCTION_OPERATIONS_RUNBOOK.md)
+- [Backup And Recovery Runbook](BACKUP_AND_RECOVERY_RUNBOOK.md)
+- [Incident Response Runbook](INCIDENT_RESPONSE_RUNBOOK.md)
+
 ## Supported Stack
 
 - Ubuntu 22.04 or 24.04 LTS
@@ -89,7 +95,7 @@ Smoke-test owner login, dashboard, building/unit/tenant creation, contract creat
 
 ## Scheduler
 
-Add the Laravel scheduler cron on the server:
+Must verify that the Laravel scheduler is enabled in the hosting environment. On a traditional server, add the scheduler cron:
 
 ```cron
 * * * * * cd /var/www/property-manager/current && php artisan schedule:run >> /var/log/property-manager-scheduler.log 2>&1
@@ -105,6 +111,8 @@ The server timezone and `APP_TIMEZONE` must be aligned for the pilot. Use `Asia/
 Both scheduled commands are safe to rerun manually because they only update rows that still match their pending/current predicates. No queue worker is required while `QUEUE_CONNECTION=sync`.
 
 Review `/var/log/property-manager-scheduler.log` after deployment and after the first overnight run.
+
+Closed beta must remain on one application replica while `CACHE_STORE=file`. The scheduled commands use `withoutOverlapping()` only. Scaling above one replica requires a shared central cache and a separately tested `onOneServer()` change.
 
 ## HTTPS And Session Safety
 
@@ -178,16 +186,17 @@ Contract termination behavior must be verified exactly as implemented:
 
 ## Backup Plan
 
-- Daily PostgreSQL backup.
-- Daily backup of private document object storage.
-- Pre-deployment database and private-upload backup before every release.
-- Keep daily backups for 14 days.
-- Keep weekly backups for 8 weeks.
-- Store an encrypted off-server copy.
-- Run a restore rehearsal at least monthly.
-- Recovery Point Objective (RPO): 24 hours.
+Use the canonical [Backup And Recovery Runbook](BACKUP_AND_RECOVERY_RUNBOOK.md).
+
+Closed-beta targets:
+
+- Keep database backups for at least 14 days.
+- Recovery Point Objective (RPO): 24 hours maximum until restore behavior is proven.
 - Recovery Time Objective (RTO): 4 hours.
-- Backup failures must notify the operator or owner responsible for the pilot.
+- Run a restore rehearsal monthly and before major risky changes.
+- Take a pre-deployment backup before destructive or high-risk migrations.
+
+Must verify serverless Postgres backup/PITR behavior in Laravel Cloud. Object storage is durable, but independent object backup is not proven until configured and tested with the storage provider.
 
 ## Restore Rehearsal
 
@@ -241,6 +250,7 @@ Pass all items before live pilot use:
 - Owner, manager, accountant, and caretaker permissions match the role model.
 - Scheduler commands can be run manually on staging.
 - Backup and restore rehearsal has completed successfully.
+- `php artisan operations:verify` passes in the production environment.
 
 ## Known Must-Fix Items Still Pending
 

@@ -80,6 +80,8 @@ the workflow completes successfully.
 ## Private Pilot Runtime Checks
 
 - Verify `/up` after deployment.
+- Run `php artisan operations:verify` from a trusted production command console.
+- Run `php artisan schedule:list` and confirm the two daily maintenance commands are listed.
 - Verify payment proof and expense invoice downloads through the application,
   not through `/storage`.
 - Verify `php artisan payments:mark-overdue` and `php artisan contracts:expire`
@@ -87,3 +89,9 @@ the workflow completes successfully.
 - Rehearse `php artisan pilot:reset-owner-password {email}` only against a
   non-production owner account, entering the new password through the hidden
   prompt.
+
+For production operations, backup, and incident handling, use:
+
+- [Production Operations Runbook](PRODUCTION_OPERATIONS_RUNBOOK.md)
+- [Backup And Recovery Runbook](BACKUP_AND_RECOVERY_RUNBOOK.md)
+- [Incident Response Runbook](INCIDENT_RESPONSE_RUNBOOK.md)

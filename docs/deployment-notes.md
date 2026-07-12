@@ -36,6 +36,12 @@ Production and CI must satisfy `composer check-platform-reqs`.
 6. Run migrations.
 7. Configure the Laravel scheduler.
 
+Operational deployment, backup, and incident procedures are maintained in:
+
+- [Production Operations Runbook](PRODUCTION_OPERATIONS_RUNBOOK.md)
+- [Backup And Recovery Runbook](BACKUP_AND_RECOVERY_RUNBOOK.md)
+- [Incident Response Runbook](INCIDENT_RESPONSE_RUNBOOK.md)
+
 ## Deployment Commands
 
 Typical deployment sequence:
@@ -109,11 +115,13 @@ copy.
 
 The registered scheduled commands are:
 
-- `contracts:expire` daily at `00:30`.
-- `payments:mark-overdue` daily at `01:00`.
+- `contracts:expire:daily` daily at `00:30`.
+- `payments:mark-overdue:daily` daily at `01:00`.
 
 Reminder emails, summary emails, and temporary-file cleanup jobs are not
 registered in code yet and should not be represented as active scheduler work.
+
+The scheduled commands use `withoutOverlapping()` only. Do not add `onOneServer()` while `CACHE_STORE=file`. Closed beta must remain on one application replica until a shared cache such as database or Valkey/Redis is configured and tested.
 
 Example cron:
 
@@ -123,6 +131,8 @@ Example cron:
 
 ## Backups
 
+Use the canonical [Backup And Recovery Runbook](BACKUP_AND_RECOVERY_RUNBOOK.md).
+
 Back up:
 
 - PostgreSQL database
@@ -131,9 +141,12 @@ Back up:
 
 Recommended:
 
-- daily database backups
-- weekly full backups
-- restore test at least monthly
+- database backups retained for at least 14 days during closed beta
+- RPO target of 24 hours maximum until restore behavior is proven
+- RTO target of 4 hours
+- restore rehearsal at least monthly
+
+Must verify Laravel Cloud serverless Postgres backups/PITR and object-storage recovery behavior. A redeploy is not a backup.
 
 ## Security Checklist
 

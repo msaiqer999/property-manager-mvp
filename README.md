@@ -35,6 +35,8 @@ deployment must use the dedicated production template and runbook:
 - [Production environment template](.env.production.example)
 - [Private Pilot Runbook](docs/PRIVATE_PILOT_RUNBOOK.md)
 - [Deployment Notes](docs/deployment-notes.md)
+- [Production Operations Runbook](docs/PRODUCTION_OPERATIONS_RUNBOOK.md)
+- [Backup And Recovery Runbook](docs/BACKUP_AND_RECOVERY_RUNBOOK.md)
 
 From the project root:
 
@@ -148,6 +150,8 @@ soon, latest payments, and latest expenses.
 ```bash
 php artisan pilot:create-owner
 php artisan pilot:reset-owner-password {email}
+php artisan operations:verify
+php artisan contracts:expire
 php artisan payments:mark-overdue
 php artisan test
 php artisan route:list
@@ -193,6 +197,9 @@ isolated test database.
 - [Future Roadmap](docs/future-roadmap.md)
 - [Deployment Notes](docs/deployment-notes.md)
 - [Private Pilot Runbook](docs/PRIVATE_PILOT_RUNBOOK.md)
+- [Production Operations Runbook](docs/PRODUCTION_OPERATIONS_RUNBOOK.md)
+- [Backup And Recovery Runbook](docs/BACKUP_AND_RECOVERY_RUNBOOK.md)
+- [Incident Response Runbook](docs/INCIDENT_RESPONSE_RUNBOOK.md)
 
 ## Known Limitations
 

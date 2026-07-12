@@ -245,7 +245,9 @@ class ContractTerminationLifecycleTest extends TestCase
             ->assertSee('400.00')
             ->assertSee('350.00');
 
-        $this->artisan('payments:mark-overdue')->expectsOutput('Marked 0 payments overdue.')->assertExitCode(0);
+        $this->artisan('payments:mark-overdue')
+            ->expectsOutput('Payments overdue check complete. Affected: 0; status: complete.')
+            ->assertExitCode(0);
         $this->assertSame('cancelled', $cancelledPending->fresh()->status);
         $this->assertSame('overdue', $overdue->fresh()->status);
         Carbon::setTestNow();
