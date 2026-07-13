@@ -11,8 +11,10 @@ use App\Models\Tenant;
 use App\Models\Unit;
 use App\Models\User;
 use App\Services\ActivityLogger;
+use App\Support\PrivateDocumentStorage;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use RuntimeException;
 use Tests\TestCase;
@@ -402,6 +404,33 @@ class PrivateDocumentAccessTest extends TestCase
         }
 
         $this->assertSame([], Storage::disk('private-docs-test')->allFiles());
+    }
+
+    public function test_private_document_delete_failure_redacts_path_and_disk_from_logs(): void
+    {
+        Log::spy();
+
+        Storage::shouldReceive('disk')
+            ->once()
+            ->with('sensitive-private-disk')
+            ->andThrow(new RuntimeException('forced storage delete failure'));
+
+        $privatePath = 'organizations/42/payments/99/proofs/private-proof.png';
+
+        $this->assertFalse(app(PrivateDocumentStorage::class)->delete('sensitive-private-disk', $privatePath));
+
+        Log::shouldHaveReceived('warning')->withArgs(function (string $message, array $context) use ($privatePath): bool {
+            $encodedContext = json_encode($context, JSON_THROW_ON_ERROR);
+
+            return $message === 'Private document delete failed.'
+                && ($context['operation'] ?? null) === 'private_document_delete'
+                && ($context['exception'] ?? null) === RuntimeException::class
+                && ! array_key_exists('disk', $context)
+                && ! array_key_exists('path', $context)
+                && ! str_contains($encodedContext, 'sensitive-private-disk')
+                && ! str_contains($encodedContext, $privatePath)
+                && ! str_contains($encodedContext, 'private-proof.png');
+        });
     }
 
     private function createTwoOrganizationScenario(): array

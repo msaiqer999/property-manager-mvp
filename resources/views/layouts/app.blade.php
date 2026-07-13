@@ -72,6 +72,7 @@
                     <div class="hidden items-center gap-2 sm:flex">
                         <button type="button" data-feedback-open class="btn-secondary tap-target px-3">{{ __('feedback.button') }}</button>
                         <button type="button" data-help-open class="btn-secondary tap-target px-3">{{ __('app.help.button') }}</button>
+                        <a href="{{ route('password.change') }}" class="btn-secondary tap-target px-3">{{ __('app.auth.change_password') }}</a>
                         <x-language-switcher />
                         <form method="post" action="{{ route('logout') }}">
                             @csrf
@@ -101,6 +102,7 @@
                             <div class="grid gap-2 border-t p-3">
                                 <button type="button" data-feedback-open class="btn-secondary tap-target min-h-11 w-full px-4">{{ __('feedback.button') }}</button>
                                 <button type="button" data-help-open class="btn-secondary tap-target min-h-11 w-full px-4">{{ __('app.help.button') }}</button>
+                                <a href="{{ route('password.change') }}" class="btn-secondary tap-target min-h-11 w-full px-4">{{ __('app.auth.change_password') }}</a>
                                 <x-language-switcher />
                                 <form method="post" action="{{ route('logout') }}">
                                     @csrf
@@ -229,6 +231,15 @@
 
             @yield('content')
         </main>
+        @auth
+            <footer data-app-legal-links class="mx-auto max-w-6xl px-4 pb-8 text-sm text-brand-muted">
+                <nav aria-label="{{ __('legal.links.label') }}" class="flex flex-wrap gap-x-4 gap-y-2">
+                    <a class="link-primary" href="{{ route('legal.beta') }}">{{ __('legal.links.beta') }}</a>
+                    <a class="link-primary" href="{{ route('legal.privacy') }}">{{ __('legal.links.privacy') }}</a>
+                    <a class="link-primary" href="{{ route('legal.terms') }}">{{ __('legal.links.terms') }}</a>
+                </nav>
+            </footer>
+        @endauth
     </div>
     @auth
         <script>

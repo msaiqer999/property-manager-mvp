@@ -181,6 +181,26 @@ class BetaFeedbackTest extends TestCase
             ->assertDontSee('Other organization feedback.');
     }
 
+    public function test_feedback_mobile_card_uses_safe_utf8_separator(): void
+    {
+        $owner = $this->user('owner');
+
+        BetaFeedback::create([
+            'organization_id' => $owner->organization_id,
+            'user_id' => $owner->id,
+            'page_url' => 'https://beta.example.test/dashboard',
+            'type' => 'bug',
+            'message' => 'Separator rendering check.',
+        ]);
+
+        $this->actingAs($owner)
+            ->get(route('feedback.index'))
+            ->assertOk()
+            ->assertSee('&middot;', false)
+            ->assertDontSee("\xC3\x83\xC2\x82\xC3\x82\xC2\xB7", false)
+            ->assertDontSee("\xC3\x82\xC2\xB7", false);
+    }
+
     public function test_authenticated_layout_shows_feedback_entry_point_in_arabic(): void
     {
         $user = $this->user('owner', 'layout-feedback-owner@example.com');

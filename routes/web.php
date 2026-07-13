@@ -3,6 +3,7 @@
 use App\Http\Controllers\ActivityLogController;
 use App\Http\Controllers\Auth\AuthenticatedSessionController;
 use App\Http\Controllers\Auth\NewPasswordController;
+use App\Http\Controllers\Auth\PasswordChangeController;
 use App\Http\Controllers\Auth\PasswordResetLinkController;
 use App\Http\Controllers\BetaFeedbackController;
 use App\Http\Controllers\Auth\RegisteredUserController;
@@ -30,6 +31,10 @@ use Illuminate\Support\Facades\Route;
 Route::post('/locale/{locale}', LocaleController::class)
     ->whereIn('locale', SupportedLocales::codes())
     ->name('locale.switch');
+
+Route::view('/privacy', 'legal.show', ['page' => 'privacy'])->name('legal.privacy');
+Route::view('/terms', 'legal.show', ['page' => 'terms'])->name('legal.terms');
+Route::view('/closed-beta', 'legal.show', ['page' => 'beta'])->name('legal.beta');
 
 Route::middleware('guest')->group(function () {
     Route::get('/login', [AuthenticatedSessionController::class, 'create'])->name('login');
@@ -61,6 +66,8 @@ Route::middleware('auth')->group(function () {
     Route::get('/dashboard', DashboardController::class)->name('dashboard.show');
     Route::get('/quick-start', QuickStartController::class)->name('quick-start.index');
     Route::get('/pilot-guide', PilotGuideController::class)->name('pilot-guide.index');
+    Route::get('/password/change', [PasswordChangeController::class, 'create'])->name('password.change');
+    Route::put('/password/change', [PasswordChangeController::class, 'update'])->name('password.update');
     Route::get('feedback', [BetaFeedbackController::class, 'index'])->name('feedback.index');
     Route::post('feedback', [BetaFeedbackController::class, 'store'])->name('feedback.store');
     Route::post('beta-feedback', [BetaFeedbackController::class, 'store'])->name('beta-feedback.store');

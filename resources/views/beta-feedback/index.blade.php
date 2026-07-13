@@ -54,7 +54,7 @@
                 <div class="flex items-start justify-between gap-3">
                     <div>
                         <p class="font-semibold">{{ __('feedback.types.'.$item->type) }}</p>
-                        <p class="text-brand-muted">{{ $item->user?->name }} · <bdi>{{ $item->created_at->toDateString() }}</bdi></p>
+                        <p class="text-brand-muted">{{ $item->user?->name }} <span aria-hidden="true">&middot;</span> <bdi>{{ $item->created_at->toDateString() }}</bdi></p>
                     </div>
                     <x-status-badge :status="$item->status" :label="__('feedback.statuses.'.$item->status)" />
                 </div>

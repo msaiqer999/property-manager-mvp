@@ -32,6 +32,11 @@
         <a href="{{ route('register') }}" class="link-primary block text-center text-sm">{{ __('app.auth.create_account') }}</a>
         @endif
     </form>
+    <nav data-login-legal-links aria-label="{{ __('legal.links.label') }}" class="mt-5 flex flex-wrap justify-center gap-x-3 gap-y-1 text-xs">
+        <a href="{{ route('legal.beta') }}" class="link-primary">{{ __('legal.links.beta') }}</a>
+        <a href="{{ route('legal.privacy') }}" class="link-primary">{{ __('legal.links.privacy') }}</a>
+        <a href="{{ route('legal.terms') }}" class="link-primary">{{ __('legal.links.terms') }}</a>
+    </nav>
 </div>
 <script>
     document.querySelectorAll('[data-password-toggle]').forEach((button) => {

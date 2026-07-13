@@ -163,6 +163,7 @@ return [
         'archive_reason' => 'archive reason',
         'building_id' => 'building',
         'category' => 'category',
+        'current_password' => 'current password',
         'deposit_amount' => 'deposit amount',
         'description' => 'description',
         'email' => 'email address',
