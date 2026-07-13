@@ -38,11 +38,16 @@ class PilotGuideTest extends TestCase
             ->assertSee('Open reports')
             ->assertSee('Send feedback if unclear, broken, or slow')
             ->assertSee(route('quick-start.index', absolute: false))
+            ->assertSee(route('password.change', absolute: false), false)
+            ->assertSee('Change password')
             ->assertSee('data-feedback-open', false)
             ->assertSee('Send feedback')
             ->assertDontSee('app.pilot_guide')
-            ->assertDontSee('password')
+            ->assertDontSee('pilot-guide-fixture-passphrase-123')
             ->assertDontSee('secret')
+            ->assertDontSee('APP_KEY')
+            ->assertDontSee('DB_PASSWORD')
+            ->assertDontSee('MAIL_PASSWORD')
             ->assertDontSee('.env');
     }
 
@@ -132,7 +137,7 @@ class PilotGuideTest extends TestCase
             'organization_id' => $organization->id,
             'name' => ucfirst($role).' Pilot User',
             'email' => $role.'-pilot-'.uniqid().'@example.com',
-            'password' => 'password',
+            'password' => 'pilot-guide-fixture-passphrase-123',
             'role' => $role,
         ]);
     }

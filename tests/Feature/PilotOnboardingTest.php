@@ -203,23 +203,49 @@ class PilotOnboardingTest extends TestCase
         $this->assertDatabaseCount('users', 0);
     }
 
-    public function test_pilot_owner_command_refuses_non_clean_database_before_collecting_password(): void
+    public function test_pilot_owner_command_creates_second_owner_in_separate_organization_without_changing_existing_records(): void
     {
-        Organization::create(['name' => 'Existing Non Pilot Org']);
-
-        $exitCode = $this->runPilotOwnerCommand([
-            'Clean Pilot Org',
-            'Clean Pilot Owner',
-        ], 'clean-owner@example.com', [
-            'The pilot owner can only be created on a clean database.',
-        ], [
-            'secret',
+        $existingOrganization = Organization::create(['name' => 'Existing Pilot Org']);
+        $existingOwner = User::create([
+            'organization_id' => $existingOrganization->id,
+            'name' => 'Existing Pilot Owner',
+            'email' => 'existing-pilot-owner@example.com',
+            'password' => 'existing-password',
+            'role' => Role::Owner,
+            'is_active' => true,
         ]);
 
-        $this->assertSame(Command::FAILURE, $exitCode);
+        $exitCode = $this->runPilotOwnerCommand([
+            'Second Pilot Org',
+            'Second Pilot Owner',
+            'second-secret-123',
+            'second-secret-123',
+        ], 'second-owner@example.com', [
+            'Pilot organization and owner created successfully.',
+            'Organization: Second Pilot Org',
+            'Owner email: second-owner@example.com',
+        ], [
+            'second-secret-123',
+        ]);
 
-        $this->assertDatabaseCount('organizations', 1);
-        $this->assertDatabaseCount('users', 0);
+        $this->assertSame(Command::SUCCESS, $exitCode);
+
+        $secondOrganization = Organization::where('name', 'Second Pilot Org')->firstOrFail();
+        $secondOwner = User::where('email', 'second-owner@example.com')->firstOrFail();
+
+        $this->assertDatabaseCount('organizations', 2);
+        $this->assertDatabaseCount('users', 2);
+        $this->assertNotSame($existingOrganization->id, $secondOrganization->id);
+        $this->assertSame($secondOrganization->id, $secondOwner->organization_id);
+        $this->assertSame(Role::Owner, $secondOwner->role);
+        $this->assertTrue($secondOwner->is_active);
+        $this->assertTrue(Hash::check('second-secret-123', $secondOwner->password));
+
+        $existingOwner->refresh();
+        $this->assertSame($existingOrganization->id, $existingOwner->organization_id);
+        $this->assertSame('Existing Pilot Owner', $existingOwner->name);
+        $this->assertSame('existing-pilot-owner@example.com', $existingOwner->email);
+        $this->assertTrue(Hash::check('existing-password', $existingOwner->password));
     }
 
     public function test_pilot_owner_command_validation_failure_does_not_create_records_or_print_passwords(): void
@@ -241,6 +267,16 @@ class PilotOnboardingTest extends TestCase
 
     public function test_pilot_owner_command_rolls_back_organization_when_owner_creation_fails(): void
     {
+        $existingOrganization = Organization::create(['name' => 'Existing Safe Org']);
+        $existingOwner = User::create([
+            'organization_id' => $existingOrganization->id,
+            'name' => 'Existing Safe Owner',
+            'email' => 'existing-safe-owner@example.com',
+            'password' => 'existing-password',
+            'role' => Role::Owner,
+            'is_active' => true,
+        ]);
+
         Event::listen('eloquent.creating: '.User::class, function (User $user): void {
             if ($user->email === 'rollback-owner@example.com') {
                 throw new RuntimeException('Simulated owner creation failure.');
@@ -261,8 +297,15 @@ class PilotOnboardingTest extends TestCase
 
             $this->assertSame(Command::FAILURE, $exitCode);
 
-            $this->assertDatabaseCount('organizations', 0);
-            $this->assertDatabaseCount('users', 0);
+            $this->assertDatabaseCount('organizations', 1);
+            $this->assertDatabaseCount('users', 1);
+            $this->assertDatabaseMissing('organizations', ['name' => 'Rollback Pilot Org']);
+            $this->assertDatabaseMissing('users', ['email' => 'rollback-owner@example.com']);
+
+            $existingOwner->refresh();
+            $this->assertSame($existingOrganization->id, $existingOwner->organization_id);
+            $this->assertSame('Existing Safe Owner', $existingOwner->name);
+            $this->assertTrue(Hash::check('existing-password', $existingOwner->password));
         } finally {
             Event::forget('eloquent.creating: '.User::class);
         }

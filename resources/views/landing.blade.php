@@ -80,6 +80,12 @@
                     @else
                         <p class="text-xs font-medium text-brand-muted">{{ __('landing.plans_soon') }}</p>
                     @endif
+
+                    <nav data-landing-legal-links aria-label="{{ __('legal.links.label') }}" class="flex flex-wrap justify-center gap-x-3 gap-y-1 text-xs">
+                        <a href="{{ route('legal.beta') }}" class="font-medium text-brand-primary">{{ __('legal.links.beta') }}</a>
+                        <a href="{{ route('legal.privacy') }}" class="font-medium text-brand-primary">{{ __('legal.links.privacy') }}</a>
+                        <a href="{{ route('legal.terms') }}" class="font-medium text-brand-primary">{{ __('legal.links.terms') }}</a>
+                    </nav>
                 </div>
             </div>
         </div>

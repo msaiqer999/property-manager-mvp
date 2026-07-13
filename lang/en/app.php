@@ -110,6 +110,13 @@ return [
         'reset_password' => 'Reset password',
         'send_reset_link' => 'Send reset link',
         'choose_new_password' => 'Choose new password',
+        'change_password' => 'Change password',
+        'change_password_body' => 'Use this page after your first login or whenever you need to update access safely.',
+        'current_password' => 'Current password',
+        'new_password' => 'New password',
+        'confirm_new_password' => 'Confirm new password',
+        'update_password' => 'Update password',
+        'password_changed' => 'Password updated successfully.',
     ],
 
     'dashboard' => [

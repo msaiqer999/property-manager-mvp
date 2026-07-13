@@ -148,6 +148,17 @@
             </div>
         </section>
 
+        <section data-pilot-guide-beta-notice class="rounded-lg border bg-brand-surface p-4 shadow-sm sm:p-5">
+            <h2 class="text-lg font-semibold text-brand-text">{{ __('legal.links.beta') }}</h2>
+            <p class="mt-2 text-sm leading-6 text-brand-muted">{{ __('legal.pages.beta.intro') }}</p>
+            <div class="mt-4 grid gap-2">
+                <a class="tap-target inline-flex min-h-11 items-center justify-center rounded border bg-brand-surface px-4 text-center text-sm font-medium text-brand-text" href="{{ route('legal.beta') }}">{{ __('legal.links.beta') }}</a>
+                <a class="tap-target inline-flex min-h-11 items-center justify-center rounded border bg-brand-surface px-4 text-center text-sm font-medium text-brand-text" href="{{ route('legal.privacy') }}">{{ __('legal.links.privacy') }}</a>
+                <a class="tap-target inline-flex min-h-11 items-center justify-center rounded border bg-brand-surface px-4 text-center text-sm font-medium text-brand-text" href="{{ route('legal.terms') }}">{{ __('legal.links.terms') }}</a>
+                <a class="tap-target inline-flex min-h-11 items-center justify-center rounded bg-brand-primary px-4 text-center text-sm font-medium text-white" href="{{ route('password.change') }}">{{ __('app.auth.change_password') }}</a>
+            </div>
+        </section>
+
         @if($isPilotHandoverRole)
             <section data-pilot-guide-handover class="rounded-lg border bg-brand-surface p-4 shadow-sm sm:p-5">
                 <h2 class="text-lg font-semibold text-brand-text">{{ __('app.pilot_guide.handover_title') }}</h2>

@@ -79,8 +79,7 @@ class PrivateDocumentStorage
             return Storage::disk($this->legacyDisk($disk))->delete($path);
         } catch (Throwable $exception) {
             Log::warning('Private document delete failed.', [
-                'disk' => $this->legacyDisk($disk),
-                'path' => $path,
+                'operation' => 'private_document_delete',
                 'exception' => $exception::class,
             ]);
 

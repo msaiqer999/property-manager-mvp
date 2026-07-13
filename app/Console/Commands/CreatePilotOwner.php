@@ -14,7 +14,7 @@ class CreatePilotOwner extends Command
 {
     protected $signature = 'pilot:create-owner';
 
-    protected $description = 'Create the first pilot organization and owner on a clean database.';
+    protected $description = 'Create a pilot organization and active owner user.';
 
     public function handle(): int
     {
@@ -48,12 +48,6 @@ class CreatePilotOwner extends Command
 
         if (Organization::whereRaw('LOWER(name) = ?', [strtolower($organizationName)])->exists()) {
             $this->error('An organization with this name already exists.');
-
-            return self::FAILURE;
-        }
-
-        if (Organization::exists() || User::exists()) {
-            $this->error('The pilot owner can only be created on a clean database.');
 
             return self::FAILURE;
         }

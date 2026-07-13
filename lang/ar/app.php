@@ -109,6 +109,13 @@ return [
         'reset_password' => 'إعادة تعيين كلمة المرور',
         'send_reset_link' => 'إرسال رابط إعادة التعيين',
         'choose_new_password' => 'اختيار كلمة مرور جديدة',
+        'change_password' => 'تغيير كلمة المرور',
+        'change_password_body' => 'استخدم هذه الصفحة بعد أول تسجيل دخول أو عندما تحتاج إلى تحديث الوصول بأمان.',
+        'current_password' => 'كلمة المرور الحالية',
+        'new_password' => 'كلمة المرور الجديدة',
+        'confirm_new_password' => 'تأكيد كلمة المرور الجديدة',
+        'update_password' => 'تحديث كلمة المرور',
+        'password_changed' => 'تم تحديث كلمة المرور بنجاح.',
     ],
 
     'dashboard' => [

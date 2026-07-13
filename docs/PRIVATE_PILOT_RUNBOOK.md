@@ -79,11 +79,31 @@ php artisan route:cache
 php artisan view:cache
 ```
 
-Create the first owner on a clean pilot database:
+Create each real pilot owner as a separate organization:
 
 ```bash
 php artisan pilot:create-owner
 ```
+
+Repeat the command safely for owner #1, owner #2, and owner #3. Each run must
+create one organization and one active owner user for that organization.
+
+Pilot account rules:
+
+- Never place real pilot users inside the demo organization.
+- Keep `REGISTRATION_ENABLED=false`.
+- Use the real pilot owner's organization name, owner name, and email.
+- Enter the temporary password only through the hidden command prompt.
+- Never place the password in shell history, tickets, screenshots, chat, logs, or
+  repository files.
+- Deliver the temporary password through a separate trusted channel from the
+  production link.
+- Require the owner operationally to change the temporary password immediately
+  after first login from **Change password** inside the authenticated app.
+- Use forgot-password only after SMTP delivery has been proven in the target
+  environment.
+- If email reset is unavailable, use `php artisan pilot:reset-owner-password`
+  from a trusted console.
 
 Verify the health endpoint:
 
@@ -91,7 +111,24 @@ Verify the health endpoint:
 https://your-pilot-domain.example/up
 ```
 
-Smoke-test owner login, dashboard, building/unit/tenant creation, contract creation, payment recording, expense creation, reports, PDFs, Arabic/English switching, and mobile layout.
+Smoke-test owner login, password change, dashboard, building/unit/tenant creation, contract creation, payment recording, expense creation, reports, PDFs, Arabic/English switching, and mobile layout.
+
+## First Three Owner Launch Checklist
+
+Before inviting each of the first three real owners:
+
+1. Confirm the latest deployment is healthy and `/up` returns success.
+2. Confirm `php artisan operations:verify` passes.
+3. Confirm `php artisan schedule:list` shows the expected daily scheduled tasks.
+4. Confirm database backups are enabled with the closed-beta retention target.
+5. Confirm private document storage is durable and not local.
+6. Run `php artisan pilot:create-owner` once for that owner.
+7. Confirm the new owner belongs to a new organization, not the demo organization.
+8. Send the production link and temporary password through separate trusted channels.
+9. Ask the owner to log in and immediately use **Change password**.
+10. Ask the owner to use the in-app Feedback button for bugs, confusion, or suggestions.
+11. Tell the owner that closed-beta support is limited and is not guaranteed 24/7.
+12. Record the owner, organization, invitation time, and support contact channel in the operator's private pilot tracker.
 
 ## Scheduler
 
@@ -175,6 +212,8 @@ Rules:
 - Existing sessions may persist until normal expiry because the current session
   architecture does not provide a safe targeted invalidation path.
 - The command does not enable public registration.
+- After a trusted reset, ask the owner to log in and use **Change password** if
+  the reset password was temporary.
 
 ## Contract Termination
 
