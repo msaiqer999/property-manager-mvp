@@ -101,6 +101,8 @@ return [
         'create_owner_account' => 'إنشاء حساب مالك',
         'organization' => 'المنشأة',
         'organization_optional' => 'اسم المؤسسة أو الحساب (اختياري)',
+        'properties_country' => 'أين تقع العقارات التي تريد إدارتها؟',
+        'choose_country_later' => 'اختيار لاحقاً',
         'name' => 'الاسم',
         'confirm_password' => 'تأكيد كلمة المرور',
         'show_password' => 'إظهار كلمة المرور',

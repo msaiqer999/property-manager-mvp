@@ -8,7 +8,7 @@
     $canManageContracts = $role?->can('manage-contracts') ?? false;
     $canViewExpenses = $role?->can('view-expenses') ?? false;
     $canViewReports = $role?->can('view-reports') ?? false;
-    $dashboardCurrency = 'AED';
+    $dashboardCurrency = $dashboardUser?->organization?->effectiveCurrencyCode();
     $formatDashboardMoney = fn ($value) => $dashboardCurrency.' '.number_format((float) $value, 2);
     $formatDashboardCount = fn ($value) => number_format((int) $value);
     $ownerOnboardingState = $canManageProperties ? ($buildingCount === 0 ? 'buildings' : ($unitCount === 0 ? 'units' : ($contractCount === 0 ? 'contracts' : null))) : null;

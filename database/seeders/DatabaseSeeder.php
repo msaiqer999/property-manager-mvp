@@ -4,6 +4,7 @@ namespace Database\Seeders;
 
 use App\Models\Building;
 use App\Models\Contract;
+use App\Models\Country;
 use App\Models\Expense;
 use App\Models\Organization;
 use App\Models\Payment;
@@ -18,7 +19,17 @@ class DatabaseSeeder extends Seeder
 {
     public function run(): void
     {
-        $organization = Organization::create(['name' => 'Riyadh Small Properties']);
+        $this->call(GlobalReadinessSeeder::class);
+
+        $country = Country::where('code', 'AE')->first();
+
+        $organization = Organization::create([
+            'name' => 'Riyadh Small Properties',
+            'country_id' => $country?->id,
+            'currency_code' => $country?->default_currency_code,
+            'locale' => $country?->default_locale,
+            'timezone' => $country?->default_timezone,
+        ]);
 
         $owner = User::create([
             'organization_id' => $organization->id,
@@ -55,12 +66,18 @@ class DatabaseSeeder extends Seeder
         $buildings = collect([
             Building::create([
                 'organization_id' => $organization->id,
+                'country_id' => $organization->country_id,
+                'currency_code' => $organization->currency_code,
+                'timezone' => $organization->timezone,
                 'name' => 'Al Noor Residence',
                 'location' => 'Olaya, Riyadh',
                 'description' => 'Residential apartment building with ground-floor services.',
             ]),
             Building::create([
                 'organization_id' => $organization->id,
+                'country_id' => $organization->country_id,
+                'currency_code' => $organization->currency_code,
+                'timezone' => $organization->timezone,
                 'name' => 'Al Yasmin Plaza',
                 'location' => 'Al Yasmin, Riyadh',
                 'description' => 'Mixed-use property with apartments and small offices.',

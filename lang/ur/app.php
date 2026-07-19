@@ -21,6 +21,8 @@ return [
         'create_owner_account' => 'مالک اکاؤنٹ بنائیں',
         'organization' => 'تنظیم',
         'organization_optional' => 'Organization or account name (optional)',
+        'properties_country' => 'Where are the properties you want to manage located?',
+        'choose_country_later' => 'Choose later',
         'name' => 'نام',
         'confirm_password' => 'پاس ورڈ کی تصدیق',
         'show_password' => 'Show password',

@@ -3,17 +3,21 @@
 namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
+use App\Models\Country;
 use App\Models\Organization;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Validation\Rule;
 
 class RegisteredUserController extends Controller
 {
     public function create()
     {
-        return view('auth.register');
+        return view('auth.register', [
+            'countries' => Country::active()->orderBy('name')->get(),
+        ]);
     }
 
     public function store(Request $request)
@@ -22,6 +26,11 @@ class RegisteredUserController extends Controller
             'organization_name' => ['nullable', 'string', 'max:255'],
             'name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'email', 'max:255', 'unique:users'],
+            'country_id' => [
+                'nullable',
+                'integer',
+                Rule::exists('countries', 'id')->where(fn ($query) => $query->where('is_active', true)),
+            ],
             'password' => ['required', 'confirmed', 'min:8'],
         ]);
 
@@ -32,7 +41,19 @@ class RegisteredUserController extends Controller
                 : $data['name']."'s Property Account";
         }
 
-        $organization = Organization::create(['name' => $organizationName]);
+        $country = null;
+
+        if (! empty($data['country_id'])) {
+            $country = Country::active()->find($data['country_id']);
+        }
+
+        $organization = Organization::create([
+            'name' => $organizationName,
+            'country_id' => $country?->id,
+            'currency_code' => $country?->default_currency_code,
+            'locale' => $country?->default_locale,
+            'timezone' => $country?->default_timezone,
+        ]);
 
         $user = User::create([
             'organization_id' => $organization->id,

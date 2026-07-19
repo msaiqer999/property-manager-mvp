@@ -1,5 +1,5 @@
 @php
-    $formatDashboardMoney = $formatDashboardMoney ?? fn ($value) => 'AED '.number_format((float) $value, 2);
+    $formatDashboardMoney = $formatDashboardMoney ?? fn ($value) => number_format((float) $value, 2);
     $todayPriorities = $todayPriorities ?? [
         [
             'label' => __('app.dashboard.attention_overdue_payments'),

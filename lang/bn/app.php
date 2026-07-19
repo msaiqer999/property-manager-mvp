@@ -21,6 +21,8 @@ return [
         'create_owner_account' => 'মালিক অ্যাকাউন্ট তৈরি করুন',
         'organization' => 'প্রতিষ্ঠান',
         'organization_optional' => 'Organization or account name (optional)',
+        'properties_country' => 'Where are the properties you want to manage located?',
+        'choose_country_later' => 'Choose later',
         'name' => 'নাম',
         'confirm_password' => 'পাসওয়ার্ড নিশ্চিত করুন',
         'show_password' => 'Show password',

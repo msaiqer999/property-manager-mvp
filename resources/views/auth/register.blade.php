@@ -7,6 +7,19 @@
     <form method="post" action="{{ route('register') }}" class="space-y-4">
         @csrf
         <label class="form-label">{{ __('app.auth.organization_optional') }} <input name="organization_name" class="form-control tap-target mt-1"></label>
+        @if(($countries ?? collect())->isNotEmpty())
+            <label class="form-label">
+                {{ __('app.auth.properties_country') }}
+                <select name="country_id" class="form-control form-select-safe tap-target mt-1">
+                    <option value="">{{ __('app.auth.choose_country_later') }}</option>
+                    @foreach($countries as $country)
+                        <option value="{{ $country->id }}" @selected((string) old('country_id') === (string) $country->id)>
+                            {{ $country->name }}
+                        </option>
+                    @endforeach
+                </select>
+            </label>
+        @endif
         <label class="form-label">{{ __('app.auth.name') }} <input name="name" class="form-control tap-target mt-1" required></label>
         <label class="form-label">{{ __('app.auth.email') }} <input name="email" type="email" class="form-control tap-target mt-1" required></label>
         <label class="form-label">

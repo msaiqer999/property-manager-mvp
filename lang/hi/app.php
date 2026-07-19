@@ -21,6 +21,8 @@ return [
         'create_owner_account' => 'मालिक खाता बनाएं',
         'organization' => 'संस्था',
         'organization_optional' => 'Organization or account name (optional)',
+        'properties_country' => 'Where are the properties you want to manage located?',
+        'choose_country_later' => 'Choose later',
         'name' => 'नाम',
         'confirm_password' => 'पासवर्ड की पुष्टि करें',
         'show_password' => 'Show password',

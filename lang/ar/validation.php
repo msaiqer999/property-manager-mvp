@@ -163,6 +163,7 @@ return [
         'archive_reason' => 'سبب الأرشفة',
         'building_id' => 'المبنى',
         'category' => 'الفئة',
+        'country_id' => 'الدولة',
         'current_password' => 'كلمة المرور الحالية',
         'deposit_amount' => 'مبلغ التأمين',
         'description' => 'الوصف',

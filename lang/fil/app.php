@@ -102,6 +102,8 @@ return [
         'create_owner_account' => 'Gumawa ng owner account',
         'organization' => 'Organization',
         'organization_optional' => 'Organization or account name (optional)',
+        'properties_country' => 'Where are the properties you want to manage located?',
+        'choose_country_later' => 'Choose later',
         'name' => 'Name',
         'confirm_password' => 'Confirm password',
         'show_password' => 'Show password',
