@@ -2,7 +2,7 @@
 @section('content')
 @php
     $reportCurrency = $reportCurrency ?? null;
-    $formatReportMoney = fn ($value) => trim(($reportCurrency ? $reportCurrency.' ' : '').number_format((float) $value, 2));
+    $formatReportMoney = fn ($value) => \App\Support\MoneyFormatter::format($value, $reportCurrency);
 @endphp
 
 <h1 class="mb-4 text-xl font-semibold">{{ __('reports.title') }}</h1>

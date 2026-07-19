@@ -132,7 +132,7 @@ class BuildingLocalizationTest extends TestCase
             ->assertSee('مؤجرة')
             ->assertSee('قيد الصيانة')
             ->assertSeeHtml('<bdi dir="ltr">BLDG-UNIT-101</bdi>')
-            ->assertSeeHtml('<bdi dir="ltr">1,234.56</bdi>')
+            ->assertSeeHtml('<bdi dir="ltr">AED 1,234.56</bdi>')
             ->assertDontSee('>vacant</td>', false)
             ->assertDontSee('>rented</td>', false)
             ->assertDontSee('>maintenance</td>', false);

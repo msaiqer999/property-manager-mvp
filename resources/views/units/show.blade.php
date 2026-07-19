@@ -1,6 +1,10 @@
 @extends('layouts.app')
 
 @section('content')
+@php
+    $formatUnitMoney = fn ($value) => \App\Support\MoneyFormatter::forBuilding($unit->building, $value);
+@endphp
+
 <div class="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
     <h1 class="text-xl font-semibold">{{ __('units.fields.unit') }} <bdi dir="ltr">{{ $unit->unit_number }}</bdi></h1>
     <div class="grid gap-2 sm:flex sm:flex-wrap">
@@ -22,7 +26,7 @@
     <p><span class="font-medium">{{ __('units.labels.building') }}</span> {{ $unit->building->name }}</p>
     <p><span class="font-medium">{{ __('units.labels.status') }}</span> <x-status-badge :status="$unit->status" :label="__('units.statuses.'.$unit->status)" /></p>
     <p><span class="font-medium">{{ __('units.labels.type') }}</span> {{ __('units.types.'.$unit->type) }}</p>
-    <p><span class="font-medium">{{ __('units.labels.rent') }}</span> <bdi dir="ltr">{{ number_format($unit->rent_amount, 2) }}</bdi></p>
+    <p><span class="font-medium">{{ __('units.labels.rent') }}</span> <bdi dir="ltr">{{ $formatUnitMoney($unit->rent_amount) }}</bdi></p>
     <p><span class="font-medium">{{ __('units.fields.size') }}:</span> <bdi dir="ltr">{{ $unit->size !== null ? number_format((float) $unit->size, 2) : __('payments.not_available') }}</bdi></p>
     <p><span class="font-medium">{{ __('units.fields.rooms') }}:</span> <bdi dir="ltr">{{ $unit->rooms ?? __('payments.not_available') }}</bdi></p>
     <p class="sm:col-span-2"><span class="font-medium">{{ __('units.fields.notes') }}:</span> {{ $unit->notes ?: __('payments.not_available') }}</p>

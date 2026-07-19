@@ -11,6 +11,74 @@ return [
     'logout' => 'Keluar',
     'language' => 'Bahasa',
 
+    'help' => [
+        'button' => 'Bantuan',
+        'first_visit' => 'Kunjungan pertama',
+        'what_for' => 'Untuk apa halaman ini',
+        'can_do' => 'Yang dapat Anda lakukan',
+        'next_action' => 'Langkah berikutnya yang disarankan',
+        'got_it' => 'Mengerti',
+        'dont_show_again' => 'Jangan tampilkan lagi',
+        'pages' => [
+            'default' => [
+                'title' => 'Bantuan halaman',
+                'for' => 'Gunakan halaman ini untuk meninjau dan mengelola bagian yang dipilih dari alur kerja properti Anda.',
+                'can' => 'Tinjau data yang terlihat dan gunakan aksi yang tersedia sesuai peran Anda.',
+                'next' => 'Mulai dari data yang paling penting atau kembali ke dasbor untuk prioritas hari ini.',
+            ],
+            'dashboard' => [
+                'title' => 'Bantuan dasbor',
+                'for' => 'Dasbor memberi ringkasan setup, pembayaran, unit kosong, dan hal yang perlu perhatian.',
+                'can' => 'Ikuti langkah setup, tinjau prioritas harian, dan buka tugas umum dengan cepat.',
+                'next' => 'Selesaikan langkah setup berikutnya atau buka prioritas harian yang paling penting.',
+            ],
+            'buildings' => [
+                'title' => 'Bantuan properti',
+                'for' => 'Properti mengelompokkan unit berdasarkan lokasi properti.',
+                'can' => 'Tambah properti, lihat detail properti, dan mulai menambahkan unit untuk setiap properti.',
+                'next' => 'Tambahkan properti pertama, lalu tambahkan unit di dalamnya.',
+            ],
+            'units' => [
+                'title' => 'Bantuan unit',
+                'for' => 'Unit adalah ruang yang dapat disewakan di dalam properti Anda.',
+                'can' => 'Tinjau status unit, nilai sewa, properti, dan buka detail setiap unit.',
+                'next' => 'Tambahkan unit yang belum tercatat atau buka unit kosong sebelum membuat kontrak.',
+            ],
+            'tenants' => [
+                'title' => 'Bantuan penyewa',
+                'for' => 'Penyewa adalah orang atau perusahaan yang menyewa unit Anda.',
+                'can' => 'Tambah data penyewa dan tinjau kontak serta detail identitas.',
+                'next' => 'Tambahkan penyewa sebelum membuat kontrak sewa.',
+            ],
+            'contracts' => [
+                'title' => 'Bantuan kontrak',
+                'for' => 'Kontrak menghubungkan penyewa ke unit dan membuat jadwal pembayaran.',
+                'can' => 'Buat, lihat, edit, perpanjang, akhiri, atau unduh PDF kontrak sesuai izin Anda.',
+                'next' => 'Buat kontrak untuk penyewa dan unit, lalu catat pembayaran saat diterima.',
+            ],
+            'payments' => [
+                'title' => 'Bantuan pembayaran',
+                'for' => 'Pembayaran melacak tagihan sewa, jumlah diterima, sisa tagihan, dan kuitansi.',
+                'can' => 'Filter pembayaran, catat jumlah diterima, unggah bukti, dan buka kuitansi jika tersedia.',
+                'next' => 'Catat pembayaran tertunggak atau sebagian terlebih dahulu.',
+            ],
+            'expenses' => [
+                'title' => 'Bantuan pengeluaran',
+                'for' => 'Pengeluaran melacak biaya perawatan dan operasional untuk properti atau unit.',
+                'can' => 'Tambah pengeluaran, filter data, lihat faktur, dan pisahkan catatan yang dibatalkan.',
+                'can_view_only' => 'Tinjau pengeluaran, filter data, lihat faktur, dan ikuti catatan terkait.',
+                'next' => 'Catat pengeluaran dengan properti, unit, kategori, dan tanggal yang benar.',
+                'next_view_only' => 'Tinjau daftar pengeluaran dan gunakan filter untuk menemukan catatan yang Anda perlukan.',
+            ],
+            'reports' => [
+                'title' => 'Bantuan laporan',
+                'for' => 'Laporan merangkum pemasukan, pengeluaran, tunggakan, laba bersih, dan mutasi unit.',
+                'can' => 'Filter berdasarkan properti, unit, dan rentang tanggal, lalu ekspor PDF.',
+                'next' => 'Pilih rentang tanggal dan ekspor laporan yang Anda perlukan.',
+            ],
+        ],
+    ],
+
     'navigation' => [
         'dashboard' => 'Dasbor',
         'units' => 'Unit',
@@ -137,6 +205,127 @@ return [
         'roadmap_tenant_account' => 'Akun penyewa',
         'roadmap_vacant_listing' => 'Daftar unit kosong',
         'suggest_feature' => 'Usulkan fitur',
+    ],
+
+    'pilot_guide' => [
+        'eyebrow' => 'Beta tertutup',
+        'title' => 'Panduan beta tertutup',
+        'subtitle' => 'Gunakan panduan ini saat pengguna pilot mencoba sistem untuk pertama kali. Panduan ini menjaga uji coba tetap sederhana, praktis, dan fokus pada tugas properti nyata.',
+        'dashboard_body' => 'Gunakan panduan singkat ini saat menyerahkan aplikasi kepada peserta pilot.',
+        'quick_start_link' => 'Sedang menguji sistem? Buka panduan beta tertutup.',
+        'open' => 'Buka panduan',
+        'back_to_quick_start' => 'Mulai dari Quick Start',
+        'not_available' => 'Tidak tersedia untuk peran Anda',
+        'quick_start_feedback_note' => 'Jika ada yang tidak jelas, rusak, atau lambat saat pengujian, gunakan tombol Masukan.',
+        'purpose_title' => 'Untuk apa beta ini',
+        'purpose_body' => 'Beta tertutup membantu memastikan tugas harian jelas di ponsel dan desktop sebelum penggunaan lebih luas.',
+        'try_title' => 'Apa yang perlu dicoba tester',
+        'try_body' => 'Gunakan contoh kecil yang realistis: satu properti, beberapa unit, satu penyewa, satu kontrak, satu pembayaran, satu pengeluaran, dan satu laporan.',
+        'report_title' => 'Masalah apa yang perlu dilaporkan',
+        'report_body' => 'Laporkan hal yang tidak jelas, rusak, lambat, sulit di ponsel, atau membingungkan pada angka.',
+        'path_title' => 'Alur uji coba 30 menit yang disarankan',
+        'path_body' => 'Ikuti langkah ini secara berurutan. Jika sebuah langkah tidak tersedia untuk peran Anda, catat di masukan.',
+        'feedback_title' => 'Cara mengirim masukan yang berguna',
+        'feedback_body' => 'Gunakan tombol Masukan untuk bug, kebingungan, saran, atau hal lain yang menghambat tester.',
+        'feedback_button' => 'Kirim masukan',
+        'examples_title' => 'Contoh masukan yang berguna',
+        'examples' => [
+            'Saya tidak menemukan tempat untuk menambahkan pembayaran.',
+            'Halaman ini sulit digunakan di ponsel.',
+            'Angka laporan kurang jelas.',
+        ],
+        'handover_title' => 'Checklist serah terima pemilik / operator',
+        'handover_body' => 'Gunakan checklist ini sebelum mengirim tautan beta ke tester.',
+        'handover_items' => [
+            'Pastikan akun pengguna pilot sudah dibuat',
+            'Kirim tautan produksi ke tester',
+            'Minta tester menggunakan tombol Masukan',
+            'Tinjau kotak masuk masukan setiap hari selama pilot',
+        ],
+        'steps' => [
+            'quick_start' => [
+                'title' => 'Buka Quick Start',
+                'body' => 'Mulai dari checklist setup sederhana.',
+                'action' => 'Buka Quick Start',
+            ],
+            'building' => [
+                'title' => 'Tambah properti',
+                'body' => 'Buat data properti pertama yang berisi unit Anda.',
+                'action' => 'Tambah properti',
+            ],
+            'units' => [
+                'title' => 'Tambah banyak unit',
+                'body' => 'Tambahkan beberapa unit untuk properti yang dipilih dalam satu langkah.',
+                'action' => 'Tambah banyak unit',
+            ],
+            'tenant' => [
+                'title' => 'Tambah penyewa',
+                'body' => 'Buat data penyewa dengan detail kontak dasar.',
+                'action' => 'Tambah penyewa',
+            ],
+            'contract' => [
+                'title' => 'Buat kontrak',
+                'body' => 'Hubungkan penyewa ke unit dan buat jadwal pembayaran.',
+                'action' => 'Buat kontrak',
+            ],
+            'payments' => [
+                'title' => 'Periksa pembayaran yang dibuat',
+                'body' => 'Tinjau jadwal pembayaran dan catat pembayaran bila perlu.',
+                'action' => 'Buka pembayaran',
+            ],
+            'expense' => [
+                'title' => 'Tambah pengeluaran',
+                'body' => 'Catat pengeluaran operasional atau perawatan sederhana.',
+                'action' => 'Tambah pengeluaran',
+            ],
+            'reports' => [
+                'title' => 'Buka laporan',
+                'body' => 'Tinjau pemasukan, pengeluaran, tunggakan, dan mutasi.',
+                'action' => 'Buka laporan',
+            ],
+            'feedback' => [
+                'title' => 'Kirim masukan jika ada yang tidak jelas, rusak, atau lambat',
+                'body' => 'Ceritakan apa yang terjadi dan halaman mana yang digunakan.',
+                'action' => 'Kirim masukan',
+            ],
+        ],
+    ],
+
+    'empty_states' => [
+        'buildings' => [
+            'title' => 'Belum ada properti',
+            'body' => 'Tambahkan properti pertama agar Anda dapat mulai menambahkan unit, penyewa, dan kontrak.',
+            'action' => 'Tambah properti',
+        ],
+        'units' => [
+            'title' => 'Belum ada unit',
+            'body' => 'Tambahkan unit yang dapat disewakan untuk properti Anda agar kontrak dapat dibuat nanti.',
+            'action' => 'Tambah unit',
+            'secondary_action' => 'Tambah banyak unit',
+            'no_buildings_title' => 'Tambahkan properti terlebih dahulu',
+            'no_buildings_body' => 'Unit berada di dalam properti. Tambahkan properti pertama sebelum menambahkan unit.',
+            'no_buildings_action' => 'Tambah properti',
+        ],
+        'tenants' => [
+            'title' => 'Belum ada penyewa',
+            'body' => 'Tambahkan detail penyewa sebelum membuat kontrak sewa pertama.',
+            'action' => 'Tambah penyewa',
+        ],
+        'contracts' => [
+            'title' => 'Belum ada kontrak',
+            'body' => 'Buat kontrak untuk menghubungkan penyewa ke unit dan membuat jadwal pembayaran.',
+            'action' => 'Buat kontrak',
+        ],
+        'payments' => [
+            'title' => 'Belum ada pembayaran',
+            'body' => 'Pembayaran akan muncul setelah Anda membuat kontrak dengan jadwal pembayaran.',
+            'action' => 'Buat kontrak',
+        ],
+        'expenses' => [
+            'title' => 'Belum ada pengeluaran',
+            'body' => 'Catat pengeluaran perawatan atau operasional pertama saat terjadi.',
+            'action' => 'Tambah pengeluaran',
+        ],
     ],
 
     'indonesia_pilot' => [

@@ -9,7 +9,7 @@
     $canViewExpenses = $role?->can('view-expenses') ?? false;
     $canViewReports = $role?->can('view-reports') ?? false;
     $dashboardCurrency = $dashboardUser?->organization?->effectiveCurrencyCode();
-    $formatDashboardMoney = fn ($value) => trim(($dashboardCurrency ? $dashboardCurrency.' ' : '').number_format((float) $value, 2));
+    $formatDashboardMoney = fn ($value) => \App\Support\MoneyFormatter::format($value, $dashboardCurrency);
     $formatDashboardCount = fn ($value) => number_format((int) $value);
     $ownerOnboardingState = $canManageProperties ? ($buildingCount === 0 ? 'buildings' : ($unitCount === 0 ? 'units' : ($contractCount === 0 ? 'contracts' : null))) : null;
     $guidedStartSteps = $canManageProperties ? [
@@ -136,14 +136,14 @@
             </section>
         @else
 
-        <div data-dashboard-with-roadmap class="grid gap-6 lg:grid-cols-[18rem_minmax(0,1fr)] xl:grid-cols-[20rem_minmax(0,1fr)]">
+        <div data-dashboard-with-roadmap class="grid gap-5 lg:grid-cols-[minmax(0,1fr)_16rem] xl:grid-cols-[minmax(0,1fr)_17rem]">
             <aside data-dashboard-roadmap class="order-2 lg:order-none">
-                <section class="rounded-lg border border-brand-accent/40 bg-brand-primary p-4 text-white shadow-lg sm:p-5 lg:sticky lg:top-24">
+                <section class="rounded border border-brand-border bg-brand-surface p-3 text-brand-text shadow-sm sm:p-4">
                     <div>
-                        <p class="text-xs font-semibold uppercase tracking-[0.24em] text-brand-accent-soft">{{ __('app.dashboard.roadmap_label') }}</p>
-                        <h2 class="mt-3 text-2xl font-semibold leading-tight">{{ __('app.dashboard.roadmap_title') }}</h2>
-                        <p class="mt-3 text-sm leading-6 text-brand-accent-soft">{{ __('app.dashboard.roadmap_body') }}</p>
-                        <div class="mt-5 grid gap-2">
+                        <p class="text-[0.7rem] font-semibold uppercase tracking-wide text-brand-muted">{{ __('app.dashboard.roadmap_label') }}</p>
+                        <h2 class="mt-2 text-base font-semibold leading-snug">{{ __('app.dashboard.roadmap_title') }}</h2>
+                        <p class="mt-2 text-xs leading-5 text-brand-muted">{{ __('app.dashboard.roadmap_body') }}</p>
+                        <div class="mt-3 grid gap-1.5">
                             @foreach([
                                 __('app.dashboard.roadmap_unit_documents'),
                                 __('app.dashboard.roadmap_smart_alerts'),
@@ -151,12 +151,12 @@
                                 __('app.dashboard.roadmap_tenant_account'),
                                 __('app.dashboard.roadmap_vacant_listing'),
                             ] as $roadmapItem)
-                                <div data-dashboard-roadmap-item class="rounded-lg border border-brand-surface/15 bg-brand-surface/10 px-3 py-2 text-sm font-medium text-white">
+                                <div data-dashboard-roadmap-item class="rounded border border-brand-border bg-brand-background px-2.5 py-1.5 text-xs font-medium text-brand-text">
                                     {{ $roadmapItem }}
                                 </div>
                             @endforeach
                         </div>
-                        <button type="button" disabled aria-disabled="true" class="tap-target mt-5 inline-flex min-h-11 w-full cursor-not-allowed items-center justify-center rounded-lg border border-brand-surface/20 bg-brand-surface/10 px-4 text-center text-sm font-medium text-white/80">
+                        <button type="button" disabled aria-disabled="true" class="tap-target mt-3 inline-flex min-h-10 w-full cursor-not-allowed items-center justify-center rounded border border-brand-border bg-brand-background px-3 text-center text-xs font-medium text-brand-muted">
                             {{ __('app.dashboard.suggest_feature') }}
                         </button>
                     </div>

@@ -1,6 +1,10 @@
 @extends('layouts.app')
 
 @section('content')
+@php
+    $formatUnitMoney = fn ($unit) => \App\Support\MoneyFormatter::forBuilding($unit->building, $unit->rent_amount);
+@endphp
+
 <div class="mb-4 grid gap-3 sm:flex sm:items-center sm:justify-between">
     <h1 class="text-xl font-semibold">{{ __('units.title') }}</h1>
     <div class="grid gap-2 sm:flex sm:flex-wrap">
@@ -60,7 +64,7 @@
                     </div>
                     <div class="flex items-center justify-between gap-3">
                         <dt class="text-brand-muted">{{ __('units.fields.rent') }}</dt>
-                        <dd><bdi dir="ltr">{{ number_format($unit->rent_amount, 2) }}</bdi></dd>
+                        <dd><bdi dir="ltr">{{ $formatUnitMoney($unit) }}</bdi></dd>
                     </div>
                 </dl>
                 <a class="tap-target mt-4 inline-flex min-h-11 w-full items-center justify-center rounded border px-4 text-center text-sm font-medium" href="{{ route('units.show', $unit) }}">{{ __('app.actions.view') }}</a>
@@ -85,7 +89,7 @@
                     <td class="p-4 font-medium whitespace-nowrap"><bdi dir="ltr">{{ $unit->unit_number }}</bdi></td>
                     <td class="p-4">{{ $unit->building->name }}</td>
                     <td class="p-4 text-center whitespace-nowrap"><x-status-badge :status="$unit->status" :label="__('units.statuses.'.$unit->status)" /></td>
-                    <td class="p-4 text-end whitespace-nowrap"><bdi dir="ltr">{{ number_format($unit->rent_amount, 2) }}</bdi></td>
+                    <td class="p-4 text-end whitespace-nowrap"><bdi dir="ltr">{{ $formatUnitMoney($unit) }}</bdi></td>
                     <td class="p-4 text-center whitespace-nowrap"><a class="tap-target inline-flex items-center rounded border px-3 text-brand-text" href="{{ route('units.show', $unit) }}">{{ __('app.actions.view') }}</a></td>
                 </tr>
             @endforeach

@@ -10,6 +10,7 @@ use App\Models\PropertyType;
 use App\Models\Tenant;
 use App\Models\Unit;
 use App\Models\User;
+use App\Support\PdfRenderer;
 use Database\Seeders\GlobalReadinessSeeder;
 use Database\Seeders\IndonesiaClosedPilotSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -105,6 +106,141 @@ class IndonesiaClosedPilotTest extends TestCase
             ->assertSee('IDR ')
             ->assertDontSee('AED ')
             ->assertDontSee('reports.');
+    }
+
+    public function test_indonesian_buildings_page_labels_and_help_modal_are_localized(): void
+    {
+        $this->seed(IndonesiaClosedPilotSeeder::class);
+
+        $owner = User::where('email', 'indonesia-owner@example.com')->firstOrFail();
+
+        $this->actingAs($owner)
+            ->withSession(['locale' => 'id'])
+            ->get(route('buildings.index'))
+            ->assertOk()
+            ->assertSee('<html lang="id" dir="ltr">', false)
+            ->assertSee('Properti')
+            ->assertSee('Tambah properti')
+            ->assertSee('Nama')
+            ->assertSee('Lokasi')
+            ->assertSee('Aksi')
+            ->assertSee('Bantuan properti')
+            ->assertSee('Untuk apa halaman ini')
+            ->assertSee('Yang dapat Anda lakukan')
+            ->assertSee('Langkah berikutnya yang disarankan')
+            ->assertSee('Mengerti')
+            ->assertSee('Jangan tampilkan lagi')
+            ->assertSee('Masukan')
+            ->assertSee('Bantuan')
+            ->assertDontSee('Buildings')
+            ->assertDontSee('Add building')
+            ->assertDontSee('Name')
+            ->assertDontSee('Location')
+            ->assertDontSee('Action')
+            ->assertDontSee('Buildings help')
+            ->assertDontSee('What this page is for')
+            ->assertDontSee('What you can do here')
+            ->assertDontSee('Recommended next action')
+            ->assertDontSee('Got it')
+            ->assertDontSee('Do not show again')
+            ->assertDontSee('Feedback')
+            ->assertDontSee('Help');
+
+        $this->actingAs($owner)
+            ->withSession(['locale' => 'id'])
+            ->get(route('dashboard'))
+            ->assertOk()
+            ->assertSee('data-dashboard-pilot-guide', false)
+            ->assertSee('Panduan beta tertutup')
+            ->assertSee('Buka panduan')
+            ->assertSee('Masukan')
+            ->assertSee('Bantuan')
+            ->assertSee('Mengerti')
+            ->assertSee('Jangan tampilkan lagi')
+            ->assertDontSee('Closed beta guide')
+            ->assertDontSee('Open guide')
+            ->assertDontSee('Feedback')
+            ->assertDontSee('Help');
+    }
+
+    public function test_indonesian_units_page_displays_idr_rent_without_cents(): void
+    {
+        $this->seed(IndonesiaClosedPilotSeeder::class);
+
+        $owner = User::where('email', 'indonesia-owner@example.com')->firstOrFail();
+        $kos = Building::where('organization_id', $owner->organization_id)
+            ->where('name', 'Kos Putri Surabaya')
+            ->firstOrFail();
+        $kontrakan = Building::where('organization_id', $owner->organization_id)
+            ->where('name', 'Kontrakan Keluarga Malang')
+            ->firstOrFail();
+
+        $this->actingAs($owner)
+            ->withSession(['locale' => 'id'])
+            ->get(route('units.index', ['building_id' => $kos->id]))
+            ->assertOk()
+            ->assertSee('Kos Putri Surabaya')
+            ->assertSeeHtml('<bdi dir="ltr">IDR 850,000</bdi>')
+            ->assertDontSee('850,000.00')
+            ->assertDontSee('AED ');
+
+        $this->actingAs($owner)
+            ->withSession(['locale' => 'id'])
+            ->get(route('units.index', ['building_id' => $kontrakan->id]))
+            ->assertOk()
+            ->assertSee('Kontrakan Keluarga Malang')
+            ->assertSeeHtml('<bdi dir="ltr">IDR 1,750,000</bdi>')
+            ->assertDontSee('1,750,000.00')
+            ->assertDontSee('AED ');
+    }
+
+    public function test_indonesian_report_and_pdf_use_telepon_label_and_idr_without_cents(): void
+    {
+        $this->seed(IndonesiaClosedPilotSeeder::class);
+
+        $owner = User::where('email', 'indonesia-owner@example.com')->firstOrFail();
+        $tenant = Tenant::where('organization_id', $owner->organization_id)
+            ->where('email', 'tenant-id-01@example.com')
+            ->firstOrFail();
+
+        $this->actingAs($owner)
+            ->withSession(['locale' => 'id'])
+            ->get(route('reports.index', ['tenant_id' => $tenant->id]))
+            ->assertOk()
+            ->assertSee('Telepon')
+            ->assertSee($tenant->phone)
+            ->assertSee('IDR 850,000')
+            ->assertDontSee('Phone')
+            ->assertDontSee('IDR 850,000.00')
+            ->assertDontSee('AED ');
+
+        $capturedPdf = null;
+        $renderer = \Mockery::mock(PdfRenderer::class);
+        $renderer->shouldReceive('download')
+            ->once()
+            ->andReturnUsing(function (string $view, array $data, string $filename) use (&$capturedPdf) {
+                $capturedPdf = compact('view', 'data', 'filename');
+
+                return response('fake '.$filename, 200);
+            });
+        $this->app->instance(PdfRenderer::class, $renderer);
+
+        $this->actingAs($owner)
+            ->withSession(['locale' => 'id'])
+            ->get(route('reports.pdf', ['type' => 'unit-statement', 'tenant_id' => $tenant->id]))
+            ->assertOk();
+
+        $this->assertIsArray($capturedPdf);
+
+        app()->setLocale('id');
+        $html = view($capturedPdf['view'], $capturedPdf['data'])->render();
+
+        $this->assertStringContainsString('Telepon', $html);
+        $this->assertStringContainsString($tenant->phone, $html);
+        $this->assertStringContainsString('IDR 850,000', $html);
+        $this->assertStringNotContainsString('Phone', $html);
+        $this->assertStringNotContainsString('IDR 850,000.00', $html);
+        $this->assertStringNotContainsString('AED ', $html);
     }
 
     public function test_indonesia_unit_forms_accept_pilot_property_types_from_reference_data(): void

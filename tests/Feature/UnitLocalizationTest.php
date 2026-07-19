@@ -88,7 +88,7 @@ class UnitLocalizationTest extends TestCase
             ->assertSee('مؤجرة')
             ->assertSee('قيد الصيانة')
             ->assertSeeHtml('<bdi dir="ltr">AR-UNIT-101</bdi>')
-            ->assertSeeHtml('<bdi dir="ltr">4,321.09</bdi>')
+            ->assertSeeHtml('<bdi dir="ltr">AED 4,321.09</bdi>')
             ->assertDontSee('>vacant</option>', false)
             ->assertDontSee('>rented</option>', false)
             ->assertDontSee('>maintenance</option>', false)
@@ -184,7 +184,7 @@ class UnitLocalizationTest extends TestCase
             ->assertSee($sizeLabel)
             ->assertSee($roomsLabel)
             ->assertSee($notesLabel)
-            ->assertSeeHtml('<bdi dir="ltr">9,876.54</bdi>')
+            ->assertSeeHtml('<bdi dir="ltr">AED 9,876.54</bdi>')
             ->assertSeeHtml('<bdi dir="ltr">125.50</bdi>')
             ->assertSeeHtml('<bdi dir="ltr">3</bdi>')
             ->assertSee('Unit show notes remain visible.');

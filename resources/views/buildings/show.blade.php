@@ -1,6 +1,10 @@
 @extends('layouts.app')
 
 @section('content')
+@php
+    $formatBuildingUnitMoney = fn ($value) => \App\Support\MoneyFormatter::forBuilding($building, $value);
+@endphp
+
 <div class="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
     <h1 class="text-xl font-semibold">{{ $building->name }}</h1>
     <div data-building-actions class="grid gap-2 sm:flex sm:flex-wrap">
@@ -42,7 +46,7 @@
                 </div>
                 <x-status-badge class="shrink-0" :status="$unit->status" :label="__('units.statuses.'.$unit->status)" />
             </div>
-            <p class="mt-3 text-sm text-brand-muted">{{ __('units.fields.rent') }}: <bdi dir="ltr">{{ number_format($unit->rent_amount, 2) }}</bdi></p>
+            <p class="mt-3 text-sm text-brand-muted">{{ __('units.fields.rent') }}: <bdi dir="ltr">{{ $formatBuildingUnitMoney($unit->rent_amount) }}</bdi></p>
             <a class="tap-target mt-4 inline-flex min-h-11 w-full items-center justify-center rounded border px-4 text-center text-sm font-medium" href="{{ route('units.show', $unit) }}">{{ __('app.actions.view') }}</a>
         </article>
     @endforeach
@@ -55,7 +59,7 @@
                 <tr class="border-t">
                     <td class="p-3 whitespace-nowrap"><bdi dir="ltr">{{ $unit->unit_number }}</bdi></td>
                     <td class="p-3 whitespace-nowrap"><x-status-badge :status="$unit->status" :label="__('units.statuses.'.$unit->status)" /></td>
-                    <td class="p-3 whitespace-nowrap"><bdi dir="ltr">{{ number_format($unit->rent_amount, 2) }}</bdi></td>
+                    <td class="p-3 whitespace-nowrap"><bdi dir="ltr">{{ $formatBuildingUnitMoney($unit->rent_amount) }}</bdi></td>
                 </tr>
             @endforeach
         </tbody>

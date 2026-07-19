@@ -60,6 +60,8 @@
                 };
                 $pageHelp = trans("app.help.pages.{$pageHelpKey}");
                 $pageHelp = is_array($pageHelp) ? $pageHelp : trans('app.help.pages.default');
+                $feedbackButtonLabel = trans('feedback.button', [], app()->getLocale());
+                $helpButtonLabel = trans('app.help.button', [], app()->getLocale());
 
                 if ($pageHelpKey === 'expenses' && ! auth()->user()->can('create', \App\Models\Expense::class)) {
                     $pageHelp['can'] = __('app.help.pages.expenses.can_view_only');
@@ -70,8 +72,8 @@
                 <div class="mx-auto flex max-w-6xl items-center justify-between gap-3 px-4 py-3">
                     <x-app-identity :href="route('dashboard')" class="text-base sm:text-lg" />
                     <div class="hidden items-center gap-2 sm:flex">
-                        <button type="button" data-feedback-open class="btn-secondary tap-target px-3">{{ __('feedback.button') }}</button>
-                        <button type="button" data-help-open class="btn-secondary tap-target px-3">{{ __('app.help.button') }}</button>
+                        <button type="button" data-feedback-open class="btn-secondary tap-target px-3">{{ $feedbackButtonLabel }}</button>
+                        <button type="button" data-help-open class="btn-secondary tap-target px-3">{{ $helpButtonLabel }}</button>
                         <a href="{{ route('password.change') }}" class="btn-secondary tap-target px-3">{{ __('app.auth.change_password') }}</a>
                         <x-language-switcher />
                         <form method="post" action="{{ route('logout') }}">
@@ -100,8 +102,8 @@
                                 @endforeach
                             </nav>
                             <div class="grid gap-2 border-t p-3">
-                                <button type="button" data-feedback-open class="btn-secondary tap-target min-h-11 w-full px-4">{{ __('feedback.button') }}</button>
-                                <button type="button" data-help-open class="btn-secondary tap-target min-h-11 w-full px-4">{{ __('app.help.button') }}</button>
+                                <button type="button" data-feedback-open class="btn-secondary tap-target min-h-11 w-full px-4">{{ $feedbackButtonLabel }}</button>
+                                <button type="button" data-help-open class="btn-secondary tap-target min-h-11 w-full px-4">{{ $helpButtonLabel }}</button>
                                 <a href="{{ route('password.change') }}" class="btn-secondary tap-target min-h-11 w-full px-4">{{ __('app.auth.change_password') }}</a>
                                 <x-language-switcher />
                                 <form method="post" action="{{ route('logout') }}">
@@ -247,7 +249,8 @@
                 const panel = document.querySelector('[data-help-panel]');
                 if (! panel) return;
 
-                const key = `property-manager-help:${panel.dataset.pageHelpKey}`;
+                const pageKey = panel.getAttribute('data-page-help-key') || 'default';
+                const key = `property-manager-help:${pageKey}`;
                 const firstVisitLabel = panel.querySelector('[data-first-visit-label]');
                 const openPanel = (firstVisit = false) => {
                     firstVisitLabel?.classList.toggle('hidden', ! firstVisit);

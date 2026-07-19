@@ -3,7 +3,7 @@
     $isRtl = $direction === 'rtl';
     $na = __('reports.pdf.not_available');
     $reportCurrency = $reportCurrency ?? null;
-    $formatReportMoney = fn ($value) => trim(($reportCurrency ? $reportCurrency.' ' : '').number_format((float) $value, 2));
+    $formatReportMoney = fn ($value) => \App\Support\MoneyFormatter::format($value, $reportCurrency);
     $statementRowsForPdf = $type === 'unit-statement' ? ($statementRows ?? collect()) : collect();
     $statementContractNumbers = ($type === 'unit-statement')
         ? $statementRowsForPdf->pluck('contract.contract_number')->filter()->unique()->values()
