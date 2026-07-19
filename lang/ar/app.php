@@ -103,6 +103,7 @@ return [
         'organization_optional' => 'اسم المؤسسة أو الحساب (اختياري)',
         'properties_country' => 'أين تقع العقارات التي تريد إدارتها؟',
         'choose_country_later' => 'اختيار لاحقاً',
+        'country_setup_required' => 'إعداد الدول غير جاهز بعد. يرجى طلب إكمال إعداد الجاهزية العالمية قبل التسجيل.',
         'name' => 'الاسم',
         'confirm_password' => 'تأكيد كلمة المرور',
         'show_password' => 'إظهار كلمة المرور',

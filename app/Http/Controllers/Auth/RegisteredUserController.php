@@ -15,13 +15,22 @@ class RegisteredUserController extends Controller
 {
     public function create()
     {
+        $countries = Country::active()->orderBy('name')->get();
+
         return view('auth.register', [
-            'countries' => Country::active()->orderBy('name')->get(),
+            'countries' => $countries,
+            'registrationCountrySetupReady' => $countries->isNotEmpty(),
         ]);
     }
 
     public function store(Request $request)
     {
+        if (! Country::active()->exists()) {
+            return back()
+                ->withInput($request->except('password', 'password_confirmation'))
+                ->withErrors(['country_id' => __('app.auth.country_setup_required')]);
+        }
+
         $data = $request->validate([
             'organization_name' => ['nullable', 'string', 'max:255'],
             'name' => ['required', 'string', 'max:255'],

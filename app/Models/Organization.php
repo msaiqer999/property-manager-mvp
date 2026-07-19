@@ -19,11 +19,11 @@ class Organization extends Model
     public function activityLogs() { return $this->hasMany(ActivityLog::class); }
     public function betaFeedback() { return $this->hasMany(BetaFeedback::class); }
 
-    public function effectiveCurrencyCode(): string
+    public function effectiveCurrencyCode(): ?string
     {
         return $this->currency_code
             ?: $this->country?->default_currency_code
-            ?: 'AED';
+            ?: config('app.fallback_currency_code');
     }
 
     public function effectiveLocale(): string

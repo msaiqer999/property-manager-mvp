@@ -4,6 +4,11 @@
 <div class="auth-card mx-auto max-w-md p-5">
     <x-app-identity class="mb-5" />
     <h1 class="mb-4 text-xl font-semibold text-brand-text">{{ __('app.auth.create_owner_account') }}</h1>
+    @if(! ($registrationCountrySetupReady ?? true))
+        <div role="alert" class="rounded border border-state-warning/40 bg-state-warning/10 p-3 text-sm text-brand-text">
+            {{ __('app.auth.country_setup_required') }}
+        </div>
+    @else
     <form method="post" action="{{ route('register') }}" class="space-y-4">
         @csrf
         <label class="form-label">{{ __('app.auth.organization_optional') }} <input name="organization_name" class="form-control tap-target mt-1"></label>
@@ -60,6 +65,7 @@
         </label>
         <button class="btn-primary tap-target w-full px-4">{{ __('app.auth.register') }}</button>
     </form>
+    @endif
 </div>
 <script>
     document.querySelectorAll('[data-password-toggle]').forEach((button) => {

@@ -35,7 +35,7 @@ return new class extends Migration {
             $table->string('code');
             $table->boolean('is_active')->default(true);
             $table->timestamps();
-            $table->index(['country_id', 'code']);
+            $table->unique(['country_id', 'code']);
         });
 
         Schema::create('payment_methods', function (Blueprint $table) {
@@ -45,7 +45,7 @@ return new class extends Migration {
             $table->string('code');
             $table->boolean('is_active')->default(true);
             $table->timestamps();
-            $table->index(['country_id', 'code']);
+            $table->unique(['country_id', 'code']);
         });
 
         Schema::create('contract_templates', function (Blueprint $table) {
@@ -57,6 +57,7 @@ return new class extends Migration {
             $table->boolean('is_default')->default(false);
             $table->boolean('is_active')->default(true);
             $table->timestamps();
+            $table->unique(['country_id', 'language', 'name']);
             $table->index(['country_id', 'language', 'is_default']);
         });
 

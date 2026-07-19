@@ -22,9 +22,12 @@ class Building extends Model
         return $this->country_id ?: $this->organization?->country_id;
     }
 
-    public function effectiveCurrencyCode(): string
+    public function effectiveCurrencyCode(): ?string
     {
-        return $this->currency_code ?: $this->organization?->effectiveCurrencyCode() ?: 'AED';
+        return $this->currency_code
+            ?: $this->country?->default_currency_code
+            ?: $this->organization?->effectiveCurrencyCode()
+            ?: config('app.fallback_currency_code');
     }
 
     public function effectiveTimezone(): string

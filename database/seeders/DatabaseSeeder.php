@@ -24,7 +24,7 @@ class DatabaseSeeder extends Seeder
         $country = Country::where('code', 'AE')->first();
 
         $organization = Organization::create([
-            'name' => 'Riyadh Small Properties',
+            'name' => 'Abu Dhabi Small Properties',
             'country_id' => $country?->id,
             'currency_code' => $country?->default_currency_code,
             'locale' => $country?->default_locale,
@@ -69,8 +69,8 @@ class DatabaseSeeder extends Seeder
                 'country_id' => $organization->country_id,
                 'currency_code' => $organization->currency_code,
                 'timezone' => $organization->timezone,
-                'name' => 'Al Noor Residence',
-                'location' => 'Olaya, Riyadh',
+                'name' => 'Al Reem Residence',
+                'location' => 'Al Reem Island, Abu Dhabi',
                 'description' => 'Residential apartment building with ground-floor services.',
             ]),
             Building::create([
@@ -78,8 +78,8 @@ class DatabaseSeeder extends Seeder
                 'country_id' => $organization->country_id,
                 'currency_code' => $organization->currency_code,
                 'timezone' => $organization->timezone,
-                'name' => 'Al Yasmin Plaza',
-                'location' => 'Al Yasmin, Riyadh',
+                'name' => 'Khalifa Plaza',
+                'location' => 'Khalifa City, Abu Dhabi',
                 'description' => 'Mixed-use property with apartments and small offices.',
             ]),
         ]);
@@ -89,7 +89,7 @@ class DatabaseSeeder extends Seeder
         foreach ($buildings as $index => $building) {
             for ($i = 1; $i <= 10; $i++) {
                 $unitNumber = ($index + 1).str_pad((string) $i, 2, '0', STR_PAD_LEFT);
-                $isOffice = $building->name === 'Al Yasmin Plaza' && $i > 7;
+                $isOffice = $building->name === 'Khalifa Plaza' && $i > 7;
 
                 $units->push(Unit::create([
                     'building_id' => $building->id,
@@ -113,10 +113,10 @@ class DatabaseSeeder extends Seeder
         $tenants = collect($tenantNames)->map(fn (string $name, int $index) => Tenant::create([
             'organization_id' => $organization->id,
             'full_name' => $name,
-            'phone' => '+9665'.str_pad((string) (50000000 + $index * 13791), 8, '0', STR_PAD_LEFT),
+            'phone' => '+9715'.str_pad((string) (50000000 + $index * 13791), 8, '0', STR_PAD_LEFT),
             'email' => 'tenant'.($index + 1).'@example.com',
             'id_number' => '10'.str_pad((string) (10000000 + $index * 9137), 8, '0', STR_PAD_LEFT),
-            'nationality' => $index % 4 === 0 ? 'Saudi' : 'Resident',
+            'nationality' => $index % 4 === 0 ? 'Emirati' : 'Resident',
             'notes' => $index % 3 === 0 ? 'Prefers WhatsApp communication.' : null,
         ]));
 

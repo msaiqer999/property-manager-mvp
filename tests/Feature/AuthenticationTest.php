@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use App\Models\Organization;
 use App\Models\User;
+use Database\Seeders\GlobalReadinessSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -41,6 +42,8 @@ class AuthenticationTest extends TestCase
 
     public function test_owner_can_register_without_entering_organization_name(): void
     {
+        $this->seed(GlobalReadinessSeeder::class);
+
         $this->post('/register', [
             'organization_name' => '',
             'name' => 'Noura Saad',
@@ -58,6 +61,8 @@ class AuthenticationTest extends TestCase
 
     public function test_registration_form_marks_organization_optional_and_has_password_toggles(): void
     {
+        $this->seed(GlobalReadinessSeeder::class);
+
         $response = $this->get('/register');
 
         $response->assertOk()

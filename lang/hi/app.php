@@ -23,6 +23,7 @@ return [
         'organization_optional' => 'Organization or account name (optional)',
         'properties_country' => 'Where are the properties you want to manage located?',
         'choose_country_later' => 'Choose later',
+        'country_setup_required' => 'Country setup is not ready yet. Please ask the site owner to finish global readiness setup before registration.',
         'name' => 'नाम',
         'confirm_password' => 'पासवर्ड की पुष्टि करें',
         'show_password' => 'Show password',

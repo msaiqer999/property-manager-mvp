@@ -23,6 +23,7 @@ return [
         'organization_optional' => 'Organization or account name (optional)',
         'properties_country' => 'Where are the properties you want to manage located?',
         'choose_country_later' => 'Choose later',
+        'country_setup_required' => 'Country setup is not ready yet. Please ask the site owner to finish global readiness setup before registration.',
         'name' => 'নাম',
         'confirm_password' => 'পাসওয়ার্ড নিশ্চিত করুন',
         'show_password' => 'Show password',

@@ -50,6 +50,22 @@ When selected, that country becomes the organization's default country and suppl
 
 After registration, organization settings are the official source of truth for country-sensitive defaults. A user preferred locale may override display language only. It must not change the organization's legal, tax, reporting, contract, currency, or timezone defaults.
 
+If no active countries exist, registration must not silently create an organization with missing country defaults. Finish the global readiness reference-data setup first.
+
+## Deployment Order
+
+New code that uses country configuration requires the global readiness migrations before registration is used.
+
+For staging or production setup, run the migrations, then seed the global readiness reference data:
+
+```bash
+php artisan db:seed --class=GlobalReadinessSeeder
+```
+
+During a fresh local or demo setup, the normal `DatabaseSeeder` also runs `GlobalReadinessSeeder` before creating the demo organization.
+
+Do not rely on IP detection for this setup. Country detection can only be a suggestion after the reference data exists.
+
 ## Data Model
 
 The foundation adds reference tables for:

@@ -5,6 +5,7 @@ namespace Tests\Feature;
 use App\Enums\Role;
 use App\Models\Organization;
 use App\Models\User;
+use Database\Seeders\GlobalReadinessSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\Event;
@@ -20,6 +21,7 @@ class PilotOnboardingTest extends TestCase
     public function test_registration_enabled_preserves_existing_public_registration_flow_and_localization(): void
     {
         Config::set('app.registration_enabled', true);
+        $this->seed(GlobalReadinessSeeder::class);
 
         $this->get(route('register'))->assertOk();
 

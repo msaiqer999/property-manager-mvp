@@ -1482,8 +1482,8 @@ class SecurityCoverageTest extends TestCase
 
     private function createTwoOrganizationScenario(): array
     {
-        $organizationA = Organization::create(['name' => 'Organization A']);
-        $organizationB = Organization::create(['name' => 'Organization B']);
+        $organizationA = Organization::create(['name' => 'Organization A', 'currency_code' => 'AED']);
+        $organizationB = Organization::create(['name' => 'Organization B', 'currency_code' => 'AED']);
 
         $ownerA = $this->user($organizationA, 'owner-a@example.com', 'owner');
         $managerA = $this->user($organizationA, 'manager-a@example.com', 'manager');

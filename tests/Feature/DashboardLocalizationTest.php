@@ -213,7 +213,10 @@ class DashboardLocalizationTest extends TestCase
 
     public function test_daily_actions_show_overdue_partial_expiring_and_vacant_items(): void
     {
-        $organization = Organization::create(['name' => 'Daily Actions Organization']);
+        $organization = Organization::create([
+            'name' => 'Daily Actions Organization',
+            'currency_code' => 'AED',
+        ]);
         $owner = User::create([
             'organization_id' => $organization->id,
             'name' => 'Daily Actions Owner',

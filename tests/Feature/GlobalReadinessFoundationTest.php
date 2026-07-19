@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Models\Building;
 use App\Models\Country;
 use App\Models\Currency;
 use App\Models\Organization;
@@ -11,6 +12,7 @@ use Database\Seeders\DatabaseSeeder;
 use Database\Seeders\GlobalReadinessSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Config;
+use Illuminate\Support\Facades\DB;
 use Tests\TestCase;
 
 class GlobalReadinessFoundationTest extends TestCase
@@ -48,6 +50,29 @@ class GlobalReadinessFoundationTest extends TestCase
         $this->assertSame('IDR', $organization->effectiveCurrencyCode());
     }
 
+    public function test_registration_requires_active_country_reference_data_before_creating_accounts(): void
+    {
+        Config::set('app.registration_enabled', true);
+
+        $this->get(route('register'))
+            ->assertOk()
+            ->assertSee('Country setup is not ready yet.')
+            ->assertDontSee('name="country_id"', false)
+            ->assertDontSee('name="email"', false);
+
+        $this->from(route('register'))->post(route('register'), [
+            'organization_name' => 'Missing Country Setup Org',
+            'name' => 'Missing Country Setup Owner',
+            'email' => 'missing-country-setup@example.com',
+            'password' => 'password-123',
+            'password_confirmation' => 'password-123',
+        ])->assertRedirect(route('register'))
+            ->assertSessionHasErrors(['country_id']);
+
+        $this->assertDatabaseCount('organizations', 0);
+        $this->assertDatabaseCount('users', 0);
+    }
+
     public function test_organization_can_use_country_default_currency_without_override(): void
     {
         Currency::create([
@@ -72,6 +97,92 @@ class GlobalReadinessFoundationTest extends TestCase
 
         $this->assertNull($organization->currency_code);
         $this->assertSame('KES', $organization->effectiveCurrencyCode());
+    }
+
+    public function test_model_currency_fallback_uses_country_or_config_without_hardcoded_aed(): void
+    {
+        Config::set('app.fallback_currency_code', null);
+
+        $organization = Organization::create(['name' => 'Unconfigured Organization']);
+
+        $this->assertNull($organization->effectiveCurrencyCode());
+
+        Config::set('app.fallback_currency_code', 'ZZZ');
+
+        $this->assertSame('ZZZ', $organization->fresh()->effectiveCurrencyCode());
+
+        Currency::create([
+            'code' => 'KES',
+            'name' => 'Kenyan Shilling',
+            'symbol' => 'KES',
+            'decimal_places' => 2,
+        ]);
+
+        $kenya = Country::create([
+            'name' => 'Kenya',
+            'code' => 'KE',
+            'default_currency_code' => 'KES',
+            'default_locale' => 'en',
+            'default_timezone' => 'Africa/Nairobi',
+        ]);
+
+        $countryOrganization = Organization::create([
+            'name' => 'Country Default Organization',
+            'country_id' => $kenya->id,
+        ]);
+
+        $building = Building::create([
+            'organization_id' => $organization->id,
+            'country_id' => $kenya->id,
+            'name' => 'Country Default Building',
+        ]);
+
+        $modelSource = file_get_contents(app_path('Models/Organization.php'))
+            .file_get_contents(app_path('Models/Building.php'));
+
+        $this->assertSame('KES', $countryOrganization->effectiveCurrencyCode());
+        $this->assertSame('KES', $building->effectiveCurrencyCode());
+        $this->assertStringNotContainsString("'AED'", $modelSource);
+        $this->assertStringNotContainsString('"AED"', $modelSource);
+    }
+
+    public function test_global_readiness_seeder_creates_required_countries_and_currencies_idempotently(): void
+    {
+        $this->seed(GlobalReadinessSeeder::class);
+
+        foreach ([
+            'AE' => 'AED',
+            'ID' => 'IDR',
+            'SA' => 'SAR',
+            'KE' => 'KES',
+            'TZ' => 'TZS',
+            'MA' => 'MAD',
+        ] as $countryCode => $currencyCode) {
+            $this->assertDatabaseHas('countries', [
+                'code' => $countryCode,
+                'default_currency_code' => $currencyCode,
+                'is_active' => true,
+            ]);
+
+            $this->assertDatabaseHas('currencies', [
+                'code' => $currencyCode,
+                'is_active' => true,
+            ]);
+        }
+
+        $tables = ['countries', 'currencies', 'property_types', 'payment_methods', 'contract_templates', 'tax_settings'];
+        $counts = collect($tables)
+            ->mapWithKeys(fn (string $table) => [$table => DB::table($table)->count()])
+            ->all();
+
+        $this->seed(GlobalReadinessSeeder::class);
+
+        $this->assertSame(
+            $counts,
+            collect($tables)
+                ->mapWithKeys(fn (string $table) => [$table => DB::table($table)->count()])
+                ->all()
+        );
     }
 
     public function test_property_types_can_be_global_or_country_specific(): void
@@ -123,10 +234,12 @@ class GlobalReadinessFoundationTest extends TestCase
 
     public function test_database_seeder_keeps_uae_demo_working_with_country_configuration(): void
     {
+        Config::set('app.fallback_currency_code', 'ZZZ');
+
         $this->seed(DatabaseSeeder::class);
 
         $country = Country::where('code', 'AE')->firstOrFail();
-        $organization = Organization::where('name', 'Riyadh Small Properties')->firstOrFail();
+        $organization = Organization::where('name', 'Abu Dhabi Small Properties')->firstOrFail();
         $owner = User::where('email', 'owner@example.com')->firstOrFail();
 
         $this->assertSame($country->id, $organization->country_id);
