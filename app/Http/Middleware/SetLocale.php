@@ -11,17 +11,23 @@ class SetLocale
 {
     public function handle(Request $request, Closure $next): Response
     {
-        $locale = $request->session()->get('locale', config('app.locale'));
+        $user = $request->user();
 
-        if (! SupportedLocales::isSupported($locale)) {
-            $locale = config('app.locale', 'en');
+        foreach ([
+            $request->session()->get('locale'),
+            $user?->preferred_locale,
+            $user?->organization?->effectiveLocale(),
+            config('app.locale', 'en'),
+            'en',
+        ] as $locale) {
+            if (is_string($locale) && SupportedLocales::isSupported($locale)) {
+                app()->setLocale($locale);
+
+                return $next($request);
+            }
         }
 
-        if (! SupportedLocales::isSupported($locale)) {
-            $locale = 'en';
-        }
-
-        app()->setLocale($locale);
+        app()->setLocale('en');
 
         return $next($request);
     }

@@ -1,0 +1,184 @@
+<?php
+
+namespace Tests\Feature;
+
+use App\Models\Building;
+use App\Models\Country;
+use App\Models\Organization;
+use App\Models\Payment;
+use App\Models\PropertyType;
+use App\Models\Tenant;
+use App\Models\Unit;
+use App\Models\User;
+use Database\Seeders\GlobalReadinessSeeder;
+use Database\Seeders\IndonesiaClosedPilotSeeder;
+use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Config;
+use Tests\TestCase;
+
+class IndonesiaClosedPilotTest extends TestCase
+{
+    use RefreshDatabase;
+
+    public function test_indonesia_registration_stores_country_defaults_and_uses_bahasa_locale(): void
+    {
+        Config::set('app.registration_enabled', true);
+        $this->seed(GlobalReadinessSeeder::class);
+
+        $indonesia = Country::where('code', 'ID')->firstOrFail();
+
+        $this->post(route('register'), [
+            'organization_name' => 'Pilot Kos Jakarta',
+            'country_id' => $indonesia->id,
+            'name' => 'Pemilik Kos Jakarta',
+            'email' => 'pilot-kos-jakarta@example.com',
+            'password' => 'password-123',
+            'password_confirmation' => 'password-123',
+        ])->assertRedirect(route('dashboard'));
+
+        $organization = Organization::where('name', 'Pilot Kos Jakarta')->firstOrFail();
+
+        $this->assertSame($indonesia->id, $organization->country_id);
+        $this->assertSame('IDR', $organization->currency_code);
+        $this->assertSame('id', $organization->locale);
+        $this->assertSame('Asia/Jakarta', $organization->timezone);
+
+        $this->get(route('dashboard'))
+            ->assertOk()
+            ->assertSee('<html lang="id" dir="ltr">', false)
+            ->assertSee('Dasbor')
+            ->assertSee('Mulai kelola properti Anda')
+            ->assertDontSee('app.dashboard.title');
+    }
+
+    public function test_indonesia_pilot_seed_data_creates_requested_sample_portfolio(): void
+    {
+        $this->seed(IndonesiaClosedPilotSeeder::class);
+
+        $organization = Organization::where('name', 'Indonesia Closed Pilot Portfolio')->firstOrFail();
+        $country = Country::where('code', 'ID')->firstOrFail();
+
+        $this->assertSame($country->id, $organization->country_id);
+        $this->assertSame('IDR', $organization->currency_code);
+        $this->assertSame('id', $organization->locale);
+        $this->assertSame('Asia/Jakarta', $organization->timezone);
+
+        $this->assertBuildingUnitCount('Kos Putri Surabaya', 18);
+        $this->assertBuildingUnitCount('Kontrakan Keluarga Malang', 6);
+        $this->assertBuildingUnitCount('Ruko Sidoarjo', 4);
+        $this->assertBuildingUnitCount('Gudang kecil Gresik', 2);
+
+        $this->assertSame(18, Unit::whereHas('building', fn ($query) => $query->where('name', 'Kos Putri Surabaya'))->where('type', 'kamar')->count());
+        $this->assertSame(6, Unit::whereHas('building', fn ($query) => $query->where('name', 'Kontrakan Keluarga Malang'))->where('type', 'kontrakan')->count());
+        $this->assertSame(4, Unit::whereHas('building', fn ($query) => $query->where('name', 'Ruko Sidoarjo'))->where('type', 'ruko')->count());
+        $this->assertSame(2, Unit::whereHas('building', fn ($query) => $query->where('name', 'Gudang kecil Gresik'))->where('type', 'warehouse')->count());
+
+        $this->assertGreaterThanOrEqual(14, Tenant::where('organization_id', $organization->id)->count());
+        $this->assertGreaterThan(0, Payment::where('organization_id', $organization->id)->where('amount_paid', '>', 0)->count());
+
+        foreach (['kos', 'kamar', 'kontrakan', 'ruko', 'apartment', 'shop', 'warehouse'] as $code) {
+            $this->assertDatabaseHas('property_types', [
+                'country_id' => $country->id,
+                'code' => $code,
+                'is_active' => true,
+            ]);
+        }
+    }
+
+    public function test_indonesia_dashboard_and_reports_display_idr_currency(): void
+    {
+        $this->seed(IndonesiaClosedPilotSeeder::class);
+
+        $owner = User::where('email', 'indonesia-owner@example.com')->firstOrFail();
+
+        $this->actingAs($owner)
+            ->get(route('dashboard'))
+            ->assertOk()
+            ->assertSee('<html lang="id" dir="ltr">', false)
+            ->assertSee('IDR ')
+            ->assertSee('Terkumpul bulan ini')
+            ->assertDontSee('AED ');
+
+        $this->actingAs($owner)
+            ->get(route('reports.index'))
+            ->assertOk()
+            ->assertSee('IDR ')
+            ->assertDontSee('AED ')
+            ->assertDontSee('reports.');
+    }
+
+    public function test_indonesia_unit_forms_accept_pilot_property_types_from_reference_data(): void
+    {
+        $this->seed(GlobalReadinessSeeder::class);
+
+        $country = Country::where('code', 'ID')->firstOrFail();
+        $organization = Organization::create([
+            'name' => 'Indonesia Unit Type Pilot',
+            'country_id' => $country->id,
+            'currency_code' => $country->default_currency_code,
+            'locale' => $country->default_locale,
+            'timezone' => $country->default_timezone,
+        ]);
+        $owner = User::create([
+            'organization_id' => $organization->id,
+            'name' => 'Indonesia Unit Type Owner',
+            'email' => 'indonesia-unit-type-owner@example.com',
+            'password' => 'password',
+            'role' => 'owner',
+        ]);
+        $building = Building::create([
+            'organization_id' => $organization->id,
+            'country_id' => $country->id,
+            'currency_code' => 'IDR',
+            'timezone' => 'Asia/Jakarta',
+            'name' => 'Indonesia Type Building',
+            'location' => 'Jakarta',
+        ]);
+
+        $response = $this->actingAs($owner)->get(route('units.create', ['building_id' => $building->id]));
+
+        foreach (['kos', 'kamar', 'kontrakan', 'ruko', 'apartment', 'shop', 'warehouse'] as $type) {
+            $response->assertSee('value="'.$type.'"', false);
+        }
+
+        $this->actingAs($owner)
+            ->post(route('units.store'), [
+                'building_id' => $building->id,
+                'unit_number' => 'RUKO-01',
+                'type' => 'ruko',
+                'status' => 'vacant',
+                'rent_amount' => 4500000,
+                'rooms' => 1,
+                'size' => 70,
+                'notes' => 'Ruko pilot Indonesia.',
+            ])->assertRedirect();
+
+        $unit = Unit::where('building_id', $building->id)->where('unit_number', 'RUKO-01')->firstOrFail();
+
+        $this->assertSame('ruko', $unit->type);
+        $this->assertSame('4500000.00', number_format((float) $unit->rent_amount, 2, '.', ''));
+
+        $this->assertContains('kos', PropertyType::availableForCountry($country)->pluck('code')->all());
+    }
+
+    public function test_uae_demo_still_renders_aed_after_indonesia_pilot_changes(): void
+    {
+        $this->seed(\Database\Seeders\DatabaseSeeder::class);
+
+        $owner = User::where('email', 'owner@example.com')->firstOrFail();
+
+        $this->actingAs($owner)
+            ->get(route('dashboard'))
+            ->assertOk()
+            ->assertSee('Abu Dhabi Small Properties')
+            ->assertSee('AED ')
+            ->assertDontSee('IDR ');
+    }
+
+    private function assertBuildingUnitCount(string $buildingName, int $expectedCount): void
+    {
+        $building = Building::where('name', $buildingName)->firstOrFail();
+
+        $this->assertSame($expectedCount, $building->units()->count());
+    }
+}

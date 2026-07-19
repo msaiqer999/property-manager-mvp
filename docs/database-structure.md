@@ -67,7 +67,7 @@ Rentable units inside a building.
 - `id`
 - `building_id`
 - `unit_number`
-- `type`: apartment, shop, office, warehouse, villa, chalet, other
+- `type`: unit/property type code from active global or country-specific `property_types` reference data
 - `size`
 - `rooms`
 - `status`: vacant, rented, maintenance

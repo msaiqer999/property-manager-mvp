@@ -1,5 +1,10 @@
 @extends('layouts.app')
 @section('content')
+@php
+    $reportCurrency = $reportCurrency ?? null;
+    $formatReportMoney = fn ($value) => trim(($reportCurrency ? $reportCurrency.' ' : '').number_format((float) $value, 2));
+@endphp
+
 <h1 class="mb-4 text-xl font-semibold">{{ __('reports.title') }}</h1>
 
 <form method="get" action="{{ route('reports.index') }}" class="mb-4 grid gap-3 rounded border bg-brand-surface p-4 shadow-sm sm:grid-cols-2 lg:grid-cols-6">
@@ -50,7 +55,7 @@
 
 <div class="grid gap-3 sm:grid-cols-3">
 @foreach(['income' => $income, 'expenses' => $expensesTotal, 'net_profit' => $netProfit] as $label => $value)
-<div class="rounded border bg-brand-surface p-4 shadow-sm"><p class="text-sm font-medium text-brand-muted">{{ __('reports.summary.'.$label) }}</p><p class="mt-1 break-words text-2xl font-semibold" dir="ltr">{{ number_format($value, 2) }}</p></div>
+<div class="rounded border bg-brand-surface p-4 shadow-sm"><p class="text-sm font-medium text-brand-muted">{{ __('reports.summary.'.$label) }}</p><p class="mt-1 break-words text-2xl font-semibold" dir="ltr"><bdi>{{ $formatReportMoney($value) }}</bdi></p></div>
 @endforeach
 </div>
 
@@ -108,7 +113,7 @@
         @foreach($statementTotals as $key => $value)
             <div class="rounded border bg-brand-background p-3">
                 <p class="text-sm font-medium text-brand-muted">{{ __('reports.columns.'.$key) }}</p>
-                <p class="mt-1 text-xl font-semibold" dir="ltr"><bdi>{{ number_format($value, 2) }}</bdi></p>
+                <p class="mt-1 text-xl font-semibold" dir="ltr"><bdi>{{ $formatReportMoney($value) }}</bdi></p>
             </div>
         @endforeach
     </div>
@@ -126,9 +131,9 @@
                 <dl class="mt-3 grid gap-2 text-sm sm:grid-cols-2">
                     <div><dt class="text-brand-muted">{{ __('reports.columns.due_date') }}</dt><dd dir="ltr"><bdi>{{ $payment->due_date->toDateString() }}</bdi></dd></div>
                     <div><dt class="text-brand-muted">{{ __('reports.columns.contract') }}</dt><dd dir="ltr"><bdi>{{ $payment->contract?->contract_number ?? __('reports.pdf.not_available') }}</bdi></dd></div>
-                    <div><dt class="text-brand-muted">{{ __('reports.columns.amount_due') }}</dt><dd dir="ltr"><bdi>{{ number_format((float) $payment->amount_due, 2) }}</bdi></dd></div>
-                    <div><dt class="text-brand-muted">{{ __('reports.columns.amount_paid') }}</dt><dd dir="ltr"><bdi>{{ number_format((float) $payment->amount_paid, 2) }}</bdi></dd></div>
-                    <div><dt class="text-brand-muted">{{ __('reports.columns.remaining_amount') }}</dt><dd dir="ltr"><bdi>{{ number_format((float) $payment->remaining_amount, 2) }}</bdi></dd></div>
+                    <div><dt class="text-brand-muted">{{ __('reports.columns.amount_due') }}</dt><dd dir="ltr"><bdi>{{ $formatReportMoney($payment->amount_due) }}</bdi></dd></div>
+                    <div><dt class="text-brand-muted">{{ __('reports.columns.amount_paid') }}</dt><dd dir="ltr"><bdi>{{ $formatReportMoney($payment->amount_paid) }}</bdi></dd></div>
+                    <div><dt class="text-brand-muted">{{ __('reports.columns.remaining_amount') }}</dt><dd dir="ltr"><bdi>{{ $formatReportMoney($payment->remaining_amount) }}</bdi></dd></div>
                     <div><dt class="text-brand-muted">{{ __('reports.columns.paid_date') }}</dt><dd dir="ltr"><bdi>{{ $payment->payment_date?->toDateString() ?? __('reports.pdf.not_available') }}</bdi></dd></div>
                 </dl>
                 @if($payment->amount_paid_minor > 0)
@@ -165,9 +170,9 @@
                         <td class="p-3">{{ $payment->contract?->tenant?->full_name ?? __('reports.pdf.not_available') }}</td>
                         <td class="p-3 whitespace-nowrap">{{ $payment->contract?->unit?->building?->name ?? __('reports.pdf.not_available') }} / <bdi dir="ltr">{{ $payment->contract?->unit?->unit_number ?? __('reports.pdf.not_available') }}</bdi></td>
                         <td class="p-3 whitespace-nowrap" dir="ltr"><bdi>{{ $payment->contract?->contract_number ?? __('reports.pdf.not_available') }}</bdi></td>
-                        <td class="p-3 text-end whitespace-nowrap" dir="ltr"><bdi>{{ number_format((float) $payment->amount_due, 2) }}</bdi></td>
-                        <td class="p-3 text-end whitespace-nowrap" dir="ltr"><bdi>{{ number_format((float) $payment->amount_paid, 2) }}</bdi></td>
-                        <td class="p-3 text-end whitespace-nowrap" dir="ltr"><bdi>{{ number_format((float) $payment->remaining_amount, 2) }}</bdi></td>
+                        <td class="p-3 text-end whitespace-nowrap" dir="ltr"><bdi>{{ $formatReportMoney($payment->amount_due) }}</bdi></td>
+                        <td class="p-3 text-end whitespace-nowrap" dir="ltr"><bdi>{{ $formatReportMoney($payment->amount_paid) }}</bdi></td>
+                        <td class="p-3 text-end whitespace-nowrap" dir="ltr"><bdi>{{ $formatReportMoney($payment->remaining_amount) }}</bdi></td>
                         <td class="p-3 whitespace-nowrap"><x-status-badge :status="$payment->display_status_key" :label="__('payments.statuses.'.$payment->display_status_key)" /></td>
                         <td class="p-3 whitespace-nowrap" dir="ltr"><bdi>{{ $payment->payment_date?->toDateString() ?? __('reports.pdf.not_available') }}</bdi></td>
                         <td class="p-3 whitespace-nowrap">

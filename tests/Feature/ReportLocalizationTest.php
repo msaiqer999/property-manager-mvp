@@ -45,9 +45,9 @@ class ReportLocalizationTest extends TestCase
             ->assertSee('name="unit_id"', false)
             ->assertSee('name="from"', false)
             ->assertSee('name="to"', false)
-            ->assertSee('dir="ltr">'.number_format($income, 2).'</p>', false)
-            ->assertSee('dir="ltr">'.number_format($expenses, 2).'</p>', false)
-            ->assertSee('dir="ltr">'.number_format($netProfit, 2).'</p>', false);
+            ->assertSee('<bdi>AED '.number_format($income, 2).'</bdi>', false)
+            ->assertSee('<bdi>AED '.number_format($expenses, 2).'</bdi>', false)
+            ->assertSee('<bdi>AED '.number_format($netProfit, 2).'</bdi>', false);
 
         foreach ($this->reportTypes() as $type) {
             $response->assertSee('href="'.e($this->filteredReportUrl($type)).'"', false);
@@ -78,9 +78,9 @@ class ReportLocalizationTest extends TestCase
             ->assertSee('تصدير تقرير الدفعات المتأخرة PDF')
             ->assertSee('تصدير تقرير صافي الربح PDF')
             ->assertSee('تصدير الملخص الشهري PDF')
-            ->assertSee('dir="ltr">'.number_format($income, 2).'</p>', false)
-            ->assertSee('dir="ltr">'.number_format($expenses, 2).'</p>', false)
-            ->assertSee('dir="ltr">'.number_format($netProfit, 2).'</p>', false);
+            ->assertSee('<bdi>AED '.number_format($income, 2).'</bdi>', false)
+            ->assertSee('<bdi>AED '.number_format($expenses, 2).'</bdi>', false)
+            ->assertSee('<bdi>AED '.number_format($netProfit, 2).'</bdi>', false);
 
         foreach ($this->reportTypes() as $type) {
             $response->assertSee('href="'.e($this->filteredReportUrl($type)).'"', false);
@@ -407,9 +407,9 @@ class ReportLocalizationTest extends TestCase
             ->withSession(['locale' => 'en'])
             ->get(route('reports.index'))
             ->assertOk()
-            ->assertSee('dir="ltr">'.number_format($income, 2).'</p>', false)
-            ->assertSee('dir="ltr">'.number_format($expenses, 2).'</p>', false)
-            ->assertSee('dir="ltr">'.number_format($netProfit, 2).'</p>', false)
+            ->assertSee('<bdi>AED '.number_format($income, 2).'</bdi>', false)
+            ->assertSee('<bdi>AED '.number_format($expenses, 2).'</bdi>', false)
+            ->assertSee('<bdi>AED '.number_format($netProfit, 2).'</bdi>', false)
             ->assertDontSee('999,999.00');
     }
 
@@ -426,9 +426,9 @@ class ReportLocalizationTest extends TestCase
             ->withSession(['locale' => 'en'])
             ->get(route('reports.index'))
             ->assertOk()
-            ->assertSee('dir="ltr">'.number_format($income, 2).'</p>', false)
-            ->assertSee('dir="ltr">'.number_format($expenses, 2).'</p>', false)
-            ->assertSee('dir="ltr">'.number_format($netProfit, 2).'</p>', false)
+            ->assertSee('<bdi>AED '.number_format($income, 2).'</bdi>', false)
+            ->assertSee('<bdi>AED '.number_format($expenses, 2).'</bdi>', false)
+            ->assertSee('<bdi>AED '.number_format($netProfit, 2).'</bdi>', false)
             ->assertDontSee('999,999.00');
     }
 

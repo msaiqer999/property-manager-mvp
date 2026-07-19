@@ -41,8 +41,13 @@ return [
         'shop' => 'Shop',
         'office' => 'Office',
         'warehouse' => 'Warehouse',
+        'house' => 'House',
         'villa' => 'Villa',
         'chalet' => 'Chalet',
+        'kos' => 'Kos',
+        'kamar' => 'Room',
+        'kontrakan' => 'Kontrakan',
+        'ruko' => 'Ruko',
         'other' => 'Other',
     ],
 

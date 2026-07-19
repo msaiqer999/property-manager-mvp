@@ -2,6 +2,8 @@
     $direction = \App\Support\SupportedLocales::direction(app()->getLocale());
     $isRtl = $direction === 'rtl';
     $na = __('reports.pdf.not_available');
+    $reportCurrency = $reportCurrency ?? null;
+    $formatReportMoney = fn ($value) => trim(($reportCurrency ? $reportCurrency.' ' : '').number_format((float) $value, 2));
     $statementRowsForPdf = $type === 'unit-statement' ? ($statementRows ?? collect()) : collect();
     $statementContractNumbers = ($type === 'unit-statement')
         ? $statementRowsForPdf->pluck('contract.contract_number')->filter()->unique()->values()
@@ -165,7 +167,7 @@
                 @foreach(['amount_due', 'amount_paid', 'remaining_balance', 'overdue_remaining'] as $key)
                     <td>
                         <span class="summary-label">{{ __('reports.columns.'.$key) }}</span>
-                        <span class="summary-value"><bdi class="ltr">{{ number_format((float) ($totals[$key] ?? 0), 2) }}</bdi></span>
+                        <span class="summary-value"><bdi class="ltr">{{ $formatReportMoney($totals[$key] ?? 0) }}</bdi></span>
                     </td>
                 @endforeach
             </tr>
@@ -175,15 +177,15 @@
             <tr>
                 <td>
                     <span class="summary-label">{{ __('reports.summary.income') }}</span>
-                    <span class="summary-value"><bdi class="ltr">{{ number_format((float) $income, 2) }}</bdi></span>
+                    <span class="summary-value"><bdi class="ltr">{{ $formatReportMoney($income) }}</bdi></span>
                 </td>
                 <td>
                     <span class="summary-label">{{ __('reports.summary.expenses') }}</span>
-                    <span class="summary-value"><bdi class="ltr">{{ number_format((float) $expensesTotal, 2) }}</bdi></span>
+                    <span class="summary-value"><bdi class="ltr">{{ $formatReportMoney($expensesTotal) }}</bdi></span>
                 </td>
                 <td>
                     <span class="summary-label">{{ __('reports.summary.net_profit') }}</span>
-                    <span class="summary-value"><bdi class="ltr">{{ number_format((float) $netProfit, 2) }}</bdi></span>
+                    <span class="summary-value"><bdi class="ltr">{{ $formatReportMoney($netProfit) }}</bdi></span>
                 </td>
             </tr>
         </table>
@@ -228,7 +230,7 @@
         </tr>
         <tr>
             @foreach($totals as $value)
-                <td class="text-end"><bdi class="ltr">{{ number_format((float) $value, 2) }}</bdi></td>
+                <td class="text-end"><bdi class="ltr">{{ $formatReportMoney($value) }}</bdi></td>
             @endforeach
         </tr>
     </table>
@@ -245,7 +247,7 @@
             @foreach($rows as $row)
                 <tr>
                     <td>{{ $row->name }}</td>
-                    <td class="text-end"><bdi class="ltr">{{ number_format((float) $row->income, 2) }}</bdi></td>
+                    <td class="text-end"><bdi class="ltr">{{ $formatReportMoney($row->income) }}</bdi></td>
                 </tr>
             @endforeach
         </table>
@@ -270,9 +272,9 @@
                     <td>{{ $row->contract?->unit?->building?->name ?? $na }}</td>
                     <td class="text-center"><bdi class="ltr">{{ $row->contract?->unit?->unit_number ?? $na }}</bdi></td>
                     <td class="text-center"><bdi class="ltr">{{ $row->contract?->contract_number ?? $na }}</bdi></td>
-                    <td class="text-end"><bdi class="ltr">{{ number_format((float) $row->amount_due, 2) }}</bdi></td>
-                    <td class="text-end"><bdi class="ltr">{{ number_format((float) $row->amount_paid, 2) }}</bdi></td>
-                    <td class="text-end"><bdi class="ltr">{{ number_format((float) $row->remaining_amount, 2) }}</bdi></td>
+                    <td class="text-end"><bdi class="ltr">{{ $formatReportMoney($row->amount_due) }}</bdi></td>
+                    <td class="text-end"><bdi class="ltr">{{ $formatReportMoney($row->amount_paid) }}</bdi></td>
+                    <td class="text-end"><bdi class="ltr">{{ $formatReportMoney($row->remaining_amount) }}</bdi></td>
                     <td class="text-center"><bdi class="ltr">{{ $row->payment_date?->toDateString() ?? $na }}</bdi></td>
                     <td class="text-center">{{ __('payments.statuses.'.$row->display_status_key) }}</td>
                 </tr>
@@ -294,7 +296,7 @@
                     <td>{{ $row->building?->name ?? $na }}</td>
                     <td class="text-center"><bdi class="ltr">{{ $row->unit?->unit_number ?? $na }}</bdi></td>
                     <td>{{ __('expenses.categories.'.$row->category) }}</td>
-                    <td class="text-end"><bdi class="ltr">{{ number_format((float) $row->amount, 2) }}</bdi></td>
+                    <td class="text-end"><bdi class="ltr">{{ $formatReportMoney($row->amount) }}</bdi></td>
                     <td class="text-center">{{ $row->voided_at ? __('expenses.lifecycle.voided') : __('expenses.lifecycle.active') }}</td>
                 </tr>
             @endforeach
@@ -318,9 +320,9 @@
                     <td>{{ $row->contract?->tenant?->full_name ?? $na }}</td>
                     <td class="text-center"><bdi class="ltr">{{ $row->contract?->unit?->unit_number ?? $na }}</bdi><br>{{ $row->contract?->unit?->building?->name ?? $na }}</td>
                     <td class="text-center"><bdi class="ltr">{{ $row->contract?->contract_number ?? $na }}</bdi></td>
-                    <td class="text-end"><bdi class="ltr">{{ number_format((float) $row->amount_due, 2) }}</bdi></td>
-                    <td class="text-end"><bdi class="ltr">{{ number_format((float) $row->amount_paid, 2) }}</bdi></td>
-                    <td class="text-end"><bdi class="ltr">{{ number_format((float) ($row->remaining_amount ?? ($row->amount_due - $row->amount_paid)), 2) }}</bdi></td>
+                    <td class="text-end"><bdi class="ltr">{{ $formatReportMoney($row->amount_due) }}</bdi></td>
+                    <td class="text-end"><bdi class="ltr">{{ $formatReportMoney($row->amount_paid) }}</bdi></td>
+                    <td class="text-end"><bdi class="ltr">{{ $formatReportMoney($row->remaining_amount ?? ($row->amount_due - $row->amount_paid)) }}</bdi></td>
                     <td>{{ $row->payment_method ? __('payments.methods.'.$row->payment_method) : $na }}</td>
                     <td class="text-center">{{ __('payments.statuses.'.($row->display_status_key ?? $row->status)) }}</td>
                 </tr>

@@ -377,6 +377,8 @@ class DashboardLocalizationTest extends TestCase
             'created_at' => now()->addDay(),
         ]);
 
+        $this->assertSame('AED', $owner->organization->currency_code);
+
         $this->actingAs($owner)
             ->withSession(['locale' => 'en'])
             ->get(route('dashboard'))
@@ -384,7 +386,7 @@ class DashboardLocalizationTest extends TestCase
             ->assertSee('<html lang="en" dir="ltr">', false)
             ->assertSee('Latest expenses')
             ->assertSee('Maintenance')
-            ->assertSeeHtml('<span class="bidi-isolate font-medium" dir="ltr">4,321.09</span>');
+            ->assertSeeHtml('<span class="bidi-isolate font-medium" dir="ltr">AED 4,321.09</span>');
 
         $this->assertSame('maintenance', $expense->fresh()->category);
     }
@@ -404,6 +406,8 @@ class DashboardLocalizationTest extends TestCase
             'created_at' => now()->addDay(),
         ]);
 
+        $this->assertSame('AED', $owner->organization->currency_code);
+
         $this->actingAs($owner)
             ->withSession(['locale' => 'ar'])
             ->get(route('dashboard'))
@@ -411,7 +415,7 @@ class DashboardLocalizationTest extends TestCase
             ->assertSee('<html lang="ar" dir="rtl">', false)
             ->assertSee('أمن')
             ->assertDontSee('security')
-            ->assertSeeHtml('<span class="bidi-isolate font-medium" dir="ltr">8,765.43</span>');
+            ->assertSeeHtml('<span class="bidi-isolate font-medium" dir="ltr">AED 8,765.43</span>');
 
         $freshExpense = $expense->fresh();
         $this->assertSame('security', $freshExpense->category);

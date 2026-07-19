@@ -7,6 +7,7 @@ class SupportedLocales
     private const LOCALES = [
         'ar' => ['label' => 'العربية', 'dir' => 'rtl'],
         'en' => ['label' => 'English', 'dir' => 'ltr'],
+        'id' => ['label' => 'Bahasa Indonesia', 'dir' => 'ltr'],
         'fil' => ['label' => 'Filipino (Tagalog)', 'dir' => 'ltr'],
         'ur' => ['label' => 'اردو', 'dir' => 'rtl'],
         'hi' => ['label' => 'हिन्दी', 'dir' => 'ltr'],

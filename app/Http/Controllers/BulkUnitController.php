@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Building;
 use App\Models\Unit;
 use App\Services\ActivityLogger;
+use App\Support\UnitTypeCatalog;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
@@ -13,7 +14,6 @@ use Illuminate\Validation\ValidationException;
 
 class BulkUnitController extends Controller
 {
-    private const TYPES = ['apartment', 'shop', 'office', 'warehouse', 'villa', 'chalet', 'other'];
     private const STATUSES = ['vacant', 'rented', 'maintenance'];
     private const MANUAL_ROW_COUNT = 5;
 
@@ -28,7 +28,7 @@ class BulkUnitController extends Controller
 
         return view('units.bulk-entry', [
             'buildings' => Building::where('organization_id', $organizationId)->orderBy('name')->get(),
-            'types' => self::TYPES,
+            'types' => UnitTypeCatalog::forUser($request->user()),
             'statuses' => self::STATUSES,
             'rowCount' => self::MANUAL_ROW_COUNT,
             'selectedBuildingId' => $selectedBuildingId,
@@ -41,7 +41,7 @@ class BulkUnitController extends Controller
 
         return view('units.bulk-create', [
             'building' => $building,
-            'types' => self::TYPES,
+            'types' => UnitTypeCatalog::forBuilding($building),
             'statuses' => self::STATUSES,
         ]);
     }
@@ -50,11 +50,13 @@ class BulkUnitController extends Controller
     {
         $this->authorizeBulkCreation($building);
 
+        $types = UnitTypeCatalog::forBuilding($building);
+
         $validated = $request->validate([
             'prefix' => ['nullable', 'string', 'max:20'],
             'start_number' => ['required', 'integer', 'min:0', 'max:999999'],
             'end_number' => ['required', 'integer', 'min:0', 'max:999999', 'gte:start_number'],
-            'type' => ['required', 'in:'.implode(',', self::TYPES)],
+            'type' => ['required', Rule::in($types)],
             'rent_amount' => ['required', 'numeric', 'min:0'],
             'rooms' => ['nullable', 'integer', 'min:0'],
             'size' => ['nullable', 'numeric', 'min:0'],
@@ -84,7 +86,7 @@ class BulkUnitController extends Controller
 
         return view('units.bulk-preview', [
             'building' => $building,
-            'types' => self::TYPES,
+            'types' => $types,
             'statuses' => self::STATUSES,
             'rows' => $rows,
         ]);
@@ -106,7 +108,7 @@ class BulkUnitController extends Controller
         $validated = $request->validate([
             'units' => ['required', 'array', 'min:1', 'max:200'],
             'units.*.unit_number' => ['required', 'string', 'max:50'],
-            'units.*.type' => ['required', 'in:'.implode(',', self::TYPES)],
+            'units.*.type' => ['required', Rule::in(UnitTypeCatalog::forBuilding($building))],
             'units.*.rent_amount' => ['required', 'numeric', 'min:0'],
             'units.*.rooms' => ['nullable', 'integer', 'min:0'],
             'units.*.size' => ['nullable', 'numeric', 'min:0'],
@@ -178,7 +180,7 @@ class BulkUnitController extends Controller
             'building_id' => ['required', Rule::exists('buildings', 'id')->where('organization_id', $organizationId)],
             'units' => ['required', 'array', 'min:1', 'max:200'],
             'units.*.unit_number' => ['required', 'string', 'max:50'],
-            'units.*.type' => ['required', 'in:'.implode(',', self::TYPES)],
+            'units.*.type' => ['required', Rule::in(UnitTypeCatalog::forUser($request->user()))],
             'units.*.rent_amount' => ['required', 'numeric', 'min:0'],
             'units.*.rooms' => ['nullable', 'integer', 'min:0'],
             'units.*.size' => ['nullable', 'numeric', 'min:0'],

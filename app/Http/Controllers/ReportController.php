@@ -32,6 +32,7 @@ class ReportController extends Controller
             'tenants' => $this->tenants(),
             'filterQuery' => $this->filterQuery($filters),
             'statementRows' => $this->statementRows($filters),
+            'reportCurrency' => $this->reportCurrency(),
         ]);
     }
 
@@ -115,7 +116,13 @@ class ReportController extends Controller
         return $data + [
             'filters' => $filters,
             'totals' => $this->reportTotals($type, $data),
+            'reportCurrency' => $this->reportCurrency(),
         ];
+    }
+
+    private function reportCurrency(): ?string
+    {
+        return auth()->user()?->organization?->effectiveCurrencyCode();
     }
 
     private function reportFilters(Request $request): array

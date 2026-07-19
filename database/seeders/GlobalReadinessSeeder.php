@@ -39,7 +39,7 @@ class GlobalReadinessSeeder extends Seeder
     private function seedPropertyTypes(array $countries): void
     {
         foreach ([
-            null => ['apartment', 'shop', 'office', 'warehouse', 'house'],
+            null => ['apartment', 'shop', 'office', 'warehouse', 'house', 'villa', 'chalet', 'other'],
             'AE' => ['apartment', 'villa', 'shop', 'office', 'warehouse'],
             'ID' => ['kos', 'kamar', 'kontrakan', 'ruko', 'apartment', 'shop', 'warehouse'],
             'KE' => ['apartment', 'shop', 'house', 'office', 'warehouse'],

@@ -313,7 +313,7 @@
         <h2 class="mb-3 font-semibold">{{ __('app.dashboard.latest_payments') }}</h2>
         @forelse($latestPayments as $payment)
             <div class="flex items-center justify-between gap-3 border-t py-3 text-sm">
-                <span class="bidi-isolate font-medium" dir="ltr">{{ number_format($payment->amount_paid, 2) }}</span>
+                <span class="bidi-isolate font-medium" dir="ltr">{{ $formatDashboardMoney($payment->amount_paid) }}</span>
                 <x-status-badge :status="$payment->status" :label="__('app.statuses.'.$payment->status)" />
             </div>
         @empty
@@ -327,7 +327,7 @@
             @forelse($latestExpenses as $expense)
                 <div class="flex items-center justify-between gap-3 border-t py-3 text-sm">
                     <span class="capitalize">{{ __('expenses.categories.'.$expense->category) }}</span>
-                    <span class="bidi-isolate font-medium" dir="ltr">{{ number_format($expense->amount, 2) }}</span>
+                    <span class="bidi-isolate font-medium" dir="ltr">{{ $formatDashboardMoney($expense->amount) }}</span>
                 </div>
             @empty
                 <p class="text-sm text-brand-muted">{{ __('app.dashboard.no_expenses') }}</p>

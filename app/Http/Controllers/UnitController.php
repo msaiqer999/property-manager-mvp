@@ -6,6 +6,7 @@ use App\Http\Controllers\Concerns\ScopesOrganization;
 use App\Models\Building;
 use App\Models\Unit;
 use App\Services\ActivityLogger;
+use App\Support\UnitTypeCatalog;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Validation\Rule;
@@ -36,7 +37,13 @@ class UnitController extends Controller
             'building_id' => $request->integer('building_id') ?: null,
         ]);
 
-        return view('units.form', ['unit' => $unit, 'buildings' => $this->buildings()]);
+        $selectedBuilding = $unit->building_id ? $this->buildings()->firstWhere('id', $unit->building_id) : null;
+
+        return view('units.form', [
+            'unit' => $unit,
+            'buildings' => $this->buildings(),
+            'types' => $selectedBuilding ? UnitTypeCatalog::forBuilding($selectedBuilding) : UnitTypeCatalog::forUser($request->user()),
+        ]);
     }
 
     public function store(Request $request, ActivityLogger $logger)
@@ -60,7 +67,13 @@ class UnitController extends Controller
     {
         Gate::authorize('update', $unit);
 
-        return view('units.form', ['unit' => $unit, 'buildings' => $this->buildings()]);
+        $unit->loadMissing('building');
+
+        return view('units.form', [
+            'unit' => $unit,
+            'buildings' => $this->buildings(),
+            'types' => UnitTypeCatalog::forBuilding($unit->building),
+        ]);
     }
 
     public function update(Request $request, Unit $unit, ActivityLogger $logger)
@@ -94,10 +107,14 @@ class UnitController extends Controller
 
     private function validated(Request $request): array
     {
+        $building = Building::where('organization_id', $this->organizationId())
+            ->whereKey($request->input('building_id'))
+            ->first();
+
         return $request->validate([
             'building_id' => ['required', Rule::exists('buildings', 'id')->where('organization_id', $this->organizationId())],
             'unit_number' => ['required', 'string', 'max:50'],
-            'type' => ['required', 'in:apartment,shop,office,warehouse,villa,chalet,other'],
+            'type' => ['required', Rule::in($building ? UnitTypeCatalog::forBuilding($building) : UnitTypeCatalog::forUser($request->user()))],
             'size' => ['nullable', 'numeric', 'min:0'],
             'rooms' => ['nullable', 'integer', 'min:0'],
             'status' => ['required', 'in:vacant,rented,maintenance'],
