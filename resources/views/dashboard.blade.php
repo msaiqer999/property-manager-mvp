@@ -136,14 +136,14 @@
             </section>
         @else
 
-        <div data-dashboard-with-roadmap class="grid gap-5 lg:grid-cols-[minmax(0,1fr)_16rem] xl:grid-cols-[minmax(0,1fr)_17rem]">
-            <aside data-dashboard-roadmap class="order-2 lg:order-none">
+        <div data-dashboard-with-roadmap class="grid gap-5">
+            <aside data-dashboard-roadmap class="order-2">
                 <section class="rounded border border-brand-border bg-brand-surface p-3 text-brand-text shadow-sm sm:p-4">
                     <div>
                         <p class="text-[0.7rem] font-semibold uppercase tracking-wide text-brand-muted">{{ __('app.dashboard.roadmap_label') }}</p>
                         <h2 class="mt-2 text-base font-semibold leading-snug">{{ __('app.dashboard.roadmap_title') }}</h2>
                         <p class="mt-2 text-xs leading-5 text-brand-muted">{{ __('app.dashboard.roadmap_body') }}</p>
-                        <div class="mt-3 grid gap-1.5">
+                        <div class="mt-3 grid gap-1.5 sm:grid-cols-2 lg:grid-cols-5">
                             @foreach([
                                 __('app.dashboard.roadmap_unit_documents'),
                                 __('app.dashboard.roadmap_smart_alerts'),
@@ -163,8 +163,8 @@
                 </section>
             </aside>
 
-            <div class="order-1 min-w-0 lg:order-none">
-                <div data-mobile-owner-dashboard class="grid items-stretch gap-3 sm:grid-cols-2 xl:grid-cols-4">
+            <div class="order-1 min-w-0">
+                <div data-mobile-owner-dashboard data-dashboard-metrics class="grid items-stretch gap-3 sm:grid-cols-2 xl:grid-cols-4">
                     <div data-dashboard-kpi-card class="flex min-h-32 flex-col justify-between rounded border bg-brand-surface p-4 shadow-sm sm:min-h-36 sm:p-5">
                         <p class="text-sm font-medium leading-5 text-brand-muted sm:whitespace-nowrap">{{ __('app.dashboard.collected_this_month') }}</p>
                         <p class="mt-4 text-2xl font-semibold leading-tight tracking-tight text-brand-text sm:text-3xl" dir="ltr"><bdi>{{ $formatDashboardMoney($monthlyIncome) }}</bdi></p>

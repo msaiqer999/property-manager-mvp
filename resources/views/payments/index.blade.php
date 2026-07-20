@@ -1,6 +1,15 @@
 @extends('layouts.app')
 
 @section('content')
+@php
+    $organizationCurrency = auth()->user()?->organization?->effectiveCurrencyCode();
+    $formatPaymentMoney = function ($payment, $value) use ($organizationCurrency): string {
+        $buildingCurrency = $payment->contract?->unit?->building?->effectiveCurrencyCode();
+
+        return \App\Support\MoneyFormatter::format($value, $buildingCurrency ?? $organizationCurrency);
+    };
+@endphp
+
 <div class="mb-4">
     <h1 class="text-xl font-semibold">{{ __('payments.title') }}</h1>
     <p class="mt-1 text-sm text-brand-muted">{{ __('payments.description') }}</p>
@@ -52,12 +61,12 @@
                 </div>
                 <div class="flex items-center justify-between gap-3">
                     <dt class="text-brand-muted">{{ __('payments.columns.amount') }}</dt>
-                    <dd><bdi dir="ltr">{{ number_format($payment->amount_paid, 2) }} / {{ number_format($payment->amount_due, 2) }}</bdi></dd>
+                    <dd><bdi dir="ltr">{{ $formatPaymentMoney($payment, $payment->amount_paid) }} / {{ $formatPaymentMoney($payment, $payment->amount_due) }}</bdi></dd>
                 </div>
                 @if($isOverduePayment)
                     <div class="flex items-center justify-between gap-3">
                         <dt class="text-brand-muted">{{ __('payments.show.remaining') }}</dt>
-                        <dd class="font-medium text-state-danger"><bdi dir="ltr">{{ number_format($payment->remaining_amount, 2) }}</bdi></dd>
+                        <dd class="font-medium text-state-danger"><bdi dir="ltr">{{ $formatPaymentMoney($payment, $payment->remaining_amount) }}</bdi></dd>
                     </div>
                 @endif
                 @if($payment->latestPromise?->promised_date)
@@ -126,9 +135,9 @@
                         @endif
                     </td>
                     <td class="p-3 text-end align-top">
-                        <bdi dir="ltr">{{ number_format($payment->amount_paid, 2) }} / {{ number_format($payment->amount_due, 2) }}</bdi>
+                        <bdi dir="ltr">{{ $formatPaymentMoney($payment, $payment->amount_paid) }} / {{ $formatPaymentMoney($payment, $payment->amount_due) }}</bdi>
                         @if($isOverduePayment)
-                            <span class="mt-1 block text-xs text-state-danger">{{ __('payments.show.remaining') }}: <bdi dir="ltr">{{ number_format($payment->remaining_amount, 2) }}</bdi></span>
+                            <span class="mt-1 block text-xs text-state-danger">{{ __('payments.show.remaining') }}: <bdi dir="ltr">{{ $formatPaymentMoney($payment, $payment->remaining_amount) }}</bdi></span>
                         @endif
                         @if($payment->latestPromise?->promised_date)
                             <span class="mt-1 block text-xs text-brand-muted">{{ __('payments.follow_ups.promise_indicator') }}: <bdi dir="ltr">{{ $payment->latestPromise->promised_date->toDateString() }}</bdi></span>

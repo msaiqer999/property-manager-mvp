@@ -10,6 +10,7 @@ use App\Models\PropertyType;
 use App\Models\Tenant;
 use App\Models\Unit;
 use App\Models\User;
+use App\Support\MoneyFormatter;
 use App\Support\PdfRenderer;
 use Database\Seeders\GlobalReadinessSeeder;
 use Database\Seeders\IndonesiaClosedPilotSeeder;
@@ -98,6 +99,13 @@ class IndonesiaClosedPilotTest extends TestCase
             ->assertSee('<html lang="id" dir="ltr">', false)
             ->assertSee('IDR ')
             ->assertSee('Terkumpul bulan ini')
+            ->assertSee('data-dashboard-with-roadmap', false)
+            ->assertSee('data-dashboard-metrics', false)
+            ->assertSee('data-dashboard-kpi-card', false)
+            ->assertSee('data-dashboard-roadmap', false)
+            ->assertSee('Segera hadir')
+            ->assertDontSee('lg:grid-cols-[minmax(0,1fr)_16rem]', false)
+            ->assertDontSee('xl:grid-cols-[minmax(0,1fr)_17rem]', false)
             ->assertDontSee('AED ');
 
         $this->actingAs($owner)
@@ -106,6 +114,28 @@ class IndonesiaClosedPilotTest extends TestCase
             ->assertSee('IDR ')
             ->assertDontSee('AED ')
             ->assertDontSee('reports.');
+    }
+
+    public function test_indonesia_payments_page_displays_idr_without_cents(): void
+    {
+        $this->seed(IndonesiaClosedPilotSeeder::class);
+
+        $owner = User::where('email', 'indonesia-owner@example.com')->firstOrFail();
+        $payment = Payment::where('organization_id', $owner->organization_id)
+            ->where('amount_paid', '>', 0)
+            ->orderBy('due_date')
+            ->firstOrFail();
+        $expectedAmount = MoneyFormatter::forOrganization($owner->organization, $payment->amount_paid)
+            .' / '.MoneyFormatter::forOrganization($owner->organization, $payment->amount_due);
+
+        $this->actingAs($owner)
+            ->withSession(['locale' => 'id'])
+            ->get(route('payments.index', ['status' => $payment->status]))
+            ->assertOk()
+            ->assertSee('IDR ')
+            ->assertSeeHtml('<bdi dir="ltr">'.$expectedAmount.'</bdi>')
+            ->assertDontSee(number_format((float) $payment->amount_due, 2))
+            ->assertDontSee('AED ');
     }
 
     public function test_indonesian_buildings_page_labels_and_help_modal_are_localized(): void
@@ -308,6 +338,21 @@ class IndonesiaClosedPilotTest extends TestCase
             ->assertOk()
             ->assertSee('Abu Dhabi Small Properties')
             ->assertSee('AED ')
+            ->assertDontSee('IDR ');
+
+        $payment = Payment::where('organization_id', $owner->organization_id)
+            ->where('amount_paid', '>', 0)
+            ->orderBy('due_date')
+            ->firstOrFail();
+        $expectedAmount = MoneyFormatter::forOrganization($owner->organization, $payment->amount_paid)
+            .' / '.MoneyFormatter::forOrganization($owner->organization, $payment->amount_due);
+
+        $this->actingAs($owner)
+            ->get(route('payments.index', ['status' => $payment->status]))
+            ->assertOk()
+            ->assertSee('AED ')
+            ->assertSeeHtml('<bdi dir="ltr">'.$expectedAmount.'</bdi>')
+            ->assertSee(number_format((float) $payment->amount_due, 2))
             ->assertDontSee('IDR ');
     }
 
